@@ -1,0 +1,867 @@
+/* ===== HERO ===== */
+.hero__wrap{
+  border-radius: 28px;
+  border: 1px solid #e5e5e5;   
+  background: #f7f7f7;
+  overflow: hidden;
+}
+
+.hero__slides{
+  position: relative;
+  height: 660px;
+}
+
+.hero__slide{
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .45s ease;
+}
+.hero__slide.is-active{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* фон */
+.hero__bg{
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+/* затемнение слева */
+.hero__veil{
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    rgba(0,0,0,.78) 0%,
+    rgba(0,0,0,.45) 42%,
+    rgba(0,0,0,.10) 72%,
+    transparent 100%
+  );
+}
+
+.hero__slide,
+.hero__bg,
+.hero__veil{
+  border-radius: 28px;
+}
+
+.hero__content{
+  padding: clamp(36px, 6vw, 72px);
+}
+
+
+/* контент */
+.hero__content{
+  position: relative;
+  z-index: 10;
+  padding: 70px 56px;
+  max-width: 780px;
+  color: #fff;
+}
+
+.hero__content,
+.hero__content *{
+  color: #fff;
+}
+
+.hero__content .kicker{
+  opacity: .85;
+}
+
+.hero__content .lead{
+  opacity: .95;
+}
+
+.hero__content .btn{
+  border-radius: 999px;
+  padding: 14px 26px;
+  font-weight: 700;
+}
+
+/* основная */
+.hero__content .btn--dark{
+  background: #e53935;        
+  color: #fff;
+}
+
+.hero__content .btn--dark:hover{
+  background: #d32f2f;
+}
+
+/* вторичная */
+.hero__content .btn--outline{
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,.55);
+  background: transparent;
+}
+
+.hero__content .btn--outline:hover{
+  background: rgba(255,255,255,.15);
+}
+
+.hero__stats{
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,.25);
+}
+
+.hero__stat-number{
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.hero__stat-label{
+  font-size: 13px;
+  opacity: .85;
+}
+
+.hero__badge{
+  margin-bottom: 18px;
+}
+
+/* ОБЩИЙ стиль бейджей */
+.hero__badge{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+  background: rgba(255,255,255,.18); 
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,.35);
+}
+
+.hero__zone { display: none !important; }
+
+/* ====== Невидимые зоны клика по краям ====== */
+.hero__tap{
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 72px;     
+  width: 28%;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  z-index: 6;            
+}
+
+.hero__tap--prev{ left: 0; }
+.hero__tap--next{ left: auto; right: 0; }
+
+.hero__content{ position: relative; z-index: 10; }
+.hero__controls{ position: relative; z-index: 12; }
+
+/* ====== НИЖНЯЯ ПАНЕЛЬ: белая, ровная, в одну линию ====== */
+.hero__controls{
+  background: #fff;
+  border-top: 1px solid #eee;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero__dots{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.dot{
+  border: none;
+  background: #e0e0e0;
+}
+
+.dot.is-active{
+  background: #e53935; 
+  transform: scale(1.3);
+}
+
+.dot:hover{
+  background: #ef5350;
+}
+
+
+/* =========================
+   COLLECTIONS (категории плитками)
+========================= */
+.headRow{
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  margin-top: -40px;
+}
+
+.grid3{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.tile{
+  position: relative;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+  transition: transform .22s ease, box-shadow .25s ease, border-color .25s ease;
+}
+
+.tile:hover{
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+  border-color: rgba(17,17,17,.20);
+}
+
+.tile__img{
+  aspect-ratio: 1/1;
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.01);
+  transition: transform .45s ease, filter .45s ease;
+}
+
+.tile:hover .tile__img{
+  transform: scale(1.06);
+  filter: saturate(1.02) contrast(1.02);
+}
+
+.tile__overlay{
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 16px;
+  gap: 4px;
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,0) 52%,
+    rgba(0,0,0,.18) 78%,
+    rgba(0,0,0,.38) 100%
+  );
+}
+
+.tile__title{
+  color: #fff;
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: -0.2px;
+}
+
+.tile__sub{
+  color: rgba(255,255,255,.85);
+  font-size: 13px;
+}
+
+
+/* =========================
+   BANNER
+========================= */
+.banner{
+  display: grid;
+  grid-template-columns: 1.05fr 1.3fr;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--r-lg) + 6px);
+  overflow: hidden;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.banner__img{
+  min-height: 320px;
+  background-size: cover;
+  background-position: center;
+  border-right: 1px solid var(--line);
+}
+
+.banner__body{
+  padding: 28px;
+}
+
+/* =========================
+   TRUST
+========================= */
+.trust{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;                  
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: #fff;
+}
+
+.trust__item{
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 16px;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fff, #fbfbfb);
+
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.trust__item:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(0,0,0,.08);
+  border-color: rgba(0,0,0,.12);
+}
+
+.trust__icon{
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+
+  display: grid;
+  place-items: center;
+
+  background: rgba(53, 229, 112, 0.1);   
+  color: #288549;            
+  flex: 0 0 42px;
+}
+
+.trust__icon svg{
+  width: 22px;
+  height: 22px;
+}
+
+.trust__title{
+  font-weight: 900;
+  margin-bottom: 6px;
+  line-height: 1.15;
+}
+
+.trust__text{
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* =========================================
+   GIFT HERO 
+========================================= */
+
+#gift.giftHero{
+  position: relative;
+  height: 100vh;          
+  overflow: hidden;
+  background: #fff;
+  border: 0;                
+}
+
+/* фон ограничен по ширине как контент страницы */
+#gift .giftHero__bg{
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(var(--container, 1200px), 100%);
+  height: 100vh;
+  background-image: url("../img/parallax.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  pointer-events: none;
+}
+
+/* на всякий случай выключаем старую “дымку/подложку”, если где-то осталась */
+#gift .giftHero__bg::before{
+  content: none !important;
+  display: none !important;
+}
+
+#gift .giftHero__veil{
+  display: none !important;
+}
+
+/* контент поверх фона */
+#gift .giftHero__inner{
+  position: relative;
+  z-index: 2;
+  height: 100vh;
+
+  display: flex;
+  align-items: center;
+
+  padding-block: clamp(16px, 3vw, 32px);
+}
+
+/* карточка с содержимым */
+#gift .giftHero__card{
+  width: min(920px, calc(100% - 32px));
+  margin-inline: auto;
+  background: rgba(255,255,255,.92);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px);
+  padding: clamp(16px, 2.2vw, 26px);
+  max-height: calc(100vh - 64px);
+  overflow: auto;
+}
+
+/* аккуратный скролл внутри карточки */
+#gift .giftHero__card::-webkit-scrollbar{ width: 10px; }
+#gift .giftHero__card::-webkit-scrollbar-thumb{
+  background: rgba(0,0,0,.18);
+  border-radius: 999px;
+}
+#gift .giftHero__card::-webkit-scrollbar-track{
+  background: rgba(0,0,0,.06);
+  border-radius: 999px;
+}
+
+/* =========================================
+   FORM WRAP
+========================================= */
+
+#gift .giftForm{
+  margin-top: 14px;
+  padding: 14px;
+
+  border: 1px solid rgba(0,0,0,.10);
+  border-radius: 18px;
+  background: rgba(255,255,255,.70);
+}
+
+#gift .giftForm__head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom: 10px;
+}
+
+#gift .giftForm__title{ font-weight: 900; }
+#gift .giftForm__counter{
+  font-size: 13px;
+  color: rgba(0,0,0,.62);
+}
+
+/* =========================================
+   DROPDOWN
+========================================= */
+
+#gift .giftLists{
+  display: grid;
+  gap: 10px;
+}
+
+#gift .giftList{
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 16px;
+  background: rgba(255,255,255,.86);
+  overflow: hidden;
+  box-shadow: 0 10px 26px rgba(0,0,0,.05);
+}
+
+#gift .giftList__summary{
+  list-style: none;
+  cursor: pointer;
+  padding: 12px 14px;
+
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  user-select: none;
+}
+
+#gift .giftList__summary::-webkit-details-marker{ display:none; }
+
+#gift .giftList__icon{
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(0,0,0,.06);
+  flex: 0 0 auto;
+}
+
+#gift .giftList__name{ font-weight: 900; }
+
+#gift .giftList__hint{
+  margin-left: auto;
+  font-size: 12px;
+  color: rgba(0,0,0,.55);
+}
+
+#gift .giftList__summary::after{
+  content: "▾";
+  opacity: .55;
+  margin-left: 6px;
+  transition: transform .2s ease;
+}
+
+#gift .giftList[open] .giftList__summary::after{
+  transform: rotate(180deg);
+}
+
+#gift .giftList__body{
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  border-top: 1px solid rgba(0,0,0,.06);
+}
+
+/* =========================================
+   OPTIONS (label + custom UI)
+========================================= */
+
+#gift .giftOption{
+  position: relative;
+  display: block;
+  cursor: pointer;
+  user-select: none;
+}
+
+#gift .giftOption > input{
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#gift .giftOption__ui{
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px 10px 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.92);
+  transition: transform .16s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease;
+}
+
+#gift .giftOption:hover .giftOption__ui{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(0,0,0,.08);
+  border-color: rgba(0,0,0,.16);
+}
+
+#gift .giftOption__ui::before{
+  content:"";
+  position:absolute;
+  left: 12px;
+  top: 10px;
+
+  width: 20px;
+  height: 20px;
+  border-radius: 7px;
+  border: 2px solid rgba(0,0,0,.22);
+  background: #fff;
+}
+
+#gift .giftOption > input:checked + .giftOption__ui::before{
+  background: var(--accent);
+  border-color: rgba(195,32,42,.20);
+  box-shadow: 0 0 0 4px rgba(195,32,42,.14);
+}
+
+#gift .giftOption > input:checked + .giftOption__ui::after{
+  content:"✓";
+  position:absolute;
+  left: 14px;
+  top: 10px;
+  width: 20px;
+  height: 20px;
+  display:grid;
+  place-items:center;
+  font-weight: 900;
+  color: #fff;
+}
+
+#gift .giftOption__title{
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+#gift .giftOption__meta{
+  font-size: 12px;
+  color: rgba(0,0,0,.60);
+  line-height: 1.3;
+}
+
+#gift .giftOption > input:disabled + .giftOption__ui{
+  opacity: .55;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* =========================================
+   SELECTED / TAGS BOX
+========================================= */
+
+#gift .giftPicked{
+  margin-top: 12px;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 16px;
+  background: rgba(255,255,255,.92);
+  padding: 12px;
+  box-shadow: 0 10px 26px rgba(0,0,0,.05);
+}
+
+#gift .giftPicked__head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+#gift .giftPicked__title{ font-weight: 900; }
+
+#gift .giftPicked__tags{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 34px;
+}
+
+#gift .giftTag{
+  display:inline-flex;
+  align-items:center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(195,32,42,.35);
+  background: rgba(195,32,42,.08);
+  font-size: 13px;
+  line-height: 1;
+}
+
+#gift .giftTag button{
+  border: 0;
+  background: rgba(0,0,0,.08);
+  cursor: pointer;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display:inline-grid;
+  place-items:center;
+  font-weight: 900;
+}
+
+#gift .giftTag button:hover{
+  background: rgba(0,0,0,.14);
+}
+
+#gift .giftPicked__footer{
+  margin-top: 10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+#gift .giftPicked__note{ font-weight: 700; }
+
+/* ===== FINAL FIX: фон 100vh всегда ===== */
+#gift.giftHero{
+  position: relative;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  overflow: hidden;
+}
+
+/* фон тянется на всю высоту секции */
+#gift.giftHero .giftHero__bg{
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  height: 100% !important;
+
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(var(--container, 1200px), 100%);
+
+  background-image: url("../img/parallax.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/* убираем любую “дымку” */
+#gift.giftHero .giftHero__veil{
+  display: none !important;
+}
+#gift.giftHero .giftHero__bg::before{
+  content: none !important;
+  display: none !important;
+}
+
+/* контейнер под контент — тоже ровно 100vh */
+#gift.giftHero .giftHero__inner{
+  position: relative;
+  z-index: 2;
+  height: 100vh !important;
+  display: flex;
+  align-items: center;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* форма/карточка ~85% высоты экрана */
+#gift.giftHero .giftHero__card{
+  max-height: 75vh;
+  overflow: auto;
+}
+
+
+/* Если хочешь, чтобы карточка не упиралась в края экрана на маленьких высотах */
+@media (max-height: 720px){
+  #gift .giftHero__card{ max-height: 90vh; }
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 820px){
+  #gift .giftList__body{
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+/* =========================
+   REVEAL (анимация появления на главной)
+========================= */
+.reveal{
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity .7s ease, transform .7s ease;
+}
+
+.reveal.in{
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =========================
+   RESPONSIVE (только главная)
+========================= */
+@media (max-width: 1024px){
+  .grid4{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid3{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .trust{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .trust__item{
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+  .trust__item:nth-last-child(-n+2){
+    border-bottom: none;
+  }
+
+  .banner{ grid-template-columns: 1fr; }
+  .banner__img{
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .hero__content{
+    padding: 40px 22px;
+  }
+}
+
+@media (max-width: 820px){
+  .hero__slides{ height: 620px; }
+}
+
+@media (max-width: 500px){
+  .tile__overlay{ padding: 14px; }
+}
+
+/* =========================
+   REDUCE MOTION (только главная)
+========================= */
+@media (prefers-reduced-motion: reduce){
+  .hero__slide,
+  .dot,
+  .tile,
+  .tile__img,
+  .reveal,
+  .hero__arrow{
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* адаптив высоты */
+@media (max-width: 1024px){
+  .hero__slides{ height: 600px; }
+  .hero__content{ padding: 52px 36px; }
+}
+@media (max-width: 820px){
+  .hero__slides{ height: 560px; }
+}
+@media (max-width: 500px){
+  .hero__slides{ height: 520px; }
+  .hero__content{ padding: 38px 18px; }
+}
+
+@media (max-width: 768px){
+  .hero__tap{ width: 35%; }
+  .hero__controls{ padding: 14px 16px; }
+}
+
+@media (max-width: 1024px){
+  .trust{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px){
+  .trust{
+    grid-template-columns: 1fr;
+    padding: 10px;
+  }
+  .trust__item{
+    padding: 14px;
+  }
+}
+
+@media (max-width: 920px){
+  .giftHero .giftList__body{
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px){
+  .giftHero__card{
+    width: calc(100% - 24px);
+    padding: 18px;
+  }
+
+  .giftHero .giftOption__ui{
+    padding-left: 44px;
+  }
+}
