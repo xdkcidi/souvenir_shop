@@ -1,10 +1,10 @@
 <?php
 // /php/db.php
 
-$host = 'localhost';   // обычно localhost
-$db   = 'lavka';       // имя твоей базы
-$user = 'root';        // пользователь MySQL
-$pass = '';            // пароль (в XAMPP часто пустой, в Денвере/на хостинге — свой)
+$host = 'localhost';  
+$db   = 'lavka';  
+$user = 'root';       
+$pass = '';          
 
 $dsn = "mysql:host=$host;dbname=$db;charset=utf8mb4";
 

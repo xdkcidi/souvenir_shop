@@ -1,10 +1,29 @@
-/* script.js — единый JS для всех страниц (без дублей) */
+/* script.js — единый JS для всех страниц */
 (() => {
   "use strict";
 
   // ==================== GUARD ====================
   if (window.__NORDE_APP_INITED__) return;
   window.__NORDE_APP_INITED__ = true;
+
+  // ==================== CONFIGURATION ====================
+  const CONFIG = {
+    favorites: {
+      minAuthMessage: "Чтобы добавить в избранное, сначала войдите в аккаунт."
+    },
+    lazyLoad: {
+      rootMargin: "120px 0px",
+      threshold: 0.1
+    },
+    heroSlider: {
+      interval: 6000,
+      swipeThreshold: 50
+    },
+    giftBuilder: {
+      minItems: 2,
+      maxItems: 4
+    }
+  };
 
   // ==================== HELPERS ====================
   const $ = (s, el = document) => el.querySelector(s);
@@ -13,10 +32,6 @@
   const lockScroll = (lock) => {
     document.documentElement.style.overflow = lock ? "hidden" : "";
   };
-
-  // ==================== GLOBAL STATE ====================
-  // Избранное (должно быть объявлено ДО DOMContentLoaded)
-  let favorites = [];
 
   const safeParse = (raw, fallback) => {
     try {
@@ -29,11 +44,44 @@
 
   const formatMoney = (n) => Number(n || 0).toLocaleString("ru-RU");
 
+  const debounce = (fn, wait) => {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => fn.apply(null, args), wait);
+    };
+  };
+
+  const throttle = (fn, limit) => {
+    let inThrottle;
+    return (...args) => {
+      if (!inThrottle) {
+        fn.apply(null, args);
+        inThrottle = setTimeout(() => (inThrottle = null), limit);
+      }
+    };
+  };
+
   function isAuthorized() {
     return document.documentElement.getAttribute('data-auth') === '1';
   }
 
-  // ✅ нормализация путей, чтобы работало и на file:// и на сервере
+  const APP_ROOT = (() => {
+    try {
+      const cs = document.currentScript;
+      if (cs && cs.src) {
+        const u = new URL(cs.src, document.baseURI);
+        return u.pathname.replace(/\/js\/[^\/]+$/, "/");
+      }
+    } catch (e) {
+      console.warn('Could not determine APP_ROOT from script:', e);
+    }
+
+    const p = window.location.pathname || "/";
+    if (p.includes("/pages/")) return p.split("/pages/")[0] + "/";
+    return "/";
+  })();
+
   const toRootPath = (path) => {
     if (!path) return "";
     if (/^(https?:)?\/\//i.test(path)) return path;
@@ -42,11 +90,11 @@
     path = path.replace(/^\.\//, "");
     while (path.startsWith("../")) path = path.slice(3);
 
-    if (window.location.protocol === "file:") {
-      return path; // "img/..."
-    }
+    if (window.location.protocol === "file:") return path;
 
-    return path.startsWith("/") ? path : "/" + path;
+    if (path.startsWith("/")) path = path.slice(1);
+
+    return APP_ROOT + path;
   };
 
   const toAbsUrl = (path) => {
@@ -58,81 +106,29 @@
     }
   };
 
-  // ==================== FAVORITES MIGRATION ====================
-  // Раньше изображения в избранном могли сохраняться как "../img/..." или "./img/...".
-  // На разных страницах такие пути ломаются. Нормализуем один раз и сохраняем обратно.
-  function migrateFavoritesImages() {
-    let raw = null;
-    try {
-      raw = localStorage.getItem("norde_favorites");
-    } catch (e) {
-      return;
-    }
+  // ==================== LOGGER ====================
+  const createLogger = (prefix) => ({
+    log: (...args) => console.log(`[${prefix}]`, ...args),
+    warn: (...args) => console.warn(`[${prefix}]`, ...args),
+    error: (...args) => console.error(`[${prefix}]`, ...args),
+    debug: (...args) => console.debug(`[${prefix}]`, ...args)
+  });
 
-    if (!raw) return;
+  const logFav = createLogger('FAV');
+  const logApp = createLogger('APP');
 
-    const arr = safeParse(raw, []);
-    if (!Array.isArray(arr) || !arr.length) return;
-
-    let changed = false;
-
-    const migrated = arr.map((it) => {
-      if (!it || typeof it !== "object") return it;
-
-      // поддерживаем разные поля (на всякий)
-      const key = ("img" in it) ? "img" : ("image" in it) ? "image" : ("imageUrl" in it) ? "imageUrl" : null;
-      if (!key) return it;
-
-      const cur = String(it[key] || "");
-      if (!cur) return it;
-
-      const next = toRootPath(cur);
-      if (next && next !== cur) {
-        changed = true;
-        return { ...it, [key]: next };
-      }
-      return it;
-    });
-
-    if (changed) {
-      try {
-        localStorage.setItem("norde_favorites", JSON.stringify(migrated));
-      } catch (e) {}
-    }
-  }
   // ==================== FAVORITES CORE ====================
-  const FAV_STORAGE_KEY = "norde_favorites";
-  const CART_STORAGE_KEY = "norde_cart";
-
-  const saveFavoritesToLocalStorage = () => {
-    try {
-      localStorage.setItem(FAV_STORAGE_KEY, JSON.stringify(favorites));
-    } catch (e) {}
-  };
-
-  const readFavoritesFromLocalStorage = () => {
-    try {
-      const raw = localStorage.getItem(FAV_STORAGE_KEY);
-      const arr = safeParse(raw, []);
-      return Array.isArray(arr) ? arr : [];
-    } catch (e) {
-      return [];
-    }
-  };
+  let favorites = [];
 
   const normalizeFavItem = (it) => {
     if (!it || typeof it !== "object") return null;
-    const id = String(it.id ?? it.product_id ?? it.productId ?? "").trim();
+    const id = String(it.id || "").trim();
     if (!id) return null;
 
-    const name = String(it.name ?? it.title ?? it.product_name ?? it.productName ?? "").trim() || "Товар";
-    const price = Number(it.price ?? it.product_price ?? it.productPrice ?? 0) || 0;
-
-    // поддерживаем разные поля картинки
-    const img =
-      it.img ?? it.image ?? it.imageUrl ?? it.product_img ?? it.productImg ?? it.product_image ?? "";
-
-    const qty = Math.max(1, Number(it.qty ?? it.quantity ?? 1) || 1);
+    const name = String(it.name || "").trim() || "Товар";
+    const price = Number(it.price || 0) || 0;
+    const img = it.image || it.img || "";
+    const qty = 1;
 
     return {
       id,
@@ -143,10 +139,13 @@
     };
   };
 
-  const isFavorite = (id) => favorites.some((x) => String(x.id) === String(id));
-
   const getFavBtnData = (btn) => {
-    if (!btn) return null;
+    logFav.log('Получаем данные кнопки');
+    
+    if (!btn) {
+      logFav.log('Кнопка не найдена');
+      return null;
+    }
 
     const id =
       btn.getAttribute("data-product-id") ||
@@ -154,7 +153,12 @@
       btn.closest("[data-product]")?.getAttribute("data-id") ||
       btn.closest("[data-product]")?.dataset.id;
 
-    if (!id) return null;
+    logFav.log('ID товара:', id);
+
+    if (!id) {
+      logFav.log('ID товара не найден');
+      return null;
+    }
 
     const name =
       btn.getAttribute("data-product-name") ||
@@ -171,8 +175,8 @@
       btn.closest("[data-product]")?.dataset.price;
 
     const price = Number(String(priceRaw || "").replace(/[\s₽]/g, "")) || 0;
+    logFav.log('Цена товара:', price);
 
-    // пробуем вытащить картинку из data-product-img, data-bg или style background-image
     const img =
       btn.getAttribute("data-product-img") ||
       btn.dataset.productImg ||
@@ -182,273 +186,265 @@
       btn.closest("[data-product]")?.querySelector("[data-bg]")?.dataset.bg ||
       "";
 
-    return normalizeFavItem({ id, name, price, img, qty: 1 });
+    logFav.log('Изображение товара:', img);
+
+    return normalizeFavItem({ id, name, price, img });
   };
 
   const loadFavorites = async () => {
-    // для гостя — из localStorage (хотя на главной вы их очищаете)
+    logFav.log('Загрузка избранного...');
+    
     if (!isAuthorized()) {
-      favorites = readFavoritesFromLocalStorage().map(normalizeFavItem).filter(Boolean);
+      logFav.log('Пользователь не авторизован');
+      favorites = [];
       return favorites;
     }
 
-    // авторизован: пробуем с сервера, иначе fallback на localStorage
+    logFav.log('Пользователь авторизован, загружаем...');
+
     try {
-      const res = await fetch(toRootPath("/php/favorites.php?action=list"), {
-        credentials: "same-origin"
+      const url = toRootPath("/php/favorites.php?action=list");
+      logFav.log('URL запроса:', url);
+      
+      const res = await fetch(url, {
+        credentials: "same-origin",
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
       });
+
+      logFav.log('Статус ответа:', res.status);
+
+      if (!res.ok) {
+        const text = await res.text();
+        logFav.error('Ошибка сервера:', text);
+        throw new Error(`HTTP ${res.status}`);
+      }
+
       const data = await res.json();
-      const arr = Array.isArray(data?.favorites) ? data.favorites : Array.isArray(data) ? data : [];
+      logFav.log('Получены данные:', data);
+      
+      const arr = Array.isArray(data) ? data : [];
+      logFav.log('Массив данных:', arr);
+      
       favorites = arr.map(normalizeFavItem).filter(Boolean);
-      // можно сохранить локально как кэш
-      saveFavoritesToLocalStorage();
+      logFav.log('Нормализованные данные:', favorites);
       return favorites;
     } catch (e) {
-      favorites = readFavoritesFromLocalStorage().map(normalizeFavItem).filter(Boolean);
+      logFav.error("Ошибка загрузки избранного:", e);
+      favorites = [];
       return favorites;
     }
+  };
+
+  const isFavorite = (id) => {
+    const found = favorites.some((x) => String(x.id) === String(id));
+    logFav.log('Проверка товара', id, 'в избранном:', found);
+    return found;
   };
 
   const updateFavoritesBadge = () => {
     const badge = document.getElementById("favoritesCount");
     const desc = document.getElementById("favorites-count-desc");
+    const total = favorites.length;
 
-    const total = favorites.reduce((s, i) => s + (Number(i.qty) || 1), 0);
+    logFav.log('Обновление бейджа. Товаров:', total);
 
     if (badge) badge.textContent = String(total);
     if (desc) desc.textContent = `Товаров в избранном: ${total}`;
   };
 
   const updateFavoriteButtons = () => {
+    logFav.log('Обновление кнопок избранного...');
     const btns = $$("[data-fav-btn]");
+    logFav.log('Найдено кнопок:', btns.length);
+    
     if (!btns.length) return;
 
-    btns.forEach((btn) => {
+    btns.forEach((btn, index) => {
       const id =
         btn.getAttribute("data-product-id") ||
         btn.dataset.productId ||
         btn.closest("[data-product]")?.dataset.id;
 
-      if (!id) return;
+      if (!id) {
+        logFav.log('Кнопка', index, 'не имеет ID');
+        return;
+      }
 
       const active = isFavorite(id);
+      logFav.log('Кнопка', index, '(ID:', id, ') активна:', active);
+      
       btn.setAttribute("aria-pressed", active ? "true" : "false");
       btn.classList.toggle("is-active", active);
+      
+      const svg = btn.querySelector('svg');
+      if (svg) {
+        const path = svg.querySelector('path');
+        if (path) {
+          if (active) {
+            path.style.fill = '#ff4757';
+            path.style.stroke = '#ff4757';
+          } else {
+            path.style.fill = 'none';
+            path.style.stroke = 'currentColor';
+          }
+        }
+      }
     });
   };
 
   const toggleFavorite = async (btn) => {
+    logFav.log('Клик по избранному');
+    
+    const wasActive = btn.classList.contains("is-active");
     const item = getFavBtnData(btn);
-    if (!item) return;
-
-    // если не авторизован — открываем модалку входа
-    if (!isAuthorized()) {
-      const modalId = btn.getAttribute("data-open-modal") || "authModal";
-      if (document.getElementById(modalId)) openModal(modalId);
+    
+    if (!item) {
+      logFav.log('Данные товара не получены');
       return;
     }
 
-    // авторизован: серверное избранное
+    if (!isAuthorized()) {
+      logFav.log('Пользователь не авторизован');
+      openAuthModalWithMessage(CONFIG.favorites.minAuthMessage);
+      return;
+    }
+
+    logFav.log('Пользователь авторизован');
+    const isCurrentlyFavorite = isFavorite(item.id);
+    logFav.log('Товар уже в избранном?', isCurrentlyFavorite);
+    
+    const action = isCurrentlyFavorite ? "remove" : "add";
+    logFav.log('Выполняем действие:', action);
+
     try {
+      logFav.log('Отправляем запрос...');
+      
       const res = await fetch(toRootPath("/php/favorites.php"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          'X-Requested-With': 'XMLHttpRequest'
+        },
         credentials: "same-origin",
         body: JSON.stringify({
-          action: isFavorite(item.id) ? "remove" : "add",
+          action: action,
           product_id: item.id,
-          name: item.name,
-          price: item.price,
-          image: item.img
+          product_name: item.name,
+          product_price: item.price,
+          product_img: item.img
         })
       });
 
-      const data = await res.json().catch(() => ({}));
+      logFav.log('Ответ сервера:', res.status);
+      
+      const data = await res.json();
+      logFav.log('Данные ответа:', data);
 
-      if (data?.success === false) throw new Error(data?.error || "favorites api error");
-
-      await loadFavorites().then(() => {
-      updateFavoritesBadge();
-      updateFavoriteButtons();
-      renderFavoritesSheet();
-    });
-      updateFavoritesBadge();
-      updateFavoriteButtons();
-      renderFavoritesSheet();
-      announce(isFavorite(item.id) ? "Добавлено в избранное" : "Удалено из избранного");
-      return;
-    } catch (e) {
-      // fallback: локально (чтобы UI не ломался)
-      if (isFavorite(item.id)) {
-        favorites = favorites.filter((x) => x.id !== item.id);
-      } else {
-        favorites.push(item);
-      }
-      saveFavoritesToLocalStorage();
-      updateFavoritesBadge();
-      updateFavoriteButtons();
-      renderFavoritesSheet();
-    }
-  };
-
-  const changeFavQty = async (id, delta) => {
-    const idx = favorites.findIndex((x) => x.id === id);
-    if (idx < 0) return;
-    const nextQty = Math.max(1, (Number(favorites[idx].qty) || 1) + Number(delta || 0));
-
-    if (!isAuthorized()) {
-      favorites[idx].qty = nextQty;
-      saveFavoritesToLocalStorage();
-      updateFavoritesBadge();
-      renderFavoritesSheet();
-      return;
-    }
-
-    try {
-      await fetch(toRootPath("/php/favorites.php"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ action: "update_qty", product_id: id, qty: nextQty })
-      });
       await loadFavorites();
       updateFavoritesBadge();
+      updateFavoriteButtons();
       renderFavoritesSheet();
+      
+      const message = action === 'add' 
+        ? "Добавлено в избранное" 
+        : "Удалено из избранного";
+      logFav.log('Сообщение:', message);
+      announce(message);
+      
     } catch (e) {
-      favorites[idx].qty = nextQty;
-      saveFavoritesToLocalStorage();
-      updateFavoritesBadge();
-      renderFavoritesSheet();
-    }
-  };
-
-  const setFavQty = async (id, qty) => {
-    const idx = favorites.findIndex((x) => x.id === id);
-    if (idx < 0) return;
-    const nextQty = Math.max(1, Number(qty) || 1);
-
-    if (!isAuthorized()) {
-      favorites[idx].qty = nextQty;
-      saveFavoritesToLocalStorage();
-      updateFavoritesBadge();
-      renderFavoritesSheet();
-      return;
-    }
-
-    try {
-      await fetch(toRootPath("/php/favorites.php"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ action: "update_qty", product_id: id, qty: nextQty })
-      });
-      await loadFavorites();
-      updateFavoritesBadge();
-      renderFavoritesSheet();
-    } catch (e) {
-      favorites[idx].qty = nextQty;
-      saveFavoritesToLocalStorage();
-      updateFavoritesBadge();
-      renderFavoritesSheet();
+      logFav.error("Ошибка при переключении избранного:", e);
+      announce("Ошибка при обновлении избранного");
+      btn.classList.toggle("is-active", wasActive);
+      btn.setAttribute("aria-pressed", wasActive ? "true" : "false");
     }
   };
 
   const removeFavorite = async (id) => {
+    logFav.log('Удаление товара', id, 'из избранного');
+    
     if (!id) return;
 
     if (!isAuthorized()) {
-      favorites = favorites.filter((x) => x.id !== id);
-      saveFavoritesToLocalStorage();
-      updateFavoritesBadge();
-      updateFavoriteButtons();
-      renderFavoritesSheet();
+      logFav.log('Пользователь не авторизован');
       return;
     }
 
     try {
-      await fetch(toRootPath(`/php/favorites.php?action=remove&product_id=${encodeURIComponent(id)}`), {
-        credentials: "same-origin"
+      const res = await fetch(toRootPath("/php/favorites.php"), {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({ 
+          action: "remove", 
+          product_id: id 
+        })
       });
+
+      const data = await res.json();
+      logFav.log('Ответ удаления:', data);
+      
       await loadFavorites();
       updateFavoritesBadge();
       updateFavoriteButtons();
       renderFavoritesSheet();
+      
+      announce("Удалено из избранного");
     } catch (e) {
-      favorites = favorites.filter((x) => x.id !== id);
-      saveFavoritesToLocalStorage();
-      updateFavoritesBadge();
-      updateFavoriteButtons();
-      renderFavoritesSheet();
+      logFav.error("Ошибка удаления из избранного:", e);
+      announce("Ошибка при удалении из избранного");
     }
   };
 
   const clearFavorites = async () => {
+    logFav.log('Очистка избранного');
+    
     if (!confirm("Очистить избранное?")) return;
 
     if (!isAuthorized()) {
-      favorites = [];
-      saveFavoritesToLocalStorage();
-      updateFavoritesBadge();
-      updateFavoriteButtons();
-      renderFavoritesSheet();
+      logFav.log('Пользователь не авторизован');
       return;
     }
 
     try {
-      await fetch(toRootPath("/php/favorites.php?action=clear"), { credentials: "same-origin" });
+      const res = await fetch(toRootPath("/php/favorites.php"), {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({ action: "clear" })
+      });
+
+      const data = await res.json();
+      logFav.log('Ответ очистки:', data);
+      
       await loadFavorites();
       updateFavoritesBadge();
       updateFavoriteButtons();
       renderFavoritesSheet();
+      
+      announce("Избранное очищено");
     } catch (e) {
-      favorites = [];
-      saveFavoritesToLocalStorage();
-      updateFavoritesBadge();
-      updateFavoriteButtons();
-      renderFavoritesSheet();
+      logFav.error("Ошибка очистки избранного:", e);
+      announce("Ошибка при очистке избранного");
     }
-  };
-
-  const readCart = () => {
-    try {
-      const raw = localStorage.getItem(CART_STORAGE_KEY);
-      const arr = safeParse(raw, []);
-      return Array.isArray(arr) ? arr : [];
-    } catch (e) {
-      return [];
-    }
-  };
-
-  const saveCart = (cart) => {
-    try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-    } catch (e) {}
-  };
-
-  const addFavoriteToCart = (id) => {
-    const item = favorites.find((x) => x.id === id);
-    if (!item) return;
-
-    const cart = readCart();
-    const idx = cart.findIndex((c) => String(c.id) === String(id));
-    if (idx >= 0) {
-      cart[idx].qty = (Number(cart[idx].qty) || 1) + (Number(item.qty) || 1);
-    } else {
-      cart.push({ ...item });
-    }
-    saveCart(cart);
-    announce("Добавлено в корзину");
-  };
-
-  const addAllFavoritesToCart = () => {
-    if (!favorites.length) return;
-    favorites.forEach((it) => addFavoriteToCart(it.id));
   };
 
   const renderFavoritesSheet = () => {
     const content = document.getElementById("favorites-content");
     const actions = document.querySelector(".favorites-actions");
     if (!content) return;
+
+    logFav.log('Рендер боковой панели избранного');
+    logFav.log('Авторизован?', isAuthorized());
+    logFav.log('Товаров в избранном:', favorites.length);
 
     if (!isAuthorized()) {
       content.innerHTML = '<p class="muted">Чтобы пользоваться избранным, войдите в аккаунт.</p>';
@@ -466,45 +462,18 @@
       <div class="favorites-items">
         ${favorites
           .map((item) => {
-            const qty = Number(item.qty) || 1;
-            const lineSum = (Number(item.price) || 0) * qty;
-            const imgUrl = toAbsUrl(item.img || item.image || "");
-
+            const imgUrl = toAbsUrl(item.img || "");
+            const escapedName = item.name.replace(/"/g, '&quot;');
+            
             return `
               <div class="favorites-item" data-favorite-id="${item.id}">
                 <div class="favorites-item__image"
                      style="background-image:url('${imgUrl}')"
-                     role="img" aria-label="${item.name}"></div>
+                     role="img" aria-label="${escapedName}"></div>
 
                 <div class="favorites-item__info">
                   <div class="favorites-item__name">${item.name}</div>
-                  <div class="favorites-item__price">
-                    ${formatMoney(item.price)} ₽
-                    <span class="muted small"> • сумма: ${formatMoney(lineSum)} ₽</span>
-                  </div>
-
-                  <div class="favorites-qty" style="margin-top:10px; display:flex; gap:10px; align-items:center;">
-                    <button class="btn btn--outline btn--sm"
-                            type="button"
-                            data-fav-qty-minus
-                            data-id="${item.id}"
-                            aria-label="Уменьшить количество ${item.name}">−</button>
-
-                    <input class="input"
-                           style="width:70px; text-align:center;"
-                           type="number"
-                           min="1"
-                           value="${qty}"
-                           data-fav-qty-input
-                           data-id="${item.id}"
-                           aria-label="Количество ${item.name}" />
-
-                    <button class="btn btn--outline btn--sm"
-                            type="button"
-                            data-fav-qty-plus
-                            data-id="${item.id}"
-                            aria-label="Увеличить количество ${item.name}">+</button>
-                  </div>
+                  <div class="favorites-item__price">${formatMoney(item.price)} ₽</div>
                 </div>
 
                 <div class="favorites-item__actions">
@@ -512,13 +481,13 @@
                           type="button"
                           data-favorite-add-to-cart
                           data-id="${item.id}"
-                          aria-label="Добавить ${item.name} в корзину">В корзину</button>
+                          aria-label="Добавить ${escapedName} в корзину">В корзину</button>
 
                   <button class="iconBtn"
                           type="button"
                           data-remove-favorite
                           data-id="${item.id}"
-                          aria-label="Удалить ${item.name} из избранного">✕</button>
+                          aria-label="Удалить ${escapedName} из избранного">✕</button>
                 </div>
               </div>
             `;
@@ -530,21 +499,11 @@
     if (actions) actions.style.display = "block";
   };
 
-  // экспортируем несколько функций в window (на случай использования где-то ещё)
-  window.changeFavQty = changeFavQty;
-  window.setFavQty = setFavQty;
-  window.removeFavorite = removeFavorite;
-  window.clearFavorites = clearFavorites;
-  window.addFavoriteToCart = addFavoriteToCart;
-  window.addAllFavoritesToCart = addAllFavoritesToCart;
-
-
   // ==================== LAZY BACKGROUNDS ====================
   const initLazyBg = () => {
     const els = $$("[data-bg]");
     if (!els.length) return;
 
-    // если IntersectionObserver нет — просто проставим сразу
     if (!("IntersectionObserver" in window)) {
       els.forEach((el) => {
         const url = el.getAttribute("data-bg");
@@ -583,7 +542,7 @@
           observer.unobserve(el);
         });
       },
-      { rootMargin: "120px 0px", threshold: 0.1 }
+      CONFIG.lazyLoad
     );
 
     els.forEach((el) => io.observe(el));
@@ -667,6 +626,25 @@
     focusable?.focus?.();
   };
 
+  const openAuthModalWithMessage = (msg) => {
+    const modal = document.getElementById("authModal");
+    if (!modal) return;
+
+    const body = modal.querySelector(".modal__body") || modal;
+    let note = modal.querySelector("[data-auth-required]");
+
+    if (!note) {
+      note = document.createElement("div");
+      note.setAttribute("data-auth-required", "1");
+      note.className = "alert alert--error";
+      note.style.marginBottom = "10px";
+      body.insertBefore(note, body.firstChild);
+    }
+
+    note.textContent = msg || "Сначала войдите в аккаунт.";
+    openModal(modal);
+  };
+
   const closeModal = (modal) => {
     modal.classList.remove("is-open");
     modal.setAttribute("aria-hidden", "true");
@@ -738,7 +716,6 @@
     });
   };
 
-  // закрытие по крестику/кнопке — capture phase
   const initCloseButtonsCapture = () => {
     document.addEventListener(
       "click",
@@ -788,59 +765,34 @@
 
   // ==================== EVENT DELEGATION (FAV) ====================
   const initFavoritesDelegation = () => {
+    logFav.log('Инициализация делегирования событий');
+    
     document.addEventListener("click", (e) => {
       const favBtn = e.target.closest("[data-fav-btn]");
       if (favBtn) {
+        logFav.log('Нажата кнопка избранного');
         e.preventDefault();
         toggleFavorite(favBtn);
         return;
       }
 
       if (e.target.closest("#clear-favorites")) {
+        logFav.log('Нажата кнопка очистки избранного');
         clearFavorites();
-        return;
-      }
-
-      if (e.target.closest("#add-all-to-cart")) {
-        addAllFavoritesToCart();
         return;
       }
 
       const removeBtn = e.target.closest("[data-remove-favorite]");
       if (removeBtn) {
-        const id = removeBtn.getAttribute("data-product-id");
+        logFav.log('Нажата кнопка удаления из избранного');
+        const id = removeBtn.getAttribute("data-id") || removeBtn.getAttribute("data-product-id");
         if (id) removeFavorite(id);
         return;
       }
-
-      const addBtn = e.target.closest("[data-favorite-add-to-cart]");
-      if (addBtn) {
-        const id = addBtn.getAttribute("data-product-id");
-        if (id) addFavoriteToCart(id);
-        return;
-      }
-
-      const minus = e.target.closest("[data-fav-qty-minus]");
-      const plus = e.target.closest("[data-fav-qty-plus]");
-      if (minus || plus) {
-        const btn = minus || plus;
-        const id = btn.getAttribute("data-product-id");
-        const delta = plus ? 1 : -1;
-        if (id) changeFavQty(id, delta);
-        return;
-      }
-    });
-
-    document.addEventListener("change", (e) => {
-      const inp = e.target.closest("[data-fav-qty-input]");
-      if (!inp) return;
-      const id = inp.getAttribute("data-product-id");
-      const val = Math.max(1, parseInt(inp.value, 10) || 1);
-      if (id) setFavQty(id, val);
     });
   };
 
-  // ==================== HERO SLIDER (один) ====================
+  // ==================== HERO SLIDER ====================
   class HeroSlider {
     constructor() {
       this.wrap = document.getElementById("hero");
@@ -856,7 +808,7 @@
       if (this.current < 0) this.current = 0;
 
       this.timer = null;
-      this.interval = 6000;
+      this.interval = CONFIG.heroSlider.interval;
 
       this.buildDots();
       this.bindTapZones();
@@ -925,7 +877,7 @@
           const diff = startX - endX;
           startX = null;
 
-          if (Math.abs(diff) > 50) {
+          if (Math.abs(diff) > CONFIG.heroSlider.swipeThreshold) {
             if (diff > 0) this.next();
             else this.prev();
           }
@@ -1003,7 +955,7 @@
     items.forEach((el) => io.observe(el));
   };
 
-  // ==================== CATALOG FILTERS/SEARCH (если есть) ====================
+  // ==================== CATALOG FILTERS/SEARCH ====================
   const initCatalogFilters = () => {
     const filtersWrap = document.getElementById("categoryFilters");
     const searchInput = document.getElementById("searchInput");
@@ -1016,10 +968,10 @@
     let searchTerm = "";
     let searchTimeout = null;
 
-    const debounce = (fn, wait) => (...args) => {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => fn.apply(null, args), wait);
-    };
+    const debouncedSearch = debounce(() => {
+      searchTerm = searchInput.value.trim().toLowerCase();
+      applyFilters();
+    }, 250);
 
     const loadFilterableProducts = () => {
       const sections = Array.from(document.querySelectorAll("[data-group]"));
@@ -1112,11 +1064,6 @@
     }
 
     if (searchInput) {
-      const debouncedSearch = debounce(() => {
-        searchTerm = searchInput.value.trim().toLowerCase();
-        applyFilters();
-      }, 250);
-
       searchInput.addEventListener("input", debouncedSearch);
     }
 
@@ -1134,7 +1081,7 @@
     applyFilters();
   };
 
-  // ==================== GIFT BUILDER (2-4 items + tags) ====================
+  // ==================== GIFT BUILDER ====================
   const initGiftBuilder = () => {
     const form = document.getElementById("giftForm");
     if (!form) return;
@@ -1148,15 +1095,13 @@
     const tagsWrap = document.getElementById("giftPickedTags");
     const clearAll = document.getElementById("giftClearAll");
 
-    const MIN = 2;
-    const MAX = 4;
+    const MIN = CONFIG.giftBuilder.minItems;
+    const MAX = CONFIG.giftBuilder.maxItems;
 
     const getLabel = (box) => {
-      // value предпочтительнее (корректно для dropdown)
       const v = (box.value || "").trim();
       if (v) return v;
 
-      // fallback: ищем текст рядом
       const txt =
         box.closest("label")?.textContent?.replace(/\s+/g, " ")?.trim() ||
         "Товар";
@@ -1164,7 +1109,6 @@
     };
 
     const escapeCss = (s) => {
-      // CSS.escape может отсутствовать в старых браузерах
       if (window.CSS && typeof window.CSS.escape === "function") return window.CSS.escape(s);
       return String(s).replace(/["\\#.:?[\]()=]/g, "\\$&");
     };
@@ -1182,10 +1126,11 @@
         .map((b) => {
           const text = getLabel(b);
           const key = escapeCss(text);
+          const escapedText = text.replace(/"/g, '&quot;');
           return `
             <span class="giftTag">
               ${text}
-              <button type="button" data-remove="${key}" aria-label="Убрать ${text}">×</button>
+              <button type="button" data-remove="${key}" aria-label="Убрать ${escapedText}">×</button>
             </span>
           `;
         })
@@ -1197,7 +1142,6 @@
 
       if (counter) counter.textContent = String(checked);
 
-      // запретить выбирать больше MAX
       boxes.forEach((b) => {
         b.disabled = !b.checked && checked >= MAX;
       });
@@ -1223,7 +1167,6 @@
       const rm = e.target.closest("[data-remove]");
       if (!rm) return;
 
-      // у нас ключ — уже escaped, поэтому сравним по label (не escaped)
       const wanted = rm.getAttribute("data-remove");
       const box = boxes.find((b) => escapeCss(getLabel(b)) === wanted);
       if (box) {
@@ -1240,116 +1183,115 @@
     update();
   };
 
+  // ==================== PAGE-SPECIFIC EXTRAS ====================
+  const initEngraveForm = () => {
+    const form = document.getElementById("engraveForm");
+    if (!form) return;
+    const btn = form.querySelector("button");
+    if (!btn) return;
 
+    btn.addEventListener("click", () => {
+      btn.textContent = "Заявка отправлена ✓";
+      btn.disabled = true;
+    });
+  };
 
-// ==================== PAGE-SPECIFIC EXTRAS ====================
-const initEngraveForm = () => {
-  const form = document.getElementById("engraveForm");
-  if (!form) return;
-  const btn = form.querySelector("button");
-  if (!btn) return;
+  const initAboutStatsCounter = () => {
+    const companyEl = document.getElementById("company");
+    if (!companyEl) return;
+    if (!("IntersectionObserver" in window)) return;
+    if (typeof animateCounter !== "function") return;
 
-  btn.addEventListener("click", () => {
-    btn.textContent = "Заявка отправлена ✓";
-    btn.disabled = true;
-  });
-};
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
 
-const initAboutStatsCounter = () => {
-  const companyEl = document.getElementById("company");
-  if (!companyEl) return;
-  if (!("IntersectionObserver" in window)) return;
-  if (typeof animateCounter !== "function") return;
+          $$(".aboutStat__n").forEach((stat) => {
+            const value = (stat.textContent || "").trim();
+            if (!value.includes("+")) return;
+            const num = parseInt(value, 10);
+            if (Number.isFinite(num)) animateCounter(stat, num, 1500);
+          });
 
-  const io = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-
-        $$(".aboutStat__n").forEach((stat) => {
-          const value = (stat.textContent || "").trim();
-          if (!value.includes("+")) return;
-          const num = parseInt(value, 10);
-          if (Number.isFinite(num)) animateCounter(stat, num, 1500);
+          io.unobserve(entry.target);
         });
+      },
+      { threshold: 0.5 }
+    );
 
-        io.unobserve(entry.target);
-      });
-    },
-    { threshold: 0.5 }
-  );
+    io.observe(companyEl);
+  };
 
-  io.observe(companyEl);
-};
+  const FACTS = [
+    "Основаны в 2018 году и с тех пор делаем подарки небольшими партиями.",
+    "Каждое изделие проходит 3 этапа проверки перед отправкой.",
+    "Персонализацию делаем вручную: надпись/имя/дата — аккуратно и читабельно.",
+    "Упаковываем в подарок: плотная коробка + наполнитель, чтобы всё доехало целым.",
+    "Работаем с проверенными материалами и фурнитурой — без резких запахов и дешёвых покрытий.",
+    "Отправляем по России: подскажем сроки и поможем выбрать удобный вариант доставки."
+  ];
 
-const FACTS = [
-  "Основаны в 2018 году и с тех пор делаем подарки небольшими партиями.",
-  "Каждое изделие проходит 3 этапа проверки перед отправкой.",
-  "Персонализацию делаем вручную: надпись/имя/дата — аккуратно и читабельно.",
-  "Упаковываем в подарок: плотная коробка + наполнитель, чтобы всё доехало целым.",
-  "Работаем с проверенными материалами и фурнитурой — без резких запахов и дешёвых покрытий.",
-  "Отправляем по России: подскажем сроки и поможем выбрать удобный вариант доставки."
-];
+  let factIndex = 0;
 
-let factIndex = 0;
+  const showFact = (i) => {
+    const el = document.getElementById("randomFact");
+    const idxEl = document.getElementById("factIndex");
+    const totalEl = document.getElementById("factTotal");
+    if (!el || !idxEl || !totalEl) return;
 
-const showFact = (i) => {
-  const el = document.getElementById("randomFact");
-  const idxEl = document.getElementById("factIndex");
-  const totalEl = document.getElementById("factTotal");
-  if (!el || !idxEl || !totalEl) return;
+    totalEl.textContent = String(FACTS.length);
+    idxEl.textContent = String(i + 1);
 
-  totalEl.textContent = String(FACTS.length);
-  idxEl.textContent = String(i + 1);
+    el.classList.remove("is-anim");
+    void el.offsetWidth;
 
-  el.classList.remove("is-anim");
-  // перезапуск анимации
-  void el.offsetWidth;
+    el.textContent = FACTS[i];
+    el.classList.add("is-anim");
+  };
 
-  el.textContent = FACTS[i];
-  el.classList.add("is-anim");
-};
+  const nextFact = () => {
+    factIndex = (factIndex + 1) % FACTS.length;
+    showFact(factIndex);
+  };
 
-const nextFact = () => {
-  factIndex = (factIndex + 1) % FACTS.length;
-  showFact(factIndex);
-};
+  const initRandomFacts = () => {
+    const el = document.getElementById("randomFact");
+    if (!el) return;
 
-const initRandomFacts = () => {
-  const el = document.getElementById("randomFact");
-  if (!el) return;
+    showFact(factIndex);
 
-  showFact(factIndex);
+    const btn = document.getElementById("factBtn");
+    if (btn) btn.addEventListener("click", nextFact);
+  };
 
-  const btn = document.getElementById("factBtn");
-  if (btn) btn.addEventListener("click", nextFact);
-};
+  const initMaterialsReveal = () => {
+    const cards = $$("#materials .mat");
+    if (!cards.length) return;
+    if (!("IntersectionObserver" in window)) return;
 
-const initMaterialsReveal = () => {
-  const cards = $$("#materials .mat");
-  if (!cards.length) return;
-  if (!("IntersectionObserver" in window)) return;
+    cards.forEach((card, i) => {
+      card.style.transitionDelay = `${i * 80}ms`;
+    });
 
-  cards.forEach((card, i) => {
-    card.style.transitionDelay = `${i * 80}ms`;
-  });
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("is-in");
+          io.unobserve(entry.target);
+        });
+      },
+      { threshold: 0.25 }
+    );
 
-  const io = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add("is-in");
-        io.unobserve(entry.target);
-      });
-    },
-    { threshold: 0.25 }
-  );
-
-  cards.forEach((card) => io.observe(card));
-};
+    cards.forEach((card) => io.observe(card));
+  };
 
   // ==================== INIT ====================
-  document.addEventListener("DOMContentLoaded", () => {
+  const init = async () => {
+    logApp.log('DOM загружен');
+    
     initCloseButtonsCapture();
 
     initLazyBg();
@@ -1358,17 +1300,16 @@ const initMaterialsReveal = () => {
     initModals();
     initSheets();
 
+    logApp.log('Проверка авторизации...');
     if (isAuthorized()) {
-      migrateFavoritesImages();
-      loadFavorites();
+      logApp.log('Пользователь авторизован, загружаем избранное');
+      await loadFavorites();
     } else {
-      // гость: очищаем локальное избранное
+      logApp.log('Пользователь не авторизован');
       favorites = [];
-      try {
-        localStorage.removeItem("norde_favorites");
-      } catch (e) {}
     }
 
+    logApp.log('Обновление UI...');
     updateFavoritesBadge();
     updateFavoriteButtons();
     renderFavoritesSheet();
@@ -1384,5 +1325,25 @@ const initMaterialsReveal = () => {
     initAboutStatsCounter();
     initRandomFacts();
     initMaterialsReveal();
-  });
+    
+    logApp.log('Инициализация завершена');
+  };
+
+  // Инициализация при разных состояниях DOM
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    // DOM уже загружен
+    setTimeout(init, 0);
+  }
+
+  // Экспорт функций для глобального использования
+  window.removeFavorite = removeFavorite;
+  window.clearFavorites = clearFavorites;
+  window.updateFavorites = async () => {
+    await loadFavorites();
+    updateFavoritesBadge();
+    updateFavoriteButtons();
+    renderFavoritesSheet();
+  };
 })();

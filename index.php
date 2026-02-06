@@ -1,6 +1,7 @@
 <?php
 session_start();
 $isAuth = isset($_SESSION['user_id']);
+$hasAuthError = !empty($_SESSION['auth_error']);
 ?>
 <!doctype html>
 <html lang="ru" data-auth="<?php echo $isAuth ? '1' : '0'; ?>">
@@ -384,11 +385,10 @@ $isAuth = isset($_SESSION['user_id']);
       </div>
     </div>
 
-    <!-- быстрый ряд товаров -->
     <div class="grid4" role="list">
 
       <!-- 1 -->
-      <div class="reveal" data-product data-category="candles" data-id="candle-1" data-name="Свеча Природа" role="listitem">
+      <div class="reveal" data-product data-category="candles" data-id="1" data-name="Свеча Природа" role="listitem">
         <div class="card">
           <div class="card__img" role="img" aria-label="Свеча Природа с ароматом трав" data-bg="img/candle2.png">
             <span class="pbadge pbadge--hit">Хит</span>
@@ -410,10 +410,10 @@ $isAuth = isset($_SESSION['user_id']);
               <button class="btn btn--dark btn--full"
                       type="button"
                       data-add-to-cart
-                      data-product-id="candle-1"
+                      data-product-id="1"
                       data-product-name="Свеча «Природа»"
                       data-product-price="1199"
-                      data-product-img="../img/candle2.png">
+                      data-product-img="img/candle2.png">
                 В корзину
               </button>
 
@@ -422,8 +422,10 @@ $isAuth = isset($_SESSION['user_id']);
                       aria-label="Добавить Свеча Природа в избранное"
                       aria-pressed="false"
                       data-fav-btn
-                      data-product-id="candle-1"
-                      data-product-name="Свеча «Природа»">
+                      data-product-id="1"
+                      data-product-name="Свеча «Природа»"
+                      data-product-price="1199"
+                      data-product-img="img/candle2.png">
                 <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
                         fill="none"
@@ -437,9 +439,9 @@ $isAuth = isset($_SESSION['user_id']);
       </div>
 
       <!-- 2 -->
-      <div class="reveal" data-product data-category="ceramics" data-id="ceramic-1" data-name="Фигурка Дом" role="listitem">
+      <div class="reveal" data-product data-category="ceramics" data-id="2" data-name="Фигурка Дом" role="listitem">
         <div class="card">
-          <div class="card__img" role="img" aria-label="Керамическая фигурка Дом" data-bg="img/ceramic4.png">
+          <div class="card__img" role="img" aria-label="Керамическая фигурка Дом" data-bg="/souvenir_shop/img/ceramic4.png">
             <span class="pbadge pbadge--hit">Хит</span>
           </div>
 
@@ -459,10 +461,10 @@ $isAuth = isset($_SESSION['user_id']);
               <button class="btn btn--dark btn--full"
                       type="button"
                       data-add-to-cart
-                      data-product-id="ceramic-1"
+                      data-product-id="2"
                       data-product-name="Фигурка «Домик»"
                       data-product-price="1999"
-                      data-product-img="../img/ceramic4.png">
+                      data-product-img="/souvenir_shop/img/ceramic4.png">
                 В корзину
               </button>
 
@@ -471,8 +473,10 @@ $isAuth = isset($_SESSION['user_id']);
                       aria-label="Добавить Фигурка Дом в избранное"
                       aria-pressed="false"
                       data-fav-btn
-                      data-product-id="ceramic-1"
-                      data-product-name="Фигурка «Домик»">
+                      data-product-id="2"
+                      data-product-name="Фигурка «Домик»"
+                      data-product-price="1999"
+                      data-product-img="/souvenir_shop/img/ceramic4.png">
                 <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
                         fill="none"
@@ -486,7 +490,7 @@ $isAuth = isset($_SESSION['user_id']);
       </div>
 
       <!-- 3 -->
-      <div class="reveal" data-product data-category="textile" data-id="textile-1" data-name="Игрушка Мишка" role="listitem">
+      <div class="reveal" data-product data-category="textile" data-id="3" data-name="Игрушка Мишка" role="listitem">
         <div class="card">
           <div class="card__img" role="img" aria-label="Мягкая игрушка Мишка ручной работы" data-bg="img/textile1.png">
             <span class="pbadge pbadge--hit">Хит</span>
@@ -508,10 +512,10 @@ $isAuth = isset($_SESSION['user_id']);
               <button class="btn btn--dark btn--full"
                       type="button"
                       data-add-to-cart
-                      data-product-id="textile-1"
+                      data-product-id="3"
                       data-product-name="Игрушка «Мишка»"
                       data-product-price="1699"
-                      data-product-img="../img/textile1.png">
+                      data-product-img="img/textile1.png">
                 В корзину
               </button>
 
@@ -520,8 +524,10 @@ $isAuth = isset($_SESSION['user_id']);
                       aria-label="Добавить Игрушка Мишка в избранное"
                       aria-pressed="false"
                       data-fav-btn
-                      data-product-id="textile-1"
-                      data-product-name="Игрушка «Мишка»">
+                      data-product-id="3"
+                      data-product-name="Игрушка «Мишка»"
+                      data-product-price="1699"
+                      data-product-img="img/textile1.png">
                 <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
                         fill="none"
@@ -535,7 +541,7 @@ $isAuth = isset($_SESSION['user_id']);
       </div>
 
       <!-- 4 -->
-      <div class="reveal" data-product data-category="decor" data-id="decor-1" data-name="Ваза Спокойствие" role="listitem">
+      <div class="reveal" data-product data-category="decor" data-id="4" data-name="Ваза Спокойствие" role="listitem">
         <div class="card">
           <div class="card__img" role="img" aria-label="Ваза Спокойствие пастельного оттенка" data-bg="img/decor2.png">
             <span class="pbadge pbadge--hit">Хит</span>
@@ -557,10 +563,10 @@ $isAuth = isset($_SESSION['user_id']);
               <button class="btn btn--dark btn--full"
                       type="button"
                       data-add-to-cart
-                      data-product-id="decor-1"
+                      data-product-id="4"
                       data-product-name="Ваза «Спокойствие»"
                       data-product-price="1999"
-                      data-product-img="../img/decor2.png">
+                      data-product-img="img/decor2.png">
                 В корзину
               </button>
 
@@ -569,8 +575,10 @@ $isAuth = isset($_SESSION['user_id']);
                       aria-label="Добавить Ваза Спокойствие в избранное"
                       aria-pressed="false"
                       data-fav-btn
-                      data-product-id="decor-1"
-                      data-product-name="Ваза «Спокойствие»">
+                      data-product-id="4"
+                      data-product-name="Ваза «Спокойствие»"
+                      data-product-price="1999"
+                      data-product-img="img/decor2.png">
                 <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
                         fill="none"
@@ -586,7 +594,6 @@ $isAuth = isset($_SESSION['user_id']);
     </div>
   </div>
 </section>
-
 
     <!-- BANNER -->
     <section id="materials" class="container section">
@@ -1006,7 +1013,8 @@ $isAuth = isset($_SESSION['user_id']);
   </div>
 </footer>
 
-<div class="modal" id="authModal" aria-hidden="true">
+<div class="modal" id="authModal" aria-hidden="true"
+     <?php if (!empty($_SESSION['auth_error'])) echo 'data-autoshow="1"'; ?>>
   <div class="modal__backdrop" data-close></div>
 
   <div class="modal__dialog" role="dialog" aria-modal="true" aria-label="Авторизация">
@@ -1066,5 +1074,6 @@ $isAuth = isset($_SESSION['user_id']);
 </aside>
 
   <script src="js/script.js" defer></script>
+  
 </body>
 </html>

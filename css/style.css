@@ -238,6 +238,57 @@ input[type="number"]{
   appearance: textfield;
 }
 
+
+.mb-14{ margin-bottom: 14px; }
+
+/* =========================
+   BREADCRUMBS (хлебные крошки)
+========================= */
+.breadcrumbs{
+  margin: 0px 0 14px;
+}
+
+.breadcrumbs ol{
+  display:flex;
+  flex-wrap: wrap;
+  align-items:center;
+  gap: 8px;
+  list-style:none;
+  padding:0;
+  margin:0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.breadcrumbs li{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+}
+
+.breadcrumbs li:not(:last-child)::after{
+  content:"›";
+  opacity:.55;
+}
+
+.breadcrumbs a{
+  color: var(--muted);
+  text-decoration: none;
+  transition: color .2s ease;
+}
+
+.breadcrumbs a:hover{
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.breadcrumbs [aria-current="page"]{
+  color: var(--text);
+  font-weight: 600;
+}
+
+
 /* =========================
    NAV (шапка)
 ========================= */
@@ -1034,6 +1085,18 @@ textarea:focus-visible{
   width: clamp(38px, 5.2vw, 42px);
   height: clamp(38px, 5.2vw, 42px);
 }
+
+
+/* Сердечко залитое, если товар в избранном */
+[data-fav-btn][aria-pressed="true"] {
+  color: #e53935; /* красный */
+}
+
+[data-fav-btn][aria-pressed="true"] .favorites-icon path {
+  fill: #e53935;
+  stroke: #e53935;
+}
+
 
 /* 3) Планшеты: меню ещё может быть в ряд, но уже “поджимается” */
 @media (max-width: 1024px){

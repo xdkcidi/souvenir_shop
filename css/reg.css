@@ -1,123 +1,858 @@
-/* Общий контейнер страницы регистрации */
-.auth-page {
-  min-height: calc(100vh - 80px - 220px); /* шапка + футер */
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;        /* больше НЕ центрируем по вертикали */
-  padding: 32px 16px 72px;        /* меньше отступ сверху */
+/* ===== ОСНОВНЫЕ СТИЛИ ЛИЧНОГО КАБИНЕТА ===== */
+
+.account-page__inner {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* Вкладки навигации */
+.account-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    margin: 32px 0 24px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+    scrollbar-width: none;
+}
+
+.account-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.account-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: #f8f8f8;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #666;
+}
+
+.account-tab:hover {
+    background: #f0f0f0;
+    transform: translateY(-1px);
+}
+
+.account-tab.active {
+    background: #1a1a1a;
+    color: #fff;
+    border-color: #1a1a1a;
+    box-shadow: 0 4px 12px rgba(26, 26, 26, 0.1);
+}
+
+.account-tab .badge {
+    background: #ff4757;
+    color: white;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 4px;
+}
+
+/* Карточки разделов */
+.account-card {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f0;
+    margin-bottom: 24px;
+    display: none;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.account-card.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== ПРОФИЛЬ ===== */
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    margin-bottom: 40px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.avatar-section {
+    text-align: center;
+}
+
+.avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    font-weight: bold;
+    color: white;
+    margin: 0 auto 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.avatar-change {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 auto;
+    padding: 4px;
+    border-radius: 6px;
+    transition: color 0.2s;
+}
+
+.avatar-change:hover {
+    color: #1a1a1a;
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-name {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #1a1a1a;
+}
+
+.profile-email {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+.profile-stats {
+    display: flex;
+    gap: 24px;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1;
+}
+
+.stat-label {
+    display: block;
+    font-size: 13px;
+    color: #888;
+    margin-top: 4px;
+}
+
+/* Форма профиля */
+.profile-card__title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: #1a1a1a;
+}
+
+.profile-form__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
 }
 
 @media (min-width: 768px) {
-  .auth-page {
-    padding-top: 40px;            /* чуть воздуха, но не как раньше */
-  }
+    .profile-form__grid {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
-/* Внутренняя колонка с заголовком и карточкой */
-.auth-page__inner {
-  width: 100%;
-  max-width: 620px;
+.profile-form__group {
+    margin-bottom: 0;
 }
 
-/* Заголовок и подпись */
-.auth-title {
-  font-size: clamp(32px, 4vw, 40px);
-  margin-bottom: 8px;
+.profile-form__label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #444;
 }
 
-.auth-lead {
-  margin-bottom: 24px;
-  color: #6b6b6b;
+.profile-input {
+    width: 100%;
+    height: 48px;
+    padding: 0 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 15px;
+    transition: all 0.2s;
+    background: #fafafa;
 }
 
-/* Карточка формы */
-.auth-card {
-  background: #ffffff;
-  border-radius: 32px;
-  padding: 32px 24px 32px;
-  box-shadow: 0 18px 45px rgba(15, 15, 15, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.02);
+.profile-input:focus {
+    outline: none;
+    border-color: #1a1a1a;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.1);
+}
+
+.profile-input--area {
+    min-height: 100px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    resize: vertical;
+}
+
+.profile-form__actions {
+    display: flex;
+    gap: 12px;
+    padding-top: 24px;
+    border-top: 1px solid #f0f0f0;
+}
+
+/* ===== ЗАКАЗЫ ===== */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.section-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.link-all {
+    color: #666;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+}
+
+.link-all:hover {
+    color: #1a1a1a;
+}
+
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.order-card {
+    background: #fafafa;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #eee;
+    transition: all 0.2s;
+}
+
+.order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    border-color: #e0e0e0;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.order-number {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #1a1a1a;
+}
+
+.order-date {
+    font-size: 13px;
+    color: #888;
+}
+
+.order-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-delivered {
+    background: rgba(76, 175, 80, 0.1);
+    color: #2e7d32;
+}
+
+.status-processing {
+    background: rgba(255, 152, 0, 0.1);
+    color: #f57c00;
+}
+
+.status-shipped {
+    background: rgba(33, 150, 243, 0.1);
+    color: #1976d2;
+}
+
+.order-body {
+    margin-bottom: 16px;
+}
+
+.order-products {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.product-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.product-preview__image {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: #f0f0f0;
+}
+
+.product-preview__name {
+    font-size: 14px;
+    color: #444;
+}
+
+.order-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.order-total {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.order-tracking {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #666;
+}
+
+.order-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ===== ИЗБРАННОЕ ===== */
+.favorites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.favorite-item {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    background: #fafafa;
+    border-radius: 16px;
+    border: 1px solid #eee;
+    transition: all 0.2s;
+}
+
+.favorite-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+}
+
+.favorite-item__image {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    background: #f0f0f0;
+    flex-shrink: 0;
+}
+
+.favorite-item__info {
+    flex: 1;
+}
+
+.favorite-item__name {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #1a1a1a;
+}
+
+.favorite-item__price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+}
+
+.favorite-item__actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ===== БОНУСЫ ===== */
+.coupons-header {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-bottom: 32px;
 }
 
 @media (min-width: 768px) {
-  .auth-card {
-    padding: 36px 40px 40px;
-  }
+    .coupons-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
 }
 
-/* Группы полей */
-.auth-form__group {
-  margin-bottom: 18px;
+.bonus-summary {
+    flex: 1;
 }
 
-.auth-form__label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
+.bonus-balance-card {
+    margin-top: 16px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    color: white;
 }
 
-/* Подсказка под паролем */
-.auth-form__hint {
-  margin-top: 4px;
-  font-size: 12px;
-  color: #8a8a8a;
+.bonus-balance {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 8px;
 }
 
-/* Ошибки */
-.auth-errors {
-  margin-bottom: 16px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: #fff2f2;
-  color: #b3261e;
-  font-size: 14px;
+.bonus-balance__label {
+    font-size: 14px;
+    opacity: 0.9;
 }
 
-.auth-errors ul {
-  margin: 0;
-  padding-left: 18px;
+.bonus-balance__value {
+    font-size: 40px;
+    font-weight: 800;
+    line-height: 1;
 }
 
-/* Кнопка отправки формы */
-.auth-btn {
-  width: 100%;
-  height: 52px;
-  border-radius: 999px;
-  font-size: 15px;
+.bonus-balance__unit {
+    font-size: 16px;
+    opacity: 0.9;
 }
 
-/* Инпуты внутри формы регистрации */
-.auth-input {
-  height: 50px;
-  border-radius: 999px;
+.bonus-info {
+    font-size: 13px;
+    opacity: 0.8;
 }
 
-/* На случай, если будет textarea */
-.auth-input--area {
-  border-radius: 18px;
-  min-height: 90px;
-  resize: vertical;
+.coupon-activate {
+    display: flex;
+    gap: 8px;
 }
 
-/* Подвал формы («Уже есть аккаунт?») */
-.auth-form__footer {
-  margin-top: 16px;
-  font-size: 14px;
-  text-align: center;
+.coupon-input {
+    width: 200px;
+    height: 44px;
 }
 
-/* Ссылка Войти – как текст, а не кнопка */
-.auth-linkLogin {
-  background: none;
-  border: none;
-  padding: 0 0 0 4px;
-  font: inherit;
-  color: #d11f26;               /* можно под цвет основной кнопки */
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
+/* Прогресс бар */
+.bonus-progress {
+    margin-bottom: 40px;
 }
 
-.auth-linkLogin:hover {
-  text-decoration-thickness: 2px;
+.progress-bar {
+    height: 8px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #666;
+}
+
+/* Купоны */
+.coupons-section {
+    margin-bottom: 40px;
+}
+
+.coupons-section__title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #1a1a1a;
+}
+
+.coupons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.coupon-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: #f8fff8;
+    border: 2px dashed #4CAF50;
+    border-radius: 16px;
+    transition: all 0.2s;
+}
+
+.coupon-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(76, 175, 80, 0.15);
+}
+
+.coupon-discount {
+    font-size: 32px;
+    font-weight: 800;
+    color: #4CAF50;
+    line-height: 1;
+}
+
+.coupon-info {
+    flex: 1;
+}
+
+.coupon-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #1a1a1a;
+}
+
+.coupon-code {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.coupon-expiry {
+    font-size: 12px;
+    color: #666;
+}
+
+/* История бонусов */
+.bonus-history {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bonus-history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #fafafa;
+    border-radius: 12px;
+    border-left: 4px solid transparent;
+}
+
+.bonus-history-item--plus {
+    border-left-color: #4CAF50;
+}
+
+.bonus-history-item--minus {
+    border-left-color: #f44336;
+}
+
+.bonus-history-info {
+    flex: 1;
+}
+
+.bonus-history-title {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: #1a1a1a;
+}
+
+.bonus-history-date {
+    font-size: 13px;
+    color: #888;
+}
+
+.bonus-history-amount {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.bonus-history-item--plus .bonus-history-amount {
+    color: #4CAF50;
+}
+
+.bonus-history-item--minus .bonus-history-amount {
+    color: #f44336;
+}
+
+/* ===== БЕЗОПАСНОСТЬ ===== */
+.security-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.security-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: #fafafa;
+    border-radius: 16px;
+    border: 1px solid #eee;
+}
+
+.security-item--danger {
+    background: #fff5f5;
+    border-color: #ffebee;
+}
+
+.security-item__info {
+    flex: 1;
+}
+
+.security-item__title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #1a1a1a;
+}
+
+.security-item__desc {
+    font-size: 14px;
+    color: #666;
+}
+
+/* Toggle switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+}
+
+.toggle-switch__input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-switch__label {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.toggle-switch__label:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+.toggle-switch__input:checked + .toggle-switch__label {
+    background-color: #4CAF50;
+}
+
+.toggle-switch__input:checked + .toggle-switch__label:before {
+    transform: translateX(24px);
+}
+
+/* ===== ПУСТЫЕ СОСТОЯНИЯ ===== */
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: #666;
+}
+
+.empty-state svg {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #444;
+}
+
+.empty-state p {
+    margin-bottom: 24px;
+    color: #888;
+}
+
+/* ===== КНОПКИ ===== */
+.btn {
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn--dark {
+    background: #1a1a1a;
+    color: white;
+}
+
+.btn--dark:hover {
+    background: #333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(26, 26, 26, 0.2);
+}
+
+.btn--outline {
+    background: transparent;
+    color: #1a1a1a;
+    border-color: #e0e0e0;
+}
+
+.btn--outline:hover {
+    border-color: #1a1a1a;
+    background: #fafafa;
+}
+
+.btn--text {
+    background: transparent;
+    color: #666;
+    padding: 8px 12px;
+}
+
+.btn--text:hover {
+    color: #1a1a1a;
+}
+
+.btn--danger {
+    background: #ff4757;
+    color: white;
+}
+
+.btn--danger:hover {
+    background: #ff3742;
+}
+
+.btn--sm {
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+/* ===== АДАПТИВНОСТЬ ===== */
+@media (max-width: 768px) {
+    .account-tabs {
+        gap: 4px;
+    }
+    
+    .account-tab {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+    
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+    }
+    
+    .profile-stats {
+        justify-content: center;
+    }
+    
+    .coupons-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .coupon-activate {
+        flex-direction: column;
+    }
+    
+    .coupon-input {
+        width: 100%;
+    }
+    
+    .profile-form__actions {
+        flex-direction: column;
+    }
+    
+    .favorites-grid {
+        grid-template-columns: 1fr;
+    }
 }

@@ -1,52 +1,53 @@
 <?php
 // php/auth.php
 session_start();
-require_once __DIR__ . '/db.php'; // здесь должен появиться $pdo
+require_once __DIR__ . '/db.php';
 
 // Берём данные из формы
 $loginOrEmail = trim($_POST['login'] ?? '');
 $password     = $_POST['password'] ?? '';
 
-// 1. Проверка на заполненность
+$back = $_SERVER['HTTP_REFERER'] ?? '/souvenir_shop/index.php';
+
+// 1) Проверка на заполненность
 if ($loginOrEmail === '' || $password === '') {
     $_SESSION['auth_error'] = 'Заполните логин (или email) и пароль.';
-    header('Location: /index.php'); // обратно на главную, где модалка
+    header('Location: ' . $back);
     exit;
 }
 
 try {
-    // 2. Ищем пользователя по логину или email
+    // 2) Ищем пользователя по логину или email (role УБРАЛИ — его нет в таблице)
     $stmt = $pdo->prepare("
-        SELECT id, login, email, password_hash, role
+        SELECT id, login, email, password_hash
         FROM users
-        WHERE login = :loginOrEmail
-           OR email = :loginOrEmail
+        WHERE login = :v
+           OR email = :v
         LIMIT 1
     ");
-    $stmt->execute([':loginOrEmail' => $loginOrEmail]);
+    $stmt->execute([':v' => $loginOrEmail]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // нет такого пользователя
+    // 3) Нет пользователя или пароль не совпал
     if (!$user || !password_verify($password, $user['password_hash'])) {
         $_SESSION['auth_error'] = 'Неверный логин/email или пароль.';
-        header('Location: /index.php');
+        header('Location: ' . $back);
         exit;
     }
 
-    // 3. Всё ок — ставим куки и сессию
-    setcookie('id',   $user['id'],           time() + 3600, '/');
-    setcookie('role', $user['role'] ?? 'user', time() + 3600, '/');
-
-    $_SESSION['user_id']    = $user['id'];
+    // 4) Всё ок — ставим сессию
+    $_SESSION['user_id']    = (int)$user['id'];
     $_SESSION['user_login'] = $user['login'];
 
-    // 4. Редирект в личный кабинет
-    header('Location: ../pages/account.php');
+    // (необязательно) кука id — можно оставить
+    setcookie('id', (string)$user['id'], time() + 3600, '/souvenir_shop/');
+
+    // 5) Редирект в личный кабинет
+    header('Location: /souvenir_shop/pages/account.php');
     exit;
 
 } catch (PDOException $e) {
-    // на проде лучше логировать в файл, а не показывать
     $_SESSION['auth_error'] = 'Ошибка при входе. Попробуйте ещё раз позже.';
-    header('Location: /index.php');
+    header('Location: ' . $back);
     exit;
 }
