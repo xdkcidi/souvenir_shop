@@ -773,12 +773,6 @@ input[type="number"]{
   gap: 16px;
 }
 
-.footer__social a{
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 14px;
-}
-
 .footer__social a:hover{
   color: var(--text);
 }
@@ -786,6 +780,101 @@ input[type="number"]{
 .footer__link{
   text-decoration: none;
 }
+
+/* Иконки соцсетей */
+.social-icons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.social-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  color: #1d4427;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.social-icon:hover {
+  background-color: #1d4427;
+  color: white;
+  border-color: #1d4427;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.social-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Ссылка на логотип */
+.footer__brand-link {
+  text-decoration: none;
+}
+
+/* Нижняя часть подвала */
+.footer__bottom {
+  padding-top: 1.5rem;
+  border-top: 1px solid #e9ecef;
+  text-align: center;
+}
+
+/* Кнопка "Наверх" */
+.to-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #1d4427;
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0.9;
+  transition: all 0.3s ease;
+}
+
+.to-top:hover {
+  opacity: 1;
+  background-color: #142f1b;
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.to-top svg {
+  transition: transform 0.3s ease;
+}
+
+.to-top:hover svg {
+  transform: translateY(-2px);
+}
+
+/* Скрытые элементы */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 
 /* =========================
    MODAL / SHEET (база)
@@ -812,6 +901,7 @@ input[type="number"]{
   padding: 6px 4px 12px;
 }
 .modal__title{ font-weight:900; }
+
 
 /* =========================
    FAVORITES SHEET

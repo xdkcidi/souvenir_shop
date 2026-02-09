@@ -232,10 +232,10 @@ $hasAuthError = !empty($_SESSION['auth_error']);
           </p>
 
           <div class="rowBtns">
-            <a class="btn btn--dark" href="pages/catalog.php#giftsets">
+            <a class="btn btn--dark" href="pages/catalog.php#group-sets">
               Смотреть наборы
             </a>
-            <a class="btn btn--outline" href="pages/catalog.php#build-your-set">
+            <a class="btn btn--outline" href="index.php#gift">
               Собрать свой набор
             </a>
           </div>
@@ -275,10 +275,10 @@ $hasAuthError = !empty($_SESSION['auth_error']);
           </p>
 
           <div class="rowBtns">
-            <a class="btn btn--dark" href="pages/catalog.php#personalize">
+            <a class="btn btn--dark" href="pages/catalog.php#personalGift">
               Выбрать с гравировкой
             </a>
-            <a class="btn btn--outline" href="pages/about.php#process">
+            <a class="btn btn--outline" href="pages/catalog.php#personalGift">
               Как это работает
             </a>
           </div>
@@ -319,7 +319,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   <div class="grid3">
 
     <!-- Керамика -->
-    <a class="tile reveal" href="pages/catalog.php#ceramics">
+    <a class="tile reveal" href="pages/catalog.php#c#group-ceramics">
       <div class="tile__img" style="background-image:url('img/ceramic.png');"></div>
       <div class="tile__overlay">
         <div class="tile__title">Керамика</div>
@@ -328,7 +328,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
     </a>
 
     <!-- Открытки -->
-    <a class="tile reveal" href="pages/catalog.php#cards">
+    <a class="tile reveal" href="pages/catalog.php#group-postcards">
       <div class="tile__img" style="background-image:url('img/letter.png');"></div>
       <div class="tile__overlay">
         <div class="tile__title">Открытки</div>
@@ -337,7 +337,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
     </a>
 
     <!-- Свечи -->
-    <a class="tile reveal" href="pages/catalog.php#candles">
+    <a class="tile reveal" href="pages/catalog.php#group-candles">
       <div class="tile__img" style="background-image:url('img/candle.png');"></div>
       <div class="tile__overlay">
         <div class="tile__title">Свечи</div>
@@ -346,7 +346,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
     </a>
 
     <!-- Текстиль -->
-    <a class="tile reveal" href="pages/catalog.php#textile">
+    <a class="tile reveal" href="pages/catalog.php#group-textile">
       <div class="tile__img" style="background-image:url('img/textile.png');"></div>
       <div class="tile__overlay">
         <div class="tile__title">Текстиль</div>
@@ -355,7 +355,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
     </a>
 
     <!-- Декор -->
-    <a class="tile reveal" href="pages/catalog.php#decor">
+    <a class="tile reveal" href="pages/catalog.php#group-decor">
       <div class="tile__img" style="background-image:url('img/decor.png');"></div>
       <div class="tile__overlay">
         <div class="tile__title">Декор</div>
@@ -364,7 +364,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
     </a>
 
     <!-- Подарочные наборы -->
-    <a class="tile reveal" href="pages/catalog.php#giftsets">
+    <a class="tile reveal" href="pages/catalog.php#group-sets">
       <div class="tile__img" style="background-image:url('img/box.png');"></div>
       <div class="tile__overlay">
         <div class="tile__title">Подарочные наборы</div>
@@ -692,7 +692,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   </div>
 </section>
 
-<!-- GIFT BUILDER (full screen image) -->
 <section id="gift" class="giftHero">
   <div class="giftHero__bg" aria-hidden="true"></div>
   <div class="giftHero__veil" aria-hidden="true"></div>
@@ -963,40 +962,78 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
   <!-- FOOTER -->
 <footer class="footer" role="contentinfo">
+  <!-- Кнопка "Наверх" -->
+  <button class="to-top" id="toTopBtn" aria-label="Вернуться наверх" style="display: none;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
+  </button>
+
   <div class="container">
     <div class="footer__grid">
+      <!-- Блок с логотипом -->
       <div>
-        <div class="footer__brand">
-          <div class="brand__mark" aria-hidden="true"><img src="img/placeholder.webp" alt="Логотип"></div>
-          <div class="brand__name">Лавка</div>
+        <a href="index.php" class="footer__brand-link">
+          <div class="footer__brand">
+            <div class="brand__mark" aria-hidden="true">
+              <img src="img/placeholder.webp" alt="Логотип Лавка">
+            </div>
+            <div class="brand__name">Лавка</div>
+          </div>
+        </a>
+        <p class="muted">Сувениры ручной работы и забота о деталях.</p>
+        
+        <!-- Соцсети с иконками -->
+        <div class="footer__social-icons">
+          <div class="social-icons">
+            <a href="#" class="social-icon" aria-label="ВКонтакте" title="ВКонтакте">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21.579 6.855c.14-.465 0-.806-.662-.806h-2.193c-.558 0-.815.295-.956.619 0 0-1.118 2.719-2.695 4.482-.51.513-.743.675-1.021.675-.139 0-.341-.162-.341-.627V6.855c0-.558-.161-.806-.626-.806H9.642c-.348 0-.558.258-.558.504 0 .528.79.65.87 2.138v3.228c0 .707-.127.836-.407.836-.743 0-2.551-2.729-3.624-5.853-.209-.607-.42-.853-.98-.853H2.752c-.627 0-.752.295-.752.619 0 .582.743 3.462 3.461 7.271 1.812 2.601 4.363 4.011 6.687 4.011 1.393 0 1.565-.313 1.565-.853v-1.966c0-.626.133-.752.57-.752.324 0 .882.164 2.183 1.417 1.486 1.486 1.732 2.153 2.567 2.153h2.192c.626 0 .939-.313.759-.931-.197-.615-.907-1.51-1.849-2.569-.512-.604-1.277-1.254-1.51-1.579-.325-.419-.231-.604 0-.976.001.001 2.672-3.761 2.95-5.04z"/>
+              </svg>
+            </a>
+            <a href="#" class="social-icon" aria-label="Telegram" title="Telegram">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.701h-.002l.002.001-.314 4.692c.46 0 .663-.211.921-.46l2.211-2.15 4.599 3.397c.848.467 1.457.227 1.668-.785l3.019-14.228c.309-1.239-.473-1.8-1.282-1.434z"/>
+              </svg>
+            </a>
+            <a href="#" class="social-icon" aria-label="YouTube" title="YouTube">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+              </svg>
+            </a>
+          </div>
         </div>
-        <p class="muted">Сувениры ручной работы. Упаковка, доставка, забота о деталях.</p>
       </div>
 
+      <!-- Навигация -->
       <div>
         <h3 class="footer__title">Навигация</h3>
         <ul class="footer__list">
           <li><a class="footer__link" href="index.php">Главная</a></li>
           <li><a class="footer__link" href="pages/about.php">О компании</a></li>
-          <li><a class="footer__link" href="pages/catalog.php#collectionsNav">Каталог</a></li>
+          <li><a class="footer__link" href="pages/catalog.php">Каталог</a></li>
+          <li><a class="footer__link" href="pages/registration.php">Регистрация</a></li>
         </ul>
       </div>
 
+      <!-- Информация -->
       <div>
         <h3 class="footer__title">Информация</h3>
         <ul class="footer__list">
           <li><a class="footer__link" href="pages/about.php#delivery">Доставка</a></li>
           <li><a class="footer__link" href="pages/about.php#returns">Возврат</a></li>
-          <li><a class="footer__link" href="pages/about.php#warranty">Гарантия</a></li>
+          <li><a class="footer__link" href="pages/about.php#materials">Материалы</a></li>
+          <li><a class="footer__link" href="pages/about.php#contacts">Контакты</a></li>
         </ul>
       </div>
 
+      <!-- Рассылка -->
       <div>
         <h3 class="footer__title">Рассылка</h3>
-        <p class="muted small">Новости и новые коллекции без спама.</p>
+        <p class="muted small">Новости и новые коллекции без спама. Первым узнавайте о скидках!</p>
         <form class="sub" data-newsletter-form>
           <label for="newsletter-email" class="visually-hidden">Email для рассылки</label>
-          <input id="newsletter-email" class="input" type="email" placeholder="Email" required />
+          <input id="newsletter-email" class="input" type="email" placeholder="Ваш email" required />
           <button class="btn btn--dark" type="submit">Подписаться</button>
         </form>
       </div>
@@ -1004,14 +1041,50 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
     <div class="footer__bottom">
       <p class="muted small">&copy; 2026 «Лавка». Все права защищены.</p>
-      <div class="footer__social">
-        <a href="#" aria-label="Instagram"><span aria-hidden="true">Instagram</span></a>
-        <a href="#" aria-label="ВКонтакте"><span aria-hidden="true">VK</span></a>
-        <a href="#" aria-label="Telegram"><span aria-hidden="true">Telegram</span></a>
-      </div>
     </div>
   </div>
 </footer>
+
+<script>
+  // Скрипт для кнопки "Наверх"
+  document.addEventListener('DOMContentLoaded', function() {
+    const toTopBtn = document.getElementById('toTopBtn');
+    
+    // Показываем кнопку при прокрутке
+    window.addEventListener('scroll', function() {
+      if (window.pageYOffset > 300) {
+        toTopBtn.style.display = 'flex';
+      } else {
+        toTopBtn.style.display = 'none';
+      }
+    });
+    
+    // Плавная прокрутка наверх
+    toTopBtn.addEventListener('click', function() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+    
+    // Обработка формы подписки (опционально)
+    const newsletterForm = document.querySelector('[data-newsletter-form]');
+    if (newsletterForm) {
+      newsletterForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const emailInput = this.querySelector('#newsletter-email');
+        const email = emailInput.value.trim();
+        
+        if (email && email.includes('@')) {
+          // Здесь можно добавить AJAX-запрос для отправки данных
+          console.log('Подписка на рассылку:', email);
+          alert('Спасибо за подписку! На ' + email + ' отправлено письмо с подтверждением.');
+          emailInput.value = '';
+        }
+      });
+    }
+  });
+</script>
 
 <div class="modal" id="authModal" aria-hidden="true"
      <?php if (!empty($_SESSION['auth_error'])) echo 'data-autoshow="1"'; ?>>
@@ -1043,7 +1116,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
           <input id="authPass" class="input input--lg" type="password" name="password" required>
         </div>
 
-        <button class="btn btn--dark btn--full" type="submit">Войти</button>
+        <button class="btn btn--dark btn--full"  style="margin-top:20px;" type="submit">Войти</button>
       </form>
 
       <p class="muted small" style="margin-top:12px;">
