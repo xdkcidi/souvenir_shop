@@ -273,7 +273,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         <section class="account-card active" id="profile-tab" role="tabpanel" aria-labelledby="profile-tab">
             <div class="profile-header">
                 <div class="avatar-section">
-                    <div class="avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="avatar" style="background: linear-gradient(135deg, #398550 0%, #164324 100%);">
                         <?= mb_strtoupper(mb_substr($user['login'], 0, 1, 'UTF-8')) ?>
                     </div>
                     <button class="avatar-change" type="button">
@@ -314,7 +314,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                         <div class="profile-form__group">
                             <label class="profile-form__label" for="phone">Телефон</label>
                             <input
-                                class="input profile-input"
+                                class="profile-input"
                                 type="tel"
                                 id="phone"
                                 name="phone"
@@ -326,7 +326,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                         <div class="profile-form__group">
                             <label class="profile-form__label" for="delivery_address">Адрес доставки</label>
                             <textarea
-                                class="input profile-input profile-input--area"
+                                class="profile-input profile-input--area"
                                 id="delivery_address"
                                 name="delivery_address"
                                 rows="3"
@@ -339,7 +339,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                         <button class="btn btn--dark" type="submit">Сохранить изменения</button>
                     </div>
 
-                    <!-- В профильной карточке замените форму выхода на это: -->
                     <div class="profile-logout">
                         <a href="../php/logout.php" class="btn btn--outline logout-link">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -377,11 +376,11 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                     <div class="order-body">
                         <div class="order-products">
                             <div class="product-preview">
-                                <div class="product-preview__image" style="background-color: #f0f0f0;"></div>
+                                <div class="product-preview__image" style="background-color: #398550;"></div>
                                 <span class="product-preview__name">Свеча "Весенний ветер"</span>
                             </div>
                             <div class="product-preview">
-                                <div class="product-preview__image" style="background-color: #e0e0e0;"></div>
+                                <div class="product-preview__image" style="background-color: #164324;"></div>
                                 <span class="product-preview__name">Керамическая кружка</span>
                             </div>
                         </div>
@@ -423,7 +422,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                     <div class="order-body">
                         <div class="order-products">
                             <div class="product-preview">
-                                <div class="product-preview__image" style="background-color: #f5f0e1;"></div>
+                                <div class="product-preview__image" style="background-color: #398550;"></div>
                                 <span class="product-preview__name">Набор открыток</span>
                             </div>
                         </div>

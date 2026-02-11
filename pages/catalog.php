@@ -10,7 +10,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Каталог сувениров ручной работы — Лавка</title>
   <meta name="description" content="Каталог сувениров ручной работы: керамика, свечи, текстиль, декор и открытки. Подарочные наборы и персонализация." />
-  <!-- стили подключаем ОТНОСИТЕЛЬНО, без слеша в начале -->
   <link rel="stylesheet" href="../css/style.css"/>
   <link rel="stylesheet" href="../css/main.css"/>
   <link rel="stylesheet" href="../css/catalog.css" />
@@ -611,7 +610,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
               Ручная лепка, приятные формы и спокойные оттенки — для ежедневных маленьких ритуалов.
             </p>
           </div>
-          <div class="group-deco" role="img" aria-label="Пример керамических изделий ручной работы" data-bg="../img/ceramic.png"></div>
         </div>
 
         <div class="grid4" role="list">
@@ -788,8 +786,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
               Тёплые слова в красивой форме — идеально как самостоятельный подарок или дополнение к набору.
             </p>
           </div>
-          <div class="group-deco" role="img" aria-label="Пример авторских открыток" data-bg="../img/letter.png">
-          </div>
         </div>
 
         <div class="grid4" role="list">
@@ -964,8 +960,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
             <p class="group-desc">
               Интерьерные и ароматные свечи — для настроения и уюта.
             </p>
-          </div>
-          <div class="group-deco" role="img" aria-label="Пример ароматических свечей" data-bg="../img/candle.png">
           </div>
         </div>
 
@@ -1144,7 +1138,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
               Мягкие и тёплые вещи ручной работы: игрушки, мешочки, панно и шарфы.
             </p>
           </div>
-          <div class="group-deco" role="img" aria-label="Пример текстильных изделий" data-bg="../img/textile.png"></div>
         </div>
 
         <div class="grid4" role="list">
@@ -1321,7 +1314,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
               Небольшие элементы для полок и столов: фигурки, вазы и подсвечники.
             </p>
           </div>
-          <div class="group-deco" role="img" aria-label="Пример декоративных изделий" data-bg="../img/decor.png"></div>
         </div>
 
         <div class="grid4" role="list">
@@ -1500,7 +1492,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
               Красиво упакованные боксы — можно дарить сразу, без лишних забот.
             </p>
           </div>
-          <div class="group-deco" role="img" aria-label="Пример подарочных наборов" data-bg="../img/box.png"></div>
         </div>
 
         <div class="grid4" role="list">
@@ -1759,8 +1750,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   // Скрипт для кнопки "Наверх"
   document.addEventListener('DOMContentLoaded', function() {
     const toTopBtn = document.getElementById('toTopBtn');
-    
-    // Показываем кнопку при прокрутке
+  
     window.addEventListener('scroll', function() {
       if (window.pageYOffset > 300) {
         toTopBtn.style.display = 'flex';
@@ -1769,7 +1759,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       }
     });
     
-    // Плавная прокрутка наверх
     toTopBtn.addEventListener('click', function() {
       window.scrollTo({
         top: 0,
@@ -1777,7 +1766,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       });
     });
     
-    // Обработка формы подписки (опционально)
     const newsletterForm = document.querySelector('[data-newsletter-form]');
     if (newsletterForm) {
       newsletterForm.addEventListener('submit', function(e) {
@@ -1786,7 +1774,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         const email = emailInput.value.trim();
         
         if (email && email.includes('@')) {
-          // Здесь можно добавить AJAX-запрос для отправки данных
           console.log('Подписка на рассылку:', email);
           alert('Спасибо за подписку! На ' + email + ' отправлено письмо с подтверждением.');
           emailInput.value = '';
@@ -1795,8 +1782,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
     }
   });
 </script>
-
-<!-- Модальные окна из index.php -->
 
 <div class="modal" id="authModal" aria-hidden="true"
      <?php if (!empty($_SESSION['auth_error'])) echo 'data-autoshow="1"'; ?>>

@@ -1,6 +1,3 @@
-/* =========================
-   СЕКЦИОННЫЙ ЗАГОЛОВОК КАТАЛОГА
-========================= */
 .catalog-head{
   display:flex;
   align-items:flex-end;
@@ -13,7 +10,6 @@
 /* =========================
    PERSONAL GIFT 
 ========================= */
-
 .personal-gift{
   position: relative;
   overflow: hidden;
@@ -113,7 +109,6 @@
 /* =========================
    FORM CARD 
 ========================= */
-
 .personal-gift__formCard{
   width: 100%;
   max-width: 640px;
@@ -256,7 +251,6 @@ select.input{
   gap:10px;
 }
 
-/* chip в каталоге */
 .chip{
   display:inline-flex;
   align-items:center;
@@ -287,7 +281,6 @@ select.input{
   border-color: var(--text);
 }
 
-/* поиск */
 .search-wrap{
   position:relative;
   min-width: 260px;
@@ -309,7 +302,6 @@ select.input{
   padding-left: 44px;
 }
 
-/* кнопка очистки поиска  */
 .search-clear{
   position:absolute;
   right: 12px;
@@ -331,9 +323,7 @@ select.input{
   background: rgba(0,0,0,.05);
 }
 
-/* =========================
-   HITS SECTION
-========================= */
+
 .hits{ margin-top: 28px; }
 
 .tag{
@@ -346,48 +336,30 @@ select.input{
 }
 
 
-
-/* =========================
-   RESPONSIVE
-========================= */
-@media (max-width: 900px){
-  .made-to-order__inner{ grid-template-columns: 1fr; }
-  .personal-gift__title{ font-size: 34px; }
-  .personal-gift{ min-height: 360px; }
-}
-
-@media (max-width: 768px){
-  .filters-row{
-    overflow-x:auto;
-    padding-bottom: 8px;
-    -webkit-overflow-scrolling: touch;
+@media (max-width: 1024px){
+  .grid3{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
   }
 
-}
+  .grid4{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
 
-@media (max-width: 980px){
+  .group-head{
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .group-deco{
+    min-height: 180px;
+    background-size: cover;
+    background-position: center;
+  }
+
   .personal-gift__inner{
     grid-template-columns: 1fr;
     align-items: start;
-  }
-  .personal-gift__content{
-    max-width: none;
-  }
-}
-
-@media (max-width: 520px){
-  .pgForm__grid{
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 980px){
-  .personal-gift__inner{
-    grid-template-columns: 1fr;
-    align-items: start;
-  }
-  .personal-gift__content{
-    max-width: none;
   }
   .personal-gift__formCard{
     max-width: none;
@@ -395,8 +367,217 @@ select.input{
   }
 }
 
-@media (max-width: 520px){
+@media (max-width: 768px){
+  .container{
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .grid3{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .grid4{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .tile{
+    position: relative;
+    overflow: hidden;
+  }
+  .tile__img{
+    height: 220px;
+    background-size: cover;
+    background-position: center;
+  }
+  .tile__overlay{
+    padding: 14px;
+  }
+
+  .card__img{
+    height: 240px;
+    background-size: cover;
+    background-position: center;
+  }
+
+  .card__actions{
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .card__actions .btn{
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .card__actions .iconBtn{
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .filters-row{
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+  .filters-row .chip{
+    scroll-snap-align: start;
+    flex: 0 0 auto;
+  }
+
   .pgForm__grid{
     grid-template-columns: 1fr;
   }
+}
+
+@media (max-width: 420px){
+  .container{
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .grid3{
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .grid4{
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .tile{
+    display: block !important;      
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px;
+  }
+
+  .tile__img{
+    width: 100%;
+    height: 220px;
+    background-size: cover;
+    background-position: center;
+  }
+
+  .tile__overlay{
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 14px;
+    background: linear-gradient(
+      to top,
+      rgba(0,0,0,.55) 0%,
+      rgba(0,0,0,.25) 55%,
+      rgba(0,0,0,0) 100%
+    );
+  }
+
+  .tile__title,
+  .tile__sub{
+    max-width: 100%;
+  }
+
+  .card__img{
+    height: 260px;
+    background-size: cover;
+    background-position: center;
+  }
+
+  .card__actions{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card__actions .btn{
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  .card__actions .iconBtn{
+    flex: 0 0 50px;
+    width: 50px;
+    height: 50px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card__actions .iconBtn svg{
+    width: 22px;
+    height: 22px;
+    display: block;
+  }
+
+  .group-head{
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .group-deco{
+    width: 100%;
+    min-height: 160px;
+    border-radius: 22px;
+    background-size: cover;
+    background-position: center;
+  }
+
+  .pgForm__grid{
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .tile,
+  .card,
+  .btn,
+  .tile__img,
+  .card__img{
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+@media (max-width: 768px){
+  .tile{
+    display: block !important;
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px;
+    min-height: 220px; 
+  }
+
+  .tile__img{
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-size: cover !important;
+    background-position: center !important;
+  }
+
+  .tile__overlay{
+    position: absolute !important;
+    left: 0; right: 0; bottom: 0;
+    padding: 14px;
+    background: linear-gradient(
+      to top,
+      rgba(0,0,0,.55) 0%,
+      rgba(0,0,0,.25) 55%,
+      rgba(0,0,0,0) 100%
+    );
+  }
+}
+
+@media (max-width: 420px){
+  .tile{ min-height: 210px; }
 }

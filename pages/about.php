@@ -10,7 +10,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>О нас — Лавка</title>
   <meta name="description" content="О компании Лавка: мастерская, материалы, доставка, возвраты и гарантия. Контакты." />
-  <!-- стили подключаем ОТНОСИТЕЛЬНО, без слеша в начале -->
   <link rel="stylesheet" href="../css/style.css"/>
   <link rel="stylesheet" href="../css/main.css"/>
   <link rel="stylesheet" href="../css/about.css" />
@@ -195,7 +194,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
           <a class="about-link" href="#materials"><span class="about-link__emoji">🧵</span>Материалы</a>
           <a class="about-link" href="#delivery"><span class="about-link__emoji">🚚</span>Доставка</a>
           <a class="about-link" href="#returns"><span class="about-link__emoji">↩️</span>Возврат</a>
-          <a class="about-link" href="#warranty"><span class="about-link__emoji">🛡️</span>Гарантия</a>
           <a class="about-link" href="#contacts"><span class="about-link__emoji">💬</span>Контакты</a>
         </nav>
       </div>
