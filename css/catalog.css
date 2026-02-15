@@ -435,7 +435,7 @@ select.input{
   }
 }
 
-@media (max-width: 420px){
+@media (max-width: 425px){
   .container{
     padding-left: 12px;
     padding-right: 12px;
@@ -578,6 +578,6 @@ select.input{
   }
 }
 
-@media (max-width: 420px){
+@media (max-width: 425px){
   .tile{ min-height: 210px; }
 }

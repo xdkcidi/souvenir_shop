@@ -1,12 +1,13 @@
 <?php
 // /php/db.php
 
-$host = 'localhost';  
-$db   = 'lavka';  
-$user = 'root';       
-$pass = '';          
+$host = '127.0.0.1';
+$port = 3310;
+$db   = 'lavka';
+$user = 'root';
+$pass = '';
 
-$dsn = "mysql:host=$host;dbname=$db;charset=utf8mb4";
+$dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
 
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -16,6 +17,5 @@ $options = [
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (PDOException $e) {
-    // В проде лучше логировать, тут можно просто показать сообщение
-    die('Ошибка подключения к базе данных');
+    die('Ошибка подключения к базе данных: ' . $e->getMessage());
 }

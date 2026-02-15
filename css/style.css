@@ -94,8 +94,8 @@ button, input, select, textarea{ font-family: inherit; }
 
 .h1{ font-size: clamp(30px, 3.4vw, 44px); line-height:1.05; letter-spacing:-.7px; margin:0 0 12px; font-weight:800; }
 .h2{ font-size: clamp(22px, 2.4vw, 30px); margin:0 0 8px; letter-spacing:-.4px; font-weight:800; }
-.lead{ margin:0 0 18px; color:var(--muted); line-height:1.75; max-width: 62ch; }
-.kicker{ margin:0 0 10px; text-transform:uppercase; letter-spacing:.18em; font-size:12px; color:rgba(29,26,22,.62); }
+.lead{ margin:0 0 18px; line-height:1.75; max-width: 62ch; }
+.kicker{ margin:0 0 10px; text-transform:uppercase; letter-spacing:.18em; font-size:12px;}
 
 /* =========================
    BUTTONS 
@@ -374,17 +374,14 @@ input[type="number"]{
 
 /* Иконка авторизованного пользователя */
 .iconBtn--auth .iconUser {
-  fill: #1aa34a;      /* зелёный заливка */
+  fill: #1aa34a;   
   stroke: #1aa34a;
 }
 
-/* Неавторизованный — как раньше, обводка */
 .iconBtn:not(.iconBtn--auth) .iconUser {
   fill: none;
   stroke: currentColor;
 }
-
-
 
 /* Mega menu */
 .nav__drop{ position:relative; }
@@ -590,7 +587,7 @@ input[type="number"]{
 }
 
 /* =========================
-   CARD (общие)
+   CARD
 ========================= */
 .card{
   border: 1px solid var(--line);
@@ -733,7 +730,6 @@ input[type="number"]{
 .footer__link:hover{ color: var(--text); }
 .sub{ display:flex; gap:10px; margin-top: 10px; align-items:center; }
 
-/* ===== скрытый текст (чтобы не появлялся перед сердечком) ===== */
 .visually-hidden{
   position: absolute !important;
   width: 1px !important;
@@ -781,7 +777,6 @@ input[type="number"]{
   text-decoration: none;
 }
 
-/* Иконки соцсетей */
 .social-icons {
   display: flex;
   gap: 1rem;
@@ -815,19 +810,16 @@ input[type="number"]{
   height: 20px;
 }
 
-/* Ссылка на логотип */
 .footer__brand-link {
   text-decoration: none;
 }
 
-/* Нижняя часть подвала */
 .footer__bottom {
   padding-top: 1.5rem;
   border-top: 1px solid #e9ecef;
   text-align: center;
 }
 
-/* Кнопка "Наверх" */
 .to-top {
   position: fixed;
   bottom: 30px;
@@ -862,7 +854,6 @@ input[type="number"]{
   transform: translateY(-2px);
 }
 
-/* Скрытые элементы */
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -877,7 +868,7 @@ input[type="number"]{
 
 
 /* =========================
-   MODAL / SHEET (база)
+   MODAL / SHEET 
 ========================= */
 .modal, .sheet{ position:fixed; inset:0; display:none; z-index: 80; }
 .modal.is-open, .sheet.is-open{ display:block; }
@@ -956,7 +947,6 @@ input[type="number"]{
   flex: 1 1 auto;
 }
 
-/* список избранного */
 .favorites-items{
   margin-bottom: 20px;
 }
@@ -1005,7 +995,6 @@ input[type="number"]{
   align-items:center;
 }
 
-/* итоги + кнопки */
 .favorites-total{
   padding: 16px;
   background: #fff;
@@ -1076,14 +1065,15 @@ textarea:focus-visible{
   height: clamp(38px, 5.2vw, 42px);
 }
 
-/* Сердечко залитое, если товар в избранном */
-[data-fav-btn][aria-pressed="true"] {
-  color: #e53935; 
+/* Избранное — активное сердечко */
+.iconBtn[aria-pressed="true"] .favorites-icon path{
+  fill: #e11d48;
+  stroke: #e11d48;
 }
 
-[data-fav-btn][aria-pressed="true"] .favorites-icon path {
-  fill: #e53935;
-  stroke: #e53935;
+/* Неактивное — как было */
+.iconBtn[aria-pressed="false"] .favorites-icon path{
+  fill: none;
 }
 
 /* =========================================================
@@ -1157,7 +1147,6 @@ textarea:focus-visible{
     min-height: 220px;
   }
 
-  /* HERO */
   .hero__slides{
     height: clamp(520px, 60vh, 640px);
   }

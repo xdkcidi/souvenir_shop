@@ -1,4 +1,3 @@
-/* script.js — единый JS для всех страниц */
 (() => {
   "use strict";
 
@@ -119,6 +118,7 @@
 
   // ==================== FAVORITES CORE ====================
   let favorites = [];
+  let favoritesSet = new Set();
 
   const normalizeFavItem = (it) => {
     if (!it || typeof it !== "object") return null;
@@ -191,58 +191,71 @@
     return normalizeFavItem({ id, name, price, img });
   };
 
-  const loadFavorites = async () => {
-    logFav.log('Загрузка избранного...');
-    
-    if (!isAuthorized()) {
-      logFav.log('Пользователь не авторизован');
-      favorites = [];
-      return favorites;
-    }
+const loadFavorites = async () => {
+  logFav.log('Загрузка избранного...');
 
-    logFav.log('Пользователь авторизован, загружаем...');
+  if (!isAuthorized()) {
+    logFav.log('Пользователь не авторизован');
+    favorites = [];
+    favoritesSet = new Set();
+    return favorites;
+  }
 
-    try {
-      const url = toRootPath("/php/favorites.php?action=list");
-      logFav.log('URL запроса:', url);
-      
-      const res = await fetch(url, {
-        credentials: "same-origin",
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
+  logFav.log('Пользователь авторизован, загружаем...');
 
-      logFav.log('Статус ответа:', res.status);
+  try {
+    const url = toRootPath("/php/favorites.php?action=list");
+    logFav.log('URL запроса:', url);
 
-      if (!res.ok) {
-        const text = await res.text();
-        logFav.error('Ошибка сервера:', text);
-        throw new Error(`HTTP ${res.status}`);
+    const res = await fetch(url, {
+      credentials: "same-origin",
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
       }
+    });
 
-      const data = await res.json();
-      logFav.log('Получены данные:', data);
-      
-      const arr = Array.isArray(data) ? data : [];
-      logFav.log('Массив данных:', arr);
-      
-      favorites = arr.map(normalizeFavItem).filter(Boolean);
-      logFav.log('Нормализованные данные:', favorites);
-      return favorites;
-    } catch (e) {
-      logFav.error("Ошибка загрузки избранного:", e);
-      favorites = [];
-      return favorites;
+    logFav.log('Статус ответа:', res.status);
+
+    if (!res.ok) {
+      const text = await res.text();
+      logFav.error('Ошибка сервера:', text);
+      throw new Error(`HTTP ${res.status}`);
     }
-  };
 
-  const isFavorite = (id) => {
-    const found = favorites.some((x) => String(x.id) === String(id));
-    logFav.log('Проверка товара', id, 'в избранном:', found);
-    return found;
-  };
+    const data = await res.json();
+    logFav.log('Получены данные:', data);
+
+    const arr = Array.isArray(data) ? data : [];
+    logFav.log('Массив данных:', arr);
+
+    favorites = arr.map(normalizeFavItem).filter(Boolean);
+    logFav.log('Нормализованные данные:', favorites);
+
+    // ✅ главное: строим Set правильных id
+    favoritesSet = new Set(
+      favorites
+        .map(x => String(x.id ?? '').trim())
+        .filter(Boolean)
+    );
+
+    logFav.log('favoritesSet:', Array.from(favoritesSet));
+    return favorites;
+
+  } catch (e) {
+    logFav.error("Ошибка загрузки избранного:", e);
+    favorites = [];
+    favoritesSet = new Set();
+    return favorites;
+  }
+};
+
+const isFavorite = (id) => {
+  const key = String(id ?? '').trim();
+  const found = favoritesSet.has(key);
+  logFav.log('Проверка товара', key, 'в избранном:', found);
+  return found;
+};
 
   const updateFavoritesBadge = () => {
     const badge = document.getElementById("favoritesCount");

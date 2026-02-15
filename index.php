@@ -10,9 +10,8 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Лавка — сувениры ручной работы</title>
   <meta name="description" content="Сувениры ручной работы: керамика, свечи, текстиль, декор, открытки и подарочные наборы." />
-  <!-- стили подключаем ОТНОСИТЕЛЬНО, без слеша в начале -->
-  <link rel="stylesheet" href="css/style.css"/>
   <link rel="stylesheet" href="css/main.css"/>
+  <link rel="stylesheet" href="css/style.css"/>
 </head>
 <body>
 
@@ -388,7 +387,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
     <div class="grid4" role="list">
 
       <!-- 1 -->
-      <div class="reveal" data-product data-category="candles" data-id="1" data-name="Свеча Природа" role="listitem">
+      <div class="reveal" data-product data-category="candles" data-id="candle-1" data-name="Свеча Природа" role="listitem">
         <div class="card">
           <div class="card__img" role="img" aria-label="Свеча Природа с ароматом трав" data-bg="img/candle2.png">
             <span class="pbadge pbadge--hit">Хит</span>
@@ -410,7 +409,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
               <button class="btn btn--dark btn--full"
                       type="button"
                       data-add-to-cart
-                      data-product-id="1"
+                      data-product-id="candle-1"
                       data-product-name="Свеча «Природа»"
                       data-product-price="1199"
                       data-product-img="img/candle2.png">
@@ -422,7 +421,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                       aria-label="Добавить Свеча Природа в избранное"
                       aria-pressed="false"
                       data-fav-btn
-                      data-product-id="1"
+                      data-product-id="candle-1"
                       data-product-name="Свеча «Природа»"
                       data-product-price="1199"
                       data-product-img="img/candle2.png">
@@ -439,7 +438,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       </div>
 
       <!-- 2 -->
-      <div class="reveal" data-product data-category="ceramics" data-id="2" data-name="Фигурка Дом" role="listitem">
+      <div class="reveal" data-product data-category="ceramics" data-id="ceramic-1" data-name="Фигурка Дом" role="listitem">
         <div class="card">
           <div class="card__img" role="img" aria-label="Керамическая фигурка Дом" data-bg="/souvenir_shop/img/ceramic4.png">
             <span class="pbadge pbadge--hit">Хит</span>
@@ -461,7 +460,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
               <button class="btn btn--dark btn--full"
                       type="button"
                       data-add-to-cart
-                      data-product-id="2"
+                      data-product-id="ceramic-1"
                       data-product-name="Фигурка «Домик»"
                       data-product-price="1999"
                       data-product-img="/souvenir_shop/img/ceramic4.png">
@@ -473,7 +472,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                       aria-label="Добавить Фигурка Дом в избранное"
                       aria-pressed="false"
                       data-fav-btn
-                      data-product-id="2"
+                      data-product-id="ceramic-1"
                       data-product-name="Фигурка «Домик»"
                       data-product-price="1999"
                       data-product-img="/souvenir_shop/img/ceramic4.png">
@@ -490,7 +489,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       </div>
 
       <!-- 3 -->
-      <div class="reveal" data-product data-category="textile" data-id="3" data-name="Игрушка Мишка" role="listitem">
+      <div class="reveal" data-product data-category="textile" data-id="textile-1" data-name="Игрушка Мишка" role="listitem">
         <div class="card">
           <div class="card__img" role="img" aria-label="Мягкая игрушка Мишка ручной работы" data-bg="img/textile1.png">
             <span class="pbadge pbadge--hit">Хит</span>
@@ -512,7 +511,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
               <button class="btn btn--dark btn--full"
                       type="button"
                       data-add-to-cart
-                      data-product-id="3"
+                      data-product-id="textile-1"
                       data-product-name="Игрушка «Мишка»"
                       data-product-price="1699"
                       data-product-img="img/textile1.png">
@@ -524,7 +523,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                       aria-label="Добавить Игрушка Мишка в избранное"
                       aria-pressed="false"
                       data-fav-btn
-                      data-product-id="3"
+                      data-product-id="textile-1"
                       data-product-name="Игрушка «Мишка»"
                       data-product-price="1699"
                       data-product-img="img/textile1.png">
@@ -541,7 +540,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       </div>
 
       <!-- 4 -->
-      <div class="reveal" data-product data-category="decor" data-id="4" data-name="Ваза Спокойствие" role="listitem">
+      <div class="reveal" data-product data-category="decor" data-id="decor-1" data-name="Ваза Спокойствие" role="listitem">
         <div class="card">
           <div class="card__img" role="img" aria-label="Ваза Спокойствие пастельного оттенка" data-bg="img/decor2.png">
             <span class="pbadge pbadge--hit">Хит</span>
@@ -563,7 +562,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
               <button class="btn btn--dark btn--full"
                       type="button"
                       data-add-to-cart
-                      data-product-id="4"
+                      data-product-id="decor-1"
                       data-product-name="Ваза «Спокойствие»"
                       data-product-price="1999"
                       data-product-img="img/decor2.png">
@@ -575,7 +574,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                       aria-label="Добавить Ваза Спокойствие в избранное"
                       aria-pressed="false"
                       data-fav-btn
-                      data-product-id="4"
+                      data-product-id="decor-1"
                       data-product-name="Ваза «Спокойствие»"
                       data-product-price="1999"
                       data-product-img="img/decor2.png">

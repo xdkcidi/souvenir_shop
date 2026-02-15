@@ -2,129 +2,160 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
-// Подключаем БД
-require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/db.php'; // $pdo
 
-// Проверка авторизации
+// ==== AUTH ====
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'AUTH_REQUIRED']);
+    echo json_encode(['success' => false, 'error' => 'AUTH_REQUIRED'], JSON_UNESCAPED_UNICODE);
     exit;
 }
-
 $uid = (int)$_SESSION['user_id'];
 
-// Определяем action из GET или POST
-$action = $_GET['action'] ?? 'list';
-
-// Если action не в GET, проверяем POST
-if ($action === 'list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $input = json_decode(file_get_contents('php://input'), true);
-    $action = $input['action'] ?? 'list';
+// ==== HELPERS ====
+function json_input(): array {
+    $raw = file_get_contents('php://input');
+    if (!$raw) return [];
+    $data = json_decode($raw, true);
+    return is_array($data) ? $data : [];
 }
 
+function is_digits($v): bool {
+    return is_string($v) || is_int($v) ? ctype_digit((string)$v) : false;
+}
+
+/**
+ * Принимает "product_id" из фронта (может быть "candle-1" или 1..24)
+ * Возвращает:
+ * - dbId (int)  => products.id
+ * - code (string) => products.product_code
+ */
+function resolve_product(PDO $pdo, $incoming): array {
+    if ($incoming === null || $incoming === '') {
+        return [null, null];
+    }
+
+    // 1) если пришло число -> ищем по products.id
+    if (is_digits($incoming)) {
+        $stmt = $pdo->prepare("SELECT id, product_code FROM products WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => (int)$incoming]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) return [null, null];
+        return [(int)$row['id'], (string)$row['product_code']];
+    }
+
+    // 2) иначе считаем, что это code -> ищем по products.product_code
+    $code = (string)$incoming;
+    $stmt = $pdo->prepare("SELECT id, product_code FROM products WHERE product_code = :code LIMIT 1");
+    $stmt->execute([':code' => $code]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row) return [null, null];
+    return [(int)$row['id'], (string)$row['product_code']];
+}
+
+// ==== ACTION ====
+$action = $_GET['action'] ?? null;
+$input  = json_input();
+if (!$action) $action = $input['action'] ?? 'list';
+
 try {
-    // ========== LIST ==========
+    // ===== LIST =====
     if ($action === 'list') {
-        // Запрос для получения избранного
+        // ВАЖНО: id отдаём как product_code, чтобы совпадал с data-product-id на кнопках
         $stmt = $pdo->prepare("
-            SELECT 
-                p.id as id,
-                p.name as name,
-                p.image as image,
-                p.price as price
+            SELECT
+                p.product_code AS id,
+                p.name AS name,
+                p.image AS image,
+                p.price AS price
             FROM favorites f
             JOIN products p ON f.product_id = p.id
             WHERE f.user_id = :uid
             ORDER BY f.created_at DESC
         ");
         $stmt->execute([':uid' => $uid]);
-        $favorites = $stmt->fetchAll();
-        
-        // Для action=list возвращаем МАССИВ
+        $favorites = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
         echo json_encode($favorites ?: [], JSON_UNESCAPED_UNICODE);
         exit;
     }
-    
-    // ========== ADD/REMOVE/TOGGLE ==========
-    if (in_array($action, ['add', 'remove', 'toggle'])) {
-        // Получаем JSON данные
-        $input = json_decode(file_get_contents('php://input'), true);
-        
-        if (!$input || !isset($input['product_id'])) {
+
+    // ===== ADD / REMOVE / TOGGLE =====
+    if (in_array($action, ['add', 'remove', 'toggle'], true)) {
+
+        if (!isset($input['product_id'])) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'MISSING_PRODUCT_ID']);
+            echo json_encode(['success' => false, 'error' => 'MISSING_PRODUCT_ID'], JSON_UNESCAPED_UNICODE);
             exit;
         }
-        
-        $productId = $input['product_id'];
-        
-        // Проверяем, есть ли уже в избранном
-        $check = $pdo->prepare("SELECT id FROM favorites WHERE user_id = :uid AND product_id = :pid");
-        $check->execute([':uid' => $uid, ':pid' => $productId]);
-        $exists = $check->fetch();
-        
-        $shouldRemove = false;
-        
-        if ($action === 'remove') {
-            $shouldRemove = true;
-        } elseif ($action === 'add') {
-            $shouldRemove = false;
-        } elseif ($action === 'toggle') {
-            $shouldRemove = (bool)$exists;
+
+        [$productDbId, $productCode] = resolve_product($pdo, $input['product_id']);
+
+        if (!$productDbId) {
+            http_response_code(404);
+            echo json_encode([
+                'success' => false,
+                'error' => 'PRODUCT_NOT_FOUND',
+                'sent' => $input['product_id'] ?? null
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
         }
-        
-        // Удаление
+
+        // Есть ли уже в избранном
+        $check = $pdo->prepare("SELECT id FROM favorites WHERE user_id = :uid AND product_id = :pid LIMIT 1");
+        $check->execute([':uid' => $uid, ':pid' => $productDbId]);
+        $exists = (bool)$check->fetch(PDO::FETCH_ASSOC);
+
+        $shouldRemove = false;
+        if ($action === 'remove') $shouldRemove = true;
+        if ($action === 'add')    $shouldRemove = false;
+        if ($action === 'toggle') $shouldRemove = $exists;
+
         if ($shouldRemove) {
             if ($exists) {
                 $del = $pdo->prepare("DELETE FROM favorites WHERE user_id = :uid AND product_id = :pid");
-                $del->execute([':uid' => $uid, ':pid' => $productId]);
+                $del->execute([':uid' => $uid, ':pid' => $productDbId]);
             }
-            // Для add/remove/toggle возвращаем ОБЪЕКТ
-            echo json_encode(['success' => true, 'state' => 'removed']);
+            echo json_encode(['success' => true, 'state' => 'removed', 'id' => $productCode], JSON_UNESCAPED_UNICODE);
             exit;
         }
-        
-        // Добавление
+
+        // Добавление (если уже есть — просто вернём added, без 500)
         if (!$exists) {
-            // Проверяем, существует ли товар
-            $checkProduct = $pdo->prepare("SELECT id FROM products WHERE id = :pid");
-            $checkProduct->execute([':pid' => $productId]);
-            
-            if (!$checkProduct->fetch()) {
-                http_response_code(404);
-                echo json_encode(['success' => false, 'error' => 'PRODUCT_NOT_FOUND']);
-                exit;
-            }
-            
-            // Добавляем в избранное
             $ins = $pdo->prepare("INSERT INTO favorites (user_id, product_id) VALUES (:uid, :pid)");
-            $ins->execute([':uid' => $uid, ':pid' => $productId]);
+            try {
+                $ins->execute([':uid' => $uid, ':pid' => $productDbId]);
+            } catch (PDOException $e) {
+                // 1062 = Duplicate entry (на случай гонки/двойного клика)
+                if ((int)($e->errorInfo[1] ?? 0) !== 1062) {
+                    throw $e;
+                }
+            }
         }
-        
-        // Для add/remove/toggle возвращаем ОБЪЕКТ
-        echo json_encode(['success' => true, 'state' => 'added']);
+
+        echo json_encode(['success' => true, 'state' => 'added', 'id' => $productCode], JSON_UNESCAPED_UNICODE);
         exit;
     }
-    
-    // ========== CLEAR ==========
+
+    // ===== CLEAR =====
     if ($action === 'clear') {
         $del = $pdo->prepare("DELETE FROM favorites WHERE user_id = :uid");
         $del->execute([':uid' => $uid]);
-        // Для clear возвращаем ОБЪЕКТ
-        echo json_encode(['success' => true]);
+
+        echo json_encode(['success' => true], JSON_UNESCAPED_UNICODE);
         exit;
     }
-    
-    // Неизвестный action
+
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'UNKNOWN_ACTION']);
-    
+    echo json_encode(['success' => false, 'error' => 'UNKNOWN_ACTION'], JSON_UNESCAPED_UNICODE);
+    exit;
+
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
         'success' => false,
         'error' => 'SERVER_ERROR',
         'message' => $e->getMessage()
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
 }
