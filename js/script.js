@@ -639,24 +639,17 @@ const isFavorite = (id) => {
     focusable?.focus?.();
   };
 
-  const openAuthModalWithMessage = (msg) => {
-    const modal = document.getElementById("authModal");
-    if (!modal) return;
+  window.openAuthModalWithMessage = function(message) {
+  const note = document.getElementById("authNote");
+  if (note) {
+    const txt = String(message || "").trim();
+    note.textContent = txt;
+    note.hidden = !txt;
+  }
 
-    const body = modal.querySelector(".modal__body") || modal;
-    let note = modal.querySelector("[data-auth-required]");
-
-    if (!note) {
-      note = document.createElement("div");
-      note.setAttribute("data-auth-required", "1");
-      note.className = "alert alert--error";
-      note.style.marginBottom = "10px";
-      body.insertBefore(note, body.firstChild);
-    }
-
-    note.textContent = msg || "Сначала войдите в аккаунт.";
-    openModal(modal);
-  };
+  const opener = document.querySelector('[data-open-modal="authModal"]');
+  if (opener) opener.click();
+};
 
   const closeModal = (modal) => {
     modal.classList.remove("is-open");

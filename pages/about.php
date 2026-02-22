@@ -154,7 +154,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
           </svg>
         </button>
 
-        <a class="btn btn--dark btn--sm hide-sm" href="catalog.php#collectionsNav">Корзина</a>
+        <a class="btn btn--dark btn--sm hide-sm" href="cart.php">Корзина</a>
       </div>
     </nav>
   </div>

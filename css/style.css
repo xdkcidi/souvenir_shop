@@ -1065,13 +1065,11 @@ textarea:focus-visible{
   height: clamp(38px, 5.2vw, 42px);
 }
 
-/* Избранное — активное сердечко */
 .iconBtn[aria-pressed="true"] .favorites-icon path{
   fill: #e11d48;
   stroke: #e11d48;
 }
 
-/* Неактивное — как было */
 .iconBtn[aria-pressed="false"] .favorites-icon path{
   fill: none;
 }

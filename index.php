@@ -4,13 +4,14 @@ $isAuth = isset($_SESSION['user_id']);
 $hasAuthError = !empty($_SESSION['auth_error']);
 ?>
 <!doctype html>
-<html lang="ru" data-auth="<?php echo $isAuth ? '1' : '0'; ?>">
+<html lang="ru" data-auth="<?php echo $isAuth ? '1' : '0'; ?>" data-base="../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Лавка — сувениры ручной работы</title>
   <meta name="description" content="Сувениры ручной работы: керамика, свечи, текстиль, декор, открытки и подарочные наборы." />
   <link rel="stylesheet" href="css/main.css"/>
+  <link rel="stylesheet" href="css/cart.css"/>
   <link rel="stylesheet" href="css/style.css"/>
 </head>
 <body>
@@ -153,7 +154,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
           </svg>
         </button>
 
-        <a class="btn btn--dark btn--sm hide-sm" href="pages/catalog.php#collectionsNav">Корзина</a>
+        <a class="btn btn--dark btn--sm hide-sm" href="pages/cart.php">Корзина</a>
       </div>
     </nav>
   </div>
@@ -406,16 +407,23 @@ $hasAuthError = !empty($_SESSION['auth_error']);
             </div>
 
             <div class="card__actions">
+              <!-- кнопка добавления -->
               <button class="btn btn--dark btn--full"
                       type="button"
                       data-add-to-cart
                       data-product-id="candle-1"
-                      data-product-name="Свеча «Природа»"
-                      data-product-price="1199"
-                      data-product-img="img/candle2.png">
+                      data-product-name="Свеча «Природа»">
                 В корзину
               </button>
 
+              <!-- счётчик (вместо кнопки) -->
+              <div class="qty qty--card" data-qty-wrap="candle-1" style="display:none;">
+                <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="candle-1">−</button>
+                <span class="qty__val" id="cardQty-candle-1">1</span>
+                <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="candle-1">+</button>
+              </div>
+
+              <!-- избранное (оставили как было) -->
               <button class="iconBtn"
                       type="button"
                       aria-label="Добавить Свеча Природа в избранное"
@@ -461,11 +469,15 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                       type="button"
                       data-add-to-cart
                       data-product-id="ceramic-1"
-                      data-product-name="Фигурка «Домик»"
-                      data-product-price="1999"
-                      data-product-img="/souvenir_shop/img/ceramic4.png">
+                      data-product-name="Фигурка «Домик»" >
                 В корзину
               </button>
+
+              <div class="qty qty--card" data-qty-wrap="ceramic-1" style="display:none;">
+                <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="ceramic-1">−</button>
+                <span class="qty__val" id="cardQty-ceramic-1">1</span>
+                <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="ceramic-1">+</button>
+              </div>
 
               <button class="iconBtn"
                       type="button"
@@ -512,11 +524,15 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                       type="button"
                       data-add-to-cart
                       data-product-id="textile-1"
-                      data-product-name="Игрушка «Мишка»"
-                      data-product-price="1699"
-                      data-product-img="img/textile1.png">
+                      data-product-name="Игрушка «Мишка»">
                 В корзину
               </button>
+
+              <div class="qty qty--card" data-qty-wrap="textile-1" style="display:none;">
+                <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="textile-1">−</button>
+                <span class="qty__val" id="cardQty-textile-1">1</span>
+                <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="textile-1">+</button>
+              </div>
 
               <button class="iconBtn"
                       type="button"
@@ -563,11 +579,15 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                       type="button"
                       data-add-to-cart
                       data-product-id="decor-1"
-                      data-product-name="Ваза «Спокойствие»"
-                      data-product-price="1999"
-                      data-product-img="img/decor2.png">
+                      data-product-name="Ваза «Спокойствие»">
                 В корзину
               </button>
+
+              <div class="qty qty--card" data-qty-wrap="decor-1" style="display:none;">
+                <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="decor-1">−</button>
+                <span class="qty__val" id="cardQty-decor-1">1</span>
+                <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="decor-1">+</button>
+              </div>
 
               <button class="iconBtn"
                       type="button"
@@ -1097,6 +1117,8 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
     <div class="modal__body">
 
+      <div class="authNote" id="authNote" hidden></div>
+
       <?php if (!empty($_SESSION['auth_error'])): ?>
         <div class="alert alert--error" style="color:#b00020; margin-bottom:10px;">
           <?= htmlspecialchars($_SESSION['auth_error']) ?>
@@ -1146,6 +1168,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 </aside>
 
   <script src="js/script.js" defer></script>
-  
+  <script src="js/cart.js" defer></script>
 </body>
 </html>

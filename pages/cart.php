@@ -1,113 +1,18 @@
 <?php
-// pages/registration.php
 session_start();
-
-// если уже авторизован — сразу в личный кабинет
-if (isset($_SESSION['user_id'])) {
-    header('Location: account.php');
-    exit;
-}
-
-require_once __DIR__ . '/../php/db.php'; // $pdo
-
-$errors = [];
-$login   = trim($_POST['login'] ?? '');
-$email   = trim($_POST['email'] ?? '');
-$phone   = trim($_POST['phone'] ?? '');
-$address = trim($_POST['delivery_address'] ?? '');
-$password = $_POST['password'] ?? '';
-$password_confirm = $_POST['password_confirm'] ?? '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-    // ВАЛИДАЦИЯ
-    if ($login === '') {
-        $errors[] = 'Введите логин.';
-    }
-
-    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = 'Введите корректный email.';
-    }
-
-    if (mb_strlen($password) < 6) {
-        $errors[] = 'Пароль должен быть не короче 6 символов.';
-    }
-
-    if ($password !== $password_confirm) {
-        $errors[] = 'Пароли не совпадают.';
-    }
-
-    // ПРОВЕРКА ЛОГИНА / EMAIL
-    if (empty($errors)) {
-        $stmt = $pdo->prepare("
-            SELECT id, login, email 
-            FROM users 
-            WHERE login = :login OR email = :email 
-            LIMIT 1
-        ");
-        $stmt->execute([
-            ':login' => $login,
-            ':email' => $email
-        ]);
-        $row = $stmt->fetch();
-
-        if ($row) {
-            if (mb_strtolower($row['login']) === mb_strtolower($login)) {
-                $errors[] = 'Пользователь с таким логином уже существует.';
-            }
-            if (mb_strtolower($row['email']) === mb_strtolower($email)) {
-                $errors[] = 'Пользователь с таким email уже существует.';
-            }
-        }
-    }
-
-    // СОХРАНЕНИЕ ПОЛЬЗОВАТЕЛЯ
-    if (empty($errors)) {
-        $hash = password_hash($password, PASSWORD_DEFAULT);
-
-        $stmt = $pdo->prepare("
-            INSERT INTO users (login, email, password_hash, phone, delivery_address)
-            VALUES (:login, :email, :password_hash, :phone, :address)
-        ");
-
-        $ok = $stmt->execute([
-            ':login'         => $login,
-            ':email'         => $email,
-            ':password_hash' => $hash,
-            ':phone'         => $phone,
-            ':address'       => $address,
-        ]);
-
-        if ($ok) {
-            $newUserId = (int)$pdo->lastInsertId();
-            $_SESSION['user_id']    = $newUserId;
-            $_SESSION['user_login'] = $login;
-
-            header('Location: account.php');
-            exit;
-        } else {
-            $errors[] = 'Не удалось сохранить данные. Попробуйте ещё раз.';
-        }
-    }
-}
-
 $isAuth = isset($_SESSION['user_id']);
-$hasAuthError = !empty($_SESSION['auth_error']);
 ?>
 <!doctype html>
 <html lang="ru" data-auth="<?php echo $isAuth ? '1' : '0'; ?>">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Регистрация — Лавка</title>
-  <meta name="description" content="Регистрация в магазине Лавка: создайте аккаунт, чтобы сохранять избранное и быстрее оформлять заказы." />
-  <!-- стили подключаем ОТНОСИТЕЛЬНО, без слеша в начале -->
-  <link rel="stylesheet" href="../css/style.css"/>
+  <title>Корзина — Лавка</title>
   <link rel="stylesheet" href="../css/main.css"/>
-  <link rel="stylesheet" href="../css/reg.css" />
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/cart.css"/> 
 </head>
 <body>
-
 <header class="nav" role="banner">
   <div class="container nav__inner">
     <a class="brand" href="../index.php" aria-label="Лавка - вернуться на главную страницу">
@@ -149,32 +54,32 @@ $hasAuthError = !empty($_SESSION['auth_error']);
               <h2 class="mega__title" id="mega-title">Основные категории</h2>
 
               <div class="mega__cards" role="group" aria-labelledby="mega-title">
-                <a class="mega__card" href="catalog.php#group-candles" role="menuitem" data-close-mega>
+                <a class="mega__card" href="#group-candles" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Свечи</div>
                   <div class="mega__cardText">Интерьерные, ароматные, необычные</div>
                 </a>
 
-                <a class="mega__card" href="catalog.php#group-ceramics" role="menuitem" data-close-mega>
+                <a class="mega__card" href="#group-ceramics" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Керамика</div>
                   <div class="mega__cardText">Кружки, тарелки, миски, фигурки</div>
                 </a>
 
-                <a class="mega__card" href="catalog.php#group-decor" role="menuitem" data-close-mega>
+                <a class="mega__card" href="#group-decor" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Декор</div>
                   <div class="mega__cardText">Фигурки, вазы, подсвечники</div>
                 </a>
 
-                <a class="mega__card" href="catalog.php#group-textile" role="menuitem" data-close-mega>
+                <a class="mega__card" href="#group-textile" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Текстиль</div>
                   <div class="mega__cardText">Игрушки, мешочки, панно, шарфы</div>
                 </a>
 
-                <a class="mega__card" href="catalog.php#group-postcards" role="menuitem" data-close-mega>
+                <a class="mega__card" href="#group-postcards" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Открытки</div>
                   <div class="mega__cardText">Авторские, минимал, наборы</div>
                 </a>
 
-                <a class="mega__card" href="catalog.php#group-sets" role="menuitem" data-close-mega>
+                <a class="mega__card" href="#group-sets" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Подарочные наборы</div>
                   <div class="mega__cardText">Готовые боксы для подарка</div>
                 </a>
@@ -187,7 +92,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                   <div class="mega__featureTitle">Подбор по случаю</div>
                   <div class="mega__featureText">Для дома, "просто так", знак внимания</div>
                 </div>
-                <a class="btn btn--dark btn--sm" href="catalog.php#collectionsNav">Открыть</a>
+                <a class="btn btn--dark btn--sm" href="#collectionsNav">Открыть</a>
               </div>
 
               <div class="mega__preview"
@@ -205,7 +110,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       <a class="nav__link" href="about.php">О компании</a>
 
       <div class="nav__actions">
-        <!-- 🔑 ИКОНКА АККАУНТА - показываем кнопку входа для неавторизованных -->
+        <!-- 🔑 ИКОНКА АККАУНТА -->
         <?php if ($isAuth): ?>
           <a class="iconBtn iconBtn--auth"
              href="../php/account.php"
@@ -252,116 +157,85 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   </div>
 </header>
 
-  <!-- ОСНОВНОЕ СОДЕРЖИМОЕ -->
-  <main class="container section auth-page" id="main-content" role="main" tabindex="-1">
-    <div class="auth-page__inner">
-      <!-- Хлебные крошки -->
-      <nav class="breadcrumbs" aria-label="Хлебные крошки">
-        <ol>
-          <li><a href="../index.php">Главная</a></li>
-          <li><span aria-current="page">Регистрация</span></li>
-        </ol>
-      </nav>
+<main class="container section" id="main-content" role="main" tabindex="-1">
 
-      <h1 class="auth-title">Регистрация</h1>
-      <p class="auth-lead">
-        Создайте аккаунт, чтобы сохранять избранное и быстрее оформлять заказы.
-      </p>
+    <!-- Хлебные крошки -->
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol>
+        <li><a href="../index.php">Главная</a></li>
+        <li><span aria-current="page">Корзина</span></li>
+      </ol>
+    </nav>
 
-      <section class="auth-card" aria-label="Форма регистрации">
-        <?php if (!empty($errors)): ?>
-          <div class="auth-errors" aria-live="polite">
-            <ul>
-              <?php foreach ($errors as $e): ?>
-                <li><?php echo htmlspecialchars($e, ENT_QUOTES); ?></li>
-              <?php endforeach; ?>
-            </ul>
-          </div>
-        <?php endif; ?>
+<div class="headRow">
+  <div>
+    <h1 class="h2">Корзина</h1>
+    <p class="muted">Проверьте товары и количество перед оформлением.</p>
+  </div>
+  <div class="headBtn">
+    <a class="btn" href="catalog.php">В каталог</a>
+    <?php if ($isAuth): ?>
+      <button class="btn" id="cartClearBtn" type="button">Очистить</button>
+    <?php endif; ?>
+  </div>
+</div>
 
-        <form method="post" class="auth-form" novalidate>
-          <div class="auth-form__group">
-            <label class="auth-form__label" for="login">Логин</label>
-            <input
-              class="input auth-input"
-              type="text"
-              id="login"
-              name="login"
-              value="<?php echo htmlspecialchars($login, ENT_QUOTES); ?>"
-              required
-            />
-          </div>
-
-          <div class="auth-form__group">
-            <label class="auth-form__label" for="email">Email</label>
-            <input
-              class="input auth-input"
-              type="email"
-              id="email"
-              name="email"
-              value="<?php echo htmlspecialchars($email, ENT_QUOTES); ?>"
-              required
-            />
-          </div>
-
-          <div class="auth-form__group">
-            <label class="auth-form__label" for="password">Пароль</label>
-            <input
-              class="input auth-input"
-              type="password"
-              id="password"
-              name="password"
-              minlength="6"
-              required
-            />
-            <p class="auth-hint">Минимум 6 символов.</p>
-          </div>
-
-          <div class="auth-form__group">
-            <label class="auth-form__label" for="password_confirm">Повторите пароль</label>
-            <input
-              class="input auth-input"
-              type="password"
-              id="password_confirm"
-              name="password_confirm"
-              required
-            />
-          </div>
-
-          <div class="auth-form__group">
-            <label class="auth-form__label" for="phone">Телефон (необязательно)</label>
-            <input
-              class="input auth-input"
-              type="tel"
-              id="phone"
-              name="phone"
-              placeholder="+7 (999) 000-00-00"
-              value="<?php echo htmlspecialchars($phone, ENT_QUOTES); ?>"
-            />
-          </div>
-
-          <div class="auth-form__group">
-            <label class="auth-form__label" for="delivery_address">Адрес доставки (необязательно)</label>
-            <textarea
-              class="input auth-input auth-input--area"
-              id="delivery_address"
-              name="delivery_address"
-              rows="3"
-              placeholder="Город, улица, дом, квартира"
-            ><?php echo htmlspecialchars($address, ENT_QUOTES); ?></textarea>
-          </div>
-
-          <button type="submit" class="btn btn--dark auth-btn">Зарегистрироваться</button>
-
-          <div class="auth-bottom">
-            <span class="auth-bottom__text">Уже есть аккаунт?</span>
-            <a href="#" class="auth-bottom__link" data-open-modal="authModal">Войти</a>
-          </div>
-        </form>
-      </section>
+  <!-- ЕСЛИ НЕ АВТОРИЗОВАН -->
+  <?php if (!$isAuth): ?>
+    <div class="banner">
+      <div class="banner__body">
+        <h2 class="h2">Чтобы добавить товар в корзину, войдите в аккаунт</h2>
+        <p class="lead">
+          Добавление и просмотр корзины доступны только после авторизации.
+        </p>
+        <button class="btn btn--dark"
+                type="button"
+                data-open-modal="authModal">
+          Войти
+        </button>
+      </div>
     </div>
-  </main>
+  <?php else: ?>
 
+    <!-- пустая корзина -->
+    <div id="cartEmpty" class="banner" style="display:none;">
+      <div class="banner__body">
+        <p class="kicker">Лавка / корзина</p>
+        <h2 class="h2">Корзина пустая</h2>
+        <p class="lead">Добавьте товары из каталога или хитов — и они появятся здесь.</p>
+        <div class="rowBtns">
+          <a class="btn btn--dark" href="catalog.php">Перейти в каталог</a>
+          <a class="btn" href="../index.php#hits">Посмотреть хиты</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- корзина -->
+    <div class="cartLayout" id="cartLayout" style="display:none;">
+      <div class="cartList" id="cartList"></div>
+
+      <aside class="cartSummary">
+        <div class="card" style="padding:16px;">
+          <div class="muted small">Итого</div>
+          <div class="h2" style="margin:6px 0;">
+            <span id="cartTotalSum">0</span> ₽
+          </div>
+          <div class="muted small">Товаров: <span id="cartTotalQty">0</span></div>
+
+          <button class="btn btn--dark btn--full" type="button" style="margin-top:12px;" disabled>
+            Оформить заказ
+          </button>
+
+          <div class="muted small" style="margin-top:10px;">
+            Оформление можно подключить позже — сейчас это рабочая корзина.
+          </div>
+        </div>
+      </aside>
+    </div>
+
+  <?php endif; ?>
+  </div>
+</main>
 <!-- FOOTER -->
 <footer class="footer" role="contentinfo">
   <!-- Кнопка "Наверх" -->
@@ -451,8 +325,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   // Скрипт для кнопки "Наверх"
   document.addEventListener('DOMContentLoaded', function() {
     const toTopBtn = document.getElementById('toTopBtn');
-    
-    // Показываем кнопку при прокрутке
+  
     window.addEventListener('scroll', function() {
       if (window.pageYOffset > 300) {
         toTopBtn.style.display = 'flex';
@@ -461,7 +334,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       }
     });
     
-    // Плавная прокрутка наверх
     toTopBtn.addEventListener('click', function() {
       window.scrollTo({
         top: 0,
@@ -469,7 +341,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       });
     });
     
-    // Обработка формы подписки (опционально)
     const newsletterForm = document.querySelector('[data-newsletter-form]');
     if (newsletterForm) {
       newsletterForm.addEventListener('submit', function(e) {
@@ -478,7 +349,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         const email = emailInput.value.trim();
         
         if (email && email.includes('@')) {
-          // Здесь можно добавить AJAX-запрос для отправки данных
           console.log('Подписка на рассылку:', email);
           alert('Спасибо за подписку! На ' + email + ' отправлено письмо с подтверждением.');
           emailInput.value = '';
@@ -487,8 +357,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
     }
   });
 </script>
-
-<!-- Модальные окна из index.php -->
 
 <div class="modal" id="authModal" aria-hidden="true"
      <?php if (!empty($_SESSION['auth_error'])) echo 'data-autoshow="1"'; ?>>
@@ -551,6 +419,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 </aside>
 
 <script src="../js/script.js" defer></script>
+<script src="../js/cart.js" defer></script>
 
 </body>
 </html>

@@ -1,0 +1,294 @@
+:root{
+  --accent-red: #d7262d;
+  --accent-green: #1f7a4a; /* тёмно-зелёный */
+  --green-soft: rgba(15, 77, 58, 0.10);
+  --border-soft: #e8e8e8;
+}
+
+.cartLayout{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+@media (max-width: 980px){.cartLayout{grid-template-columns:1fr}}
+.cartList .card{margin-bottom:12px}
+.cartItemImg{width:88px;height:88px;border-radius:14px;background:#f3f3f3;overflow:hidden;flex:0 0 auto}
+.cartItemImg img{width:100%;height:100%;object-fit:cover;display:block}
+.cartTitle{font-weight:800}
+.cartRow{display:flex;gap:14px;align-items:center}
+.cartMeta{margin-top:2px}
+.cartRight{font-weight:900;white-space:nowrap}
+
+    /* ====== Большой счетчик в карточках (вместо "В корзину") ====== */
+.qty--card{
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 40px;
+  padding: 10px 10px;
+  border-radius: 14px;
+}
+
+/* цифра */
+.qty--card .qty__val{
+  min-width: 26px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* кнопки -/+ */
+.qty--card .qty__btn{
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 0;
+  background: #d7262d; 
+  color: #fff;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform .08s ease, filter .15s ease;
+}
+
+.qty--card .qty__btn:hover{
+  filter: brightness(0.95);
+}
+
+.qty--card .qty__btn:active{
+  transform: scale(0.98);
+}
+
+.card__actions{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.card__actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.card__actions .qty--card{
+  flex: 1;          
+}
+
+.card__actions .iconBtn{
+  flex: 0 0 auto; 
+}
+
+/* ====== CART PAGE tweaks ====== */
+
+.cartTitle{
+  font-weight: 800;
+  margin-bottom: 6px; 
+  line-height: 1.15;
+}
+
+.headBtn .btn{
+  font-size: 16px;      
+  padding: 10px 16px;
+}
+
+.headBtn a{
+    color: #fff;
+    background-color: #d7262d;
+
+}
+
+.headBtn a:hover{
+    border-color: #d7262d;
+    background-color: #fff;
+}
+
+.cartList .qty{
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  background: #fff;
+}
+
+/* кнопки -/+ чуть меньше, красные */
+.cartList .qty__btn{
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  border: 0;
+  background: #d7262d;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform .08s ease, filter .15s ease;
+}
+
+.cartList .qty__btn:hover{ filter: brightness(.95); }
+.cartList .qty__btn:active{ transform: scale(.98); }
+
+.cartList .qty__val{
+  min-width: 18px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.cartList .cartRow > div[style*="flex:1"] > div[style*="margin-top:10px"]{
+  justify-content: flex-start !important; 
+  gap: 12px;
+}
+
+/* 1) Тонкая зелёная линия-акцент слева у карточки */
+.cartList .card{
+  position: relative;
+}
+.cartList .card::before{
+  content:"";
+  position:absolute;
+  left: 12px;
+  top: 16px;
+  bottom: 16px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--accent-green);
+  opacity: .60; 
+}
+
+/* ====== ПРИЖИМАЕМ ПОДВАЛ ====== */
+html, body {
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+.footer {
+  flex-shrink: 0;
+}
+
+/* ====== ОТСТУП ДЛЯ ЗАГОЛОВКА ====== */
+.breadcrumbs {
+  margin-bottom: 20px;
+}
+
+.headRow {
+  margin-top: 20px;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ====== СТИЛИ ДЛЯ КНОПОК ====== */
+.headBtn {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.headBtn .btn {
+  font-size: 16px !important; /* одинаковый размер шрифта */
+  padding: 10px 24px !important;
+  border-radius: 30px !important;
+  font-weight: 400 !important;
+  transition: all 0.2s ease !important;
+  height: 42px !important; /* одинаковая высота */
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Кнопка "В каталог" - стандартная */
+.headBtn a.btn {
+  background: #d7262d !important;
+  border: 1px solid #d7262d !important;
+  color: #fff!important;
+}
+
+.headBtn a.btn:hover {
+  background: #fff !important;
+  color: #d7262d !important;
+}
+
+
+/* ====== ПРИЖИМАЕМ ПОДВАЛ ПОЛНОСТЬЮ ====== */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+  width: 100%;
+}
+
+.footer {
+  flex-shrink: 0;
+  margin-top: auto; /* дополнительная гарантия */
+}
+
+/* ====== ОТСТУПЫ ДЛЯ ЗАГОЛОВКА ====== */
+.breadcrumbs {
+  margin-bottom: 10px !important;
+  padding-bottom: 0 !important;
+}
+
+.breadcrumbs ol {
+  margin: 0;
+  padding: 0;
+}
+
+.headRow {
+  margin-top: 0 !important; /* убираем верхний отступ */
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Убираем возможные лишние отступы у h1 */
+.headRow h1 {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Если h1 имеет класс h2, тоже убираем отступы */
+.h2 {
+  margin-top: 0;
+}
+
+/* ====== ДОПОЛНИТЕЛЬНЫЙ КОНТРОЙ ОТСТУПОВ ====== */
+.container.section {
+  padding-top: 10px; /* небольшой отступ сверху, если нужен */
+}
+
+/* Гарантия что хлебные крошки не налезают */
+.breadcrumbs + .headRow {
+  clear: both;
+}

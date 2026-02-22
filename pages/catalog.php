@@ -13,6 +13,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   <link rel="stylesheet" href="../css/style.css"/>
   <link rel="stylesheet" href="../css/main.css"/>
   <link rel="stylesheet" href="../css/catalog.css" />
+  <link rel="stylesheet" href="../css/cart.css" />
 </head>
 
 <body>
@@ -155,7 +156,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
           </svg>
         </button>
 
-        <a class="btn btn--dark btn--sm hide-sm" href="#collectionsNav">Корзина</a>
+        <a class="btn btn--dark btn--sm hide-sm" href="cart.php">Корзина</a>
       </div>
     </nav>
   </div>
@@ -264,6 +265,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/candle2.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="candle-1" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="candle-1">−</button>
+                    <span class="qty__val" id="cardQty-candle-1">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="candle-1">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Свеча Природа в избранное"
                           aria-pressed="false"
@@ -306,6 +313,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/ceramic4.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="ceramic-1" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="ceramic-1">−</button>
+                    <span class="qty__val" id="cardQty-ceramic-1">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="ceramic-1">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Фигурка Дом в избранное"
                           aria-pressed="false"
@@ -348,6 +361,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/textile1.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="textile-1" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="textile-1">−</button>
+                    <span class="qty__val" id="cardQty-textile-1">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="textile-1">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Игрушка Мишка в избранное"
                           aria-pressed="false"
@@ -390,6 +409,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/decor2.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="decor-1" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="decor-1">−</button>
+                    <span class="qty__val" id="cardQty-decor-1">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="decor-1">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Ваза Спокойствие в избранное"
                           aria-pressed="false"
@@ -512,9 +537,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       </div>
     </section>
 
-    <!-- PRODUCT GROUPS -->
     <section class="section section--sm" id="productGroups" aria-label="Группы товаров">
-      <!-- QUICK NAV + FILTERS -->
       <section class="filters-bar reveal" id="collectionsNav" aria-labelledby="filters-title">
         <div class="filters-left">
           <h2 id="filters-title" class="visually-hidden">Фильтры каталога</h2>
@@ -635,6 +658,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/ceramic1.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="ceramic-2" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="ceramic-2">−</button>
+                    <span class="qty__val" id="cardQty-ceramic-2">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="ceramic-2">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Кружка Утро в избранное"
                           aria-pressed="false"
@@ -675,6 +704,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/ceramic2.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="ceramic-3" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="ceramic-3">−</button>
+                    <span class="qty__val" id="cardQty-ceramic-3">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="ceramic-3">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Тарелка Мини в избранное"
                           aria-pressed="false"
@@ -715,6 +750,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/ceramic3.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="ceramic-4" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="ceramic-4">−</button>
+                    <span class="qty__val" id="cardQty-ceramic-4">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="ceramic-4">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Миска Тепло в избранное"
                           aria-pressed="false"
@@ -757,6 +798,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/ceramic4.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="ceramic-1" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="ceramic-1">−</button>
+                    <span class="qty__val" id="cardQty-ceramic-1">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="ceramic-1">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Фигурка Домик в избранное"
                           aria-pressed="false"
@@ -812,6 +859,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/letter1.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="postcard-1" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="postcard-1">−</button>
+                    <span class="qty__val" id="cardQty-postcard-1">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="postcard-1">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Открытка Цветы в избранное"
                           aria-pressed="false"
@@ -852,6 +905,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/letter2.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="postcard-2" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="postcard-2">−</button>
+                    <span class="qty__val" id="cardQty-postcard-2">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="postcard-2">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Открытка Дом в избранное"
                           aria-pressed="false"
@@ -892,6 +951,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/letter3.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="postcard-3" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="postcard-3">−</button>
+                    <span class="qty__val" id="cardQty-postcard-3">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="postcard-3">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Открытка С любовью в избранное"
                           aria-pressed="false"
@@ -932,6 +997,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/letter4.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="postcard-4" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="postcard-4">−</button>
+                    <span class="qty__val" id="cardQty-postcard-4">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="postcard-4">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Открытка С новым годом в избранное"
                           aria-pressed="false"
@@ -987,6 +1058,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/candle1.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="candle-2" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="candle-2">−</button>
+                    <span class="qty__val" id="cardQty-candle-2">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="candle-2">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Свеча Необычная в избранное"
                           aria-pressed="false"
@@ -1029,6 +1106,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/candle2.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="candle-1" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="candle-1">−</button>
+                    <span class="qty__val" id="cardQty-candle-1">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="candle-1">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Свеча Природа зеленая в избранное"
                           aria-pressed="false"
@@ -1069,6 +1152,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/candle3.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="candle-4" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="candle-4">−</button>
+                    <span class="qty__val" id="cardQty-candle-4">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="candle-4">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Свеча Форма в избранное"
                           aria-pressed="false"
@@ -1109,6 +1198,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/candle4.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="candle-5" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="candle-5">−</button>
+                    <span class="qty__val" id="cardQty-candle-5">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="candle-5">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Свеча Вечер в избранное"
                           aria-pressed="false"
@@ -1165,6 +1260,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/textile1.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="textile-1" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="textile-1">−</button>
+                    <span class="qty__val" id="cardQty-textile-1">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="textile-1">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Игрушка Мишка большой в избранное"
                           aria-pressed="false"
@@ -1205,6 +1306,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/textile2.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="textile-3" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="textile-3">−</button>
+                    <span class="qty__val" id="cardQty-textile-3">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="textile-3">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Мешочек Лён в избранное"
                           aria-pressed="false"
@@ -1245,6 +1352,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/textile3.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="textile-4" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="textile-4">−</button>
+                    <span class="qty__val" id="cardQty-textile-4">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="textile-4">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Панно Цветок в избранное"
                           aria-pressed="false"
@@ -1285,6 +1398,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/textile4.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="textile-5" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="textile-5">−</button>
+                    <span class="qty__val" id="cardQty-textile-5">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="textile-5">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Шарф Тепло в избранное"
                           aria-pressed="false"
@@ -1341,6 +1460,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/decor1.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="decor-2" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="decor-2">−</button>
+                    <span class="qty__val" id="cardQty-decor-2">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="decor-2">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Фигурка Кот в избранное"
                           aria-pressed="false"
@@ -1383,6 +1508,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/decor2.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="decor-1" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="decor-1">−</button>
+                    <span class="qty__val" id="cardQty-decor-1">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="decor-1">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Ваза Спокойствие большая в избранное"
                           aria-pressed="false"
@@ -1423,6 +1554,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/decor3.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="decor-4" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="decor-4">−</button>
+                    <span class="qty__val" id="cardQty-decor-4">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="decor-4">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Подсвечник Домик в избранное"
                           aria-pressed="false"
@@ -1463,6 +1600,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/decor4.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="decor-5" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="decor-5">−</button>
+                    <span class="qty__val" id="cardQty-decor-5">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="decor-5">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Мини-декор Сердце в избранное"
                           aria-pressed="false"
@@ -1519,6 +1662,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/box1.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="set-1" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="set-1">−</button>
+                    <span class="qty__val" id="cardQty-set-1">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="set-1">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Набор Уют в избранное"
                           aria-pressed="false"
@@ -1559,6 +1708,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/box2.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="set-2" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="set-2">−</button>
+                    <span class="qty__val" id="cardQty-set-2">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="set-2">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Набор Теплый дом в избранное"
                           aria-pressed="false"
@@ -1599,6 +1754,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/box3.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="set-3" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="set-3">−</button>
+                    <span class="qty__val" id="cardQty-set-3">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="set-3">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Набор Нежность в избранное"
                           aria-pressed="false"
@@ -1639,6 +1800,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-img="../img/box4.png">
                     В корзину
                   </button>
+                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
+                  <div class="qty qty--card" data-qty-wrap="set-4" style="display:none;">
+                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="set-4">−</button>
+                    <span class="qty__val" id="cardQty-set-4">1</span>
+                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="set-4">+</button>
+                  </div>
                   <button class="iconBtn" 
                           aria-label="Добавить Набор Малый в избранное"
                           aria-pressed="false"
@@ -1844,6 +2011,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 </aside>
 
 <script src="../js/script.js" defer></script>
+<script src="../js/cart.js" defer></script>
 
 </body>
 </html>
