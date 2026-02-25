@@ -1105,6 +1105,10 @@ textarea:focus-visible{
   min-width: 140px;
 }
 
+.breadcrumbs{
+  margin: 20px 0;
+}
+
 
 @media (max-width: 1024px){
   .section{

@@ -1,7 +1,3 @@
-.breadcrumbs{
-  margin: 20px 0;
-}
-
 .aboutHero{
   position: relative;
   overflow: hidden;
@@ -786,7 +782,7 @@
   overflow: hidden;
   background:
     linear-gradient(rgba(245,238,228,.78), rgba(245,238,228,.78)),
-    url("../img/gift.png") center / cover no-repeat fixed;
+    url("../img/gift.webp") center / cover no-repeat fixed;
 }
 
 .returnsWrap .kicker,

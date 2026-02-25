@@ -371,7 +371,7 @@
   transform: translateX(-50%);
   width: min(var(--container, 1200px), 100%);
 
-  background-image: url("../img/parallax.png");
+  background-image: url("../img/parallax.webp");
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;

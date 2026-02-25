@@ -1,0 +1,611 @@
+/* =========================================================
+   PRODUCT.CSS (FULL REWRITE)
+   Accents: Red + Green
+   Base: White + light neutrals
+   ========================================================= */
+
+:root{
+  --paper:#ffffff;
+
+  --text:#191919;
+  --muted:#7b7b7b;
+
+  --line:rgba(0,0,0,.08);
+  --shadow: 0 12px 32px rgba(0,0,0,.06);
+
+  --red:#c4161c;
+  --green:#1f8a4c;
+
+  --r12:12px;
+  --r16:16px;
+  --r18:18px;
+}
+
+/* =========================================================
+   Breadcrumbs (as on About page)
+   ========================================================= */
+.breadcrumbs{
+  background: transparent;
+  padding: 14px 0;
+  margin: 0 0 12px;
+}
+.breadcrumbs .container{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.breadcrumbs a{
+  color: var(--muted);
+  text-decoration:none;
+}
+.breadcrumbs a:hover{
+  color: var(--text);
+  text-decoration:none;
+}
+.breadcrumbs .sep{
+  color:#c9c9c9;
+}
+.breadcrumbs span{
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* =========================================================
+   Main background
+   ========================================================= */
+.pMain{
+  background: var(--paper);
+  padding: 18px 0 14px;
+}
+
+/* =========================================================
+   HERO (image + buy column)
+   ========================================================= */
+.pHero{
+  display:grid;
+  grid-template-columns: 1.05fr .95fr;
+  gap: 22px;
+
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r18);
+  box-shadow: var(--shadow);
+  padding: 18px;
+
+  align-items: start;
+}
+
+.pHero__media,
+.pHero__buy{
+  min-width: 0;
+}
+
+/* =========================================================
+   Media block (smaller image + click to fullscreen)
+   ========================================================= */
+.pMedia{
+  display:grid;
+  gap: 10px;
+}
+
+/* smaller image container */
+.pMedia__main{
+  position: relative;
+
+  max-width: 520px;    /* makes image smaller */
+  margin: 0 auto;
+
+  border: 1px solid var(--line);
+  border-radius: var(--r16);
+  overflow: hidden;
+  background: rgba(0,0,0,.02);
+}
+
+.pMedia__main img{
+  width: 100%;
+  height: auto;
+  display:block;
+  max-height: 520px;
+  object-fit: contain;
+}
+
+/* future thumbs (hidden in your HTML, but safe) */
+.pMedia__thumbs{
+  display:grid;
+  grid-template-columns: repeat(5, minmax(0,1fr));
+  gap: 8px;
+}
+
+/* zoom cursor */
+#mainImage[data-zoomable]{
+  cursor: zoom-in;
+}
+
+/* =========================================================
+   Badge
+   ========================================================= */
+.pbadge{
+  position: absolute;
+  left: 12px;
+  top: 12px;
+
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 18px rgba(0,0,0,.07);
+
+  z-index: 2;
+}
+.pbadge--hit{
+  background: rgba(31,138,76,.10);
+  border-color: rgba(31,138,76,.25);
+  color: var(--green);
+}
+.pbadge--new{
+  background: rgba(196,22,28,.10);
+  border-color: rgba(196,22,28,.25);
+  color: var(--red);
+}
+
+/* =========================================================
+   Title + rating
+   ========================================================= */
+.pTitle{
+  margin: 2px 0 10px;
+  font-size: 34px;
+  line-height: 1.12;
+  letter-spacing: -.02em;
+  color: var(--text);
+}
+
+.pRating{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  margin: 6px 0 6px;
+}
+
+.stars .star{
+  font-size: 14px;
+  opacity: .28;
+}
+.stars .star.filled{
+  opacity: 1;
+  color: var(--red);
+}
+
+.pRating__link{
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(0,0,0,.25);
+}
+.pRating__link:hover{
+  color: var(--text);
+}
+
+.pSubtitle{
+  margin: 10px 0 14px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+/* =========================================================
+   Price box + stock
+   ========================================================= */
+.pPriceBox{
+  display:flex;
+  align-items:flex-end;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 14px;
+  border-radius: var(--r16);
+  border: 1px solid var(--line);
+  background: rgba(0,0,0,.02);
+  margin: 12px 0 12px;
+}
+
+.pPriceBox__price{
+  font-weight: 900;
+  color: var(--text);
+  font-size: 34px;
+}
+.pPriceBox__price .price-amount{
+  font-size: 44px;
+}
+
+.pPriceBox__stock{
+  font-weight: 800;
+  white-space: nowrap;
+}
+.pPriceBox__stock.is-in{ color: var(--green); }
+.pPriceBox__stock.is-out{ color: #b00020; }
+
+/* =========================================================
+   Actions
+   ========================================================= */
+.pActions{
+  display:flex;
+  gap: 12px;
+  margin: 12px 0 10px;
+}
+
+/* compatible with your global buttons */
+.btn--large{
+  padding: 14px 28px;
+  border-radius: 14px;
+}
+
+.iconBtn--large{
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: #fff;
+  display:grid;
+  place-items:center;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.iconBtn--large:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(0,0,0,.08);
+}
+
+/* =========================================================
+   Quick facts
+   ========================================================= */
+.pFacts{
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+
+  display:grid;
+  gap: 8px;
+}
+
+.pFact{
+  display:flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pFact span{
+  color: var(--muted);
+}
+.pFact strong{
+  color: var(--text);
+  font-weight: 800;
+  text-align: right;
+}
+
+/* =========================================================
+   Perks
+   ========================================================= */
+.pPerks{
+  margin-top: 12px;
+  display:grid;
+  gap: 10px;
+}
+
+.pPerk{
+  display:flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r16);
+  background: #fff;
+}
+.pPerk__i{
+  font-size: 18px;
+  line-height: 1;
+  transform: translateY(1px);
+}
+.pPerk strong{
+  display:inline-block;
+  font-weight: 900;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.pPerk__t{
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.35;
+}
+.pPerk--accent{
+  border-color: rgba(31,138,76,.35);
+  background: rgba(31,138,76,.06);
+}
+
+/* =========================================================
+   Sections
+   ========================================================= */
+.pSection{
+  margin: 18px 0;
+}
+
+.pSection__head{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.pH2{
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: -.01em;
+  color: var(--text);
+}
+
+.pLink{
+  color: var(--muted);
+  text-decoration:none;
+  border-bottom: 1px dashed rgba(0,0,0,.25);
+}
+.pLink:hover{ color: var(--text); }
+
+.pMuted{ color: var(--muted); }
+
+/* description + specs layout */
+.pSection__grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.pCardBox{
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r18);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+.pText{
+  color: #353535;
+  line-height: 1.75;
+}
+
+/* specs (dl) */
+.pSpecs{
+  margin: 6px 0 0;
+  display:grid;
+  gap: 10px;
+}
+.pSpec{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.pSpec:last-child{ border-bottom: none; }
+
+.pSpec dt{
+  color: var(--muted);
+}
+.pSpec dd{
+  margin: 0;
+  color: var(--text);
+  font-weight: 800;
+  text-align: right;
+}
+.pSpec dd.is-in{ color: var(--green); }
+.pSpec dd.is-out{ color: #b00020; }
+
+/* =========================================================
+   Related products (always 4 cards)
+   ========================================================= */
+.pGrid{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 14px;
+}
+
+.pMini{
+  cursor:pointer;
+  background:#fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r18);
+  overflow:hidden;
+  box-shadow: 0 10px 22px rgba(0,0,0,.06);
+  transition: transform .14s ease, box-shadow .14s ease;
+}
+.pMini:hover{
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px rgba(0,0,0,.09);
+}
+
+.pMini__imgWrap{
+  position: relative;
+  background: rgba(0,0,0,.02);
+}
+.pMini__img{
+  width: 100%;
+  height: 210px;
+  object-fit: cover;
+  display:block;
+}
+
+.pMini__body{
+  padding: 12px;
+}
+
+.pMini__title{
+  margin: 0 0 6px;
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.pMini__meta{
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+  min-height: 34px;
+}
+
+.pMini__bottom{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pMini__price{
+  font-weight: 900;
+  color: var(--text);
+}
+
+.pMini__stock{
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.pMini__stock.is-in{ color: var(--green); }
+.pMini__stock.is-out{ color: #b00020; }
+
+/* =========================================================
+   Reviews
+   ========================================================= */
+.pReviews{
+  background:#fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r18);
+  box-shadow: var(--shadow);
+  padding: 18px;
+
+  display:grid;
+  grid-template-columns: 220px 1fr;
+  gap: 14px;
+}
+
+.pReviews__summary{
+  border-right: 1px solid var(--line);
+  padding-right: 14px;
+}
+
+.pBigRate{
+  font-size: 44px;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.pReviews__list{
+  padding-left: 6px;
+}
+
+/* =========================================================
+   Fullscreen image modal + zoom
+   ========================================================= */
+.imgModal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 9999;
+}
+.imgModal[aria-hidden="false"]{ display:block; }
+
+.imgModal__backdrop{
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,.78);
+}
+
+.imgModal__toolbar{
+  position:absolute;
+  top:14px;
+  right:14px;
+  display:flex;
+  gap:10px;
+  z-index:2;
+}
+.imgModal__btn{
+  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.12);
+  color:#fff;
+  padding:10px 12px;
+  border-radius: 12px;
+  cursor:pointer;
+  backdrop-filter: blur(6px);
+}
+.imgModal__btn:hover{
+  background: rgba(255,255,255,.18);
+}
+.imgModal__btn--close{
+  background: rgba(196,22,28,.25);
+  border-color: rgba(196,22,28,.35);
+}
+
+.imgModal__stage{
+  position:absolute;
+  inset: 0;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  z-index:1;
+}
+
+.imgModal__stage img{
+  max-width: 92vw;
+  max-height: 88vh;
+  transform-origin: 50% 50%;
+  cursor: grab;
+  user-select:none;
+}
+.imgModal__stage img:active{ cursor: grabbing; }
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+@media (max-width: 1020px){
+  .pHero{
+    grid-template-columns: 1fr;
+  }
+  .pSection__grid{
+    grid-template-columns: 1fr;
+  }
+  .pGrid{
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+  .pReviews{
+    grid-template-columns: 1fr;
+  }
+  .pReviews__summary{
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+    padding-right: 0;
+    padding-bottom: 12px;
+  }
+}
+
+@media (max-width: 520px){
+  .pTitle{ font-size: 28px; }
+  .pPriceBox{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .pGrid{
+    grid-template-columns: 1fr;
+  }
+  .pMini__img{ height: 240px; }
+}
+
+/* =========================================================
+   Accessibility polish
+   ========================================================= */
+:focus-visible{
+  outline: 2px solid rgba(196,22,28,.55);
+  outline-offset: 2px;
+}

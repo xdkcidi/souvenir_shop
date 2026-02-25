@@ -103,7 +103,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
               <div class="mega__preview"
                    role="img"
                    aria-label="Подарочный набор из свечи и керамической кружки"
-                   data-bg="../img/mega-preview.png">
+                   data-bg="../img/mega-preview.webp">
               </div>
 
               <div class="mega__note">Быстрая навигация и фильтры — сверху каталога.</div>
@@ -182,7 +182,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
     <section id="home" class="section section--sm" aria-labelledby="for-home-title">
       <div class="grid3 mb-14" role="list">
         <a class="tile reveal" href="#group-ceramics" role="listitem">
-          <div class="tile__img" role="img" aria-label="Керамические изделия ручной работы" data-bg="../img/ceramic.png"></div>
+          <div class="tile__img" role="img" aria-label="Керамические изделия ручной работы" data-bg="../img/ceramic.webp"></div>
           <div class="tile__overlay">
             <div class="tile__title">Керамика</div>
             <div class="tile__sub">кружки • тарелки • фигурки</div>
@@ -190,7 +190,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         </a>
 
         <a class="tile reveal" href="#group-postcards" role="listitem">
-          <div class="tile__img" role="img" aria-label="Открытки ручной работы с акварельными рисунками" data-bg="../img/letter.png"></div>
+          <div class="tile__img" role="img" aria-label="Открытки ручной работы с акварельными рисунками" data-bg="../img/letter.webp"></div>
           <div class="tile__overlay">
             <div class="tile__title">Открытки</div>
             <div class="tile__sub">акварель • авторские</div>
@@ -198,7 +198,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         </a>
 
         <a class="tile reveal" href="#group-candles" role="listitem">
-          <div class="tile__img" role="img" aria-label="Ароматические свечи из соевого воска" data-bg="../img/candle.png"></div>
+          <div class="tile__img" role="img" aria-label="Ароматические свечи из соевого воска" data-bg="../img/candle.webp"></div>
           <div class="tile__overlay">
             <div class="tile__title">Свечи</div>
             <div class="tile__sub">соевые • ароматные</div>
@@ -206,7 +206,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         </a>
 
         <a class="tile reveal" href="#group-textile" role="listitem">
-          <div class="tile__img" role="img" aria-label="Текстильные изделия и мягкие игрушки" data-bg="../img/textile.png"></div>
+          <div class="tile__img" role="img" aria-label="Текстильные изделия и мягкие игрушки" data-bg="../img/textile.webp"></div>
           <div class="tile__overlay">
             <div class="tile__title">Текстиль</div>
             <div class="tile__sub">игрушки • вышивка</div>
@@ -214,7 +214,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         </a>
 
         <a class="tile reveal" href="#group-decor" role="listitem">
-          <div class="tile__img" role="img" aria-label="Декор для интерьера и фигурки" data-bg="../img/decor.png"></div>
+          <div class="tile__img" role="img" aria-label="Декор для интерьера и фигурки" data-bg="../img/decor.webp"></div>
           <div class="tile__overlay">
             <div class="tile__title">Декор</div>
             <div class="tile__sub">фигурки • вазы</div>
@@ -222,7 +222,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         </a>
 
         <a class="tile reveal" href="#group-sets" role="listitem">
-          <div class="tile__img" role="img" aria-label="Подарочные наборы в красивой упаковке" data-bg="../img/box.png"></div>
+          <div class="tile__img" role="img" aria-label="Подарочные наборы в красивой упаковке" data-bg="../img/box.webp"></div>
           <div class="tile__overlay">
             <div class="tile__title">Подарочные наборы</div>
             <div class="tile__sub">свечи • керамика • открытки</div>
@@ -243,7 +243,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         <div class="grid4" role="list">
           <div class="reveal" data-product data-category="candles" data-id="candle-1" data-name="Свеча Природа" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Свеча Природа с ароматом трав" data-bg="../img/candle2.png">
+              <div class="card__img" role="img" aria-label="Свеча Природа с ароматом трав" data-bg="../img/candle2.webp">
                 <span class="pbadge pbadge--hit">Хит</span>
               </div>
               <div class="card__body">
@@ -262,7 +262,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="candle-1"
                           data-product-name="Свеча «Природа»" 
                           data-product-price="1199"
-                          data-product-img="../img/candle2.png">
+                          data-product-img="../img/candle2.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -291,7 +291,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div class="reveal" data-product data-category="ceramics" data-id="ceramic-1" data-name="Фигурка Дом" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Керамическая фигурка Дом" data-bg="../img/ceramic4.png">
+              <div class="card__img" role="img" aria-label="Керамическая фигурка Дом" data-bg="../img/ceramic4.webp">
                 <span class="pbadge pbadge--hit">Хит</span>
               </div>
               <div class="card__body">
@@ -310,7 +310,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="ceramic-1"
                           data-product-name="Фигурка «Домик»" 
                           data-product-price="1999"
-                          data-product-img="../img/ceramic4.png">
+                          data-product-img="../img/ceramic4.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -339,7 +339,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div class="reveal" data-product data-category="textile" data-id="textile-1" data-name="Игрушка Мишка" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Мягкая игрушка Мишка ручной работы" data-bg="../img/textile1.png">
+              <div class="card__img" role="img" aria-label="Мягкая игрушка Мишка ручной работы" data-bg="../img/textile1.webp">
                 <span class="pbadge pbadge--hit">Хит</span>
               </div>
               <div class="card__body">
@@ -358,7 +358,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="textile-1"
                           data-product-name="Игрушка «Мишка»" 
                           data-product-price="1699"
-                          data-product-img="../img/textile1.png">
+                          data-product-img="../img/textile1.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -387,7 +387,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div class="reveal" data-product data-category="decor" data-id="decor-1" data-name="Ваза Спокойствие" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Ваза Спокойствие пастельного оттенка" data-bg="../img/decor2.png">
+              <div class="card__img" role="img" aria-label="Ваза Спокойствие пастельного оттенка" data-bg="../img/decor2.webp">
                 <span class="pbadge pbadge--hit">Хит</span>
               </div>
               <div class="card__body">
@@ -406,7 +406,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="decor-1"
                           data-product-name="Ваза «Спокойствие»" 
                           data-product-price="1999"
-                          data-product-img="../img/decor2.png">
+                          data-product-img="../img/decor2.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -441,7 +441,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       <div class="personal-gift__bg"
            role="img"
            aria-label="Персонализированный подарок с гравировкой имени"
-           data-bg="../img/personal-gift.png"></div>
+           data-bg="../img/personal-gift.webp"></div>
 
       <div class="personal-gift__veil" aria-hidden="true"></div>
 
@@ -638,7 +638,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         <div class="grid4" role="list">
           <div data-product data-category="ceramics" data-id="ceramic-2" data-name="Кружка Утро" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Кружка Утро ручной лепки с матовой глазурью" data-bg="../img/ceramic1.png"></div>
+              <div class="card__img" role="img" aria-label="Кружка Утро ручной лепки с матовой глазурью" data-bg="../img/ceramic1.webp"></div>
               <div class="card__body">
                 <div class="card__top">
                   <div>
@@ -655,7 +655,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="ceramic-2"
                           data-product-name="Кружка «Утро»" 
                           data-product-price="1499"
-                          data-product-img="../img/ceramic1.png">
+                          data-product-img="../img/ceramic1.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -684,7 +684,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="ceramics" data-id="ceramic-3" data-name="Тарелка Мини" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Тарелка Мини для украшений и мелочей" data-bg="../img/ceramic2.png"></div>
+              <div class="card__img" role="img" aria-label="Тарелка Мини для украшений и мелочей" data-bg="../img/ceramic2.webp"></div>
               <div class="card__body">
                 <div class="card__top">
                   <div>
@@ -701,7 +701,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="ceramic-3"
                           data-product-name="Тарелка «Мини»" 
                           data-product-price="999"
-                          data-product-img="../img/ceramic2.png">
+                          data-product-img="../img/ceramic2.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -730,7 +730,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="ceramics" data-id="ceramic-4" data-name="Миска Тепло" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Миска Тепло с натуральной текстурой" data-bg="../img/ceramic3.png"></div>
+              <div class="card__img" role="img" aria-label="Миска Тепло с натуральной текстурой" data-bg="../img/ceramic3.webp"></div>
               <div class="card__body">
                 <div class="card__top">
                   <div>
@@ -747,7 +747,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="ceramic-4"
                           data-product-name="Миска «Тепло»" 
                           data-product-price="1299"
-                          data-product-img="../img/ceramic3.png">
+                          data-product-img="../img/ceramic3.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -776,7 +776,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="ceramics" data-id="ceramic-5" data-name="Фигурка Домик" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Фигурка Домик из керамики" data-bg="../img/ceramic4.png">
+              <div class="card__img" role="img" aria-label="Фигурка Домик из керамики" data-bg="../img/ceramic4.webp">
                 <span class="pbadge pbadge--hit">Хит</span>
               </div>
               <div class="card__body">
@@ -795,7 +795,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="ceramic-1"
                           data-product-name="Фигурка «Домик»" 
                           data-product-price="1999"
-                          data-product-img="../img/ceramic4.png">
+                          data-product-img="../img/ceramic4.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -838,7 +838,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         <div class="grid4" role="list">
           <div data-product data-category="postcards" data-id="postcard-1" data-name="Открытка Цветы" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Открытка Цветы с акварельным рисунком" data-bg="../img/letter1.png"></div>
+              <div class="card__img" role="img" aria-label="Открытка Цветы с акварельным рисунком" data-bg="../img/letter1.webp"></div>
               <span class="pbadge pbadge--new">Новинка</span>
               <div class="card__body">
                 <div class="card__top">
@@ -856,7 +856,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="postcard-1"
                           data-product-name="Открытка «Цветы»" 
                           data-product-price="249"
-                          data-product-img="../img/letter1.png">
+                          data-product-img="../img/letter1.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -885,7 +885,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="postcards" data-id="postcard-2" data-name="Открытка Дом" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Открытка Дом в минималистичном стиле" data-bg="../img/letter2.png"></div>
+              <div class="card__img" role="img" aria-label="Открытка Дом в минималистичном стиле" data-bg="../img/letter2.webp"></div>
               <div class="card__body">
                 <div class="card__top">
                   <div>
@@ -902,7 +902,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="postcard-2"
                           data-product-name="Открытка «Дом»" 
                           data-product-price="249"
-                          data-product-img="../img/letter2.png">
+                          data-product-img="../img/letter2.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -931,7 +931,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="postcards" data-id="postcard-3" data-name="Открытка С любовью" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Открытка С любовью для подарков" data-bg="../img/letter3.png"></div>
+              <div class="card__img" role="img" aria-label="Открытка С любовью для подарков" data-bg="../img/letter3.webp"></div>
               <div class="card__body">
                 <div class="card__top">
                   <div>
@@ -948,7 +948,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="postcard-3"
                           data-product-name="Открытка «С любовью»" 
                           data-product-price="299"
-                          data-product-img="../img/letter3.png">
+                          data-product-img="../img/letter3.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -977,7 +977,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="postcards" data-id="postcard-4" data-name="Открытка С новым годом" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Открытка С новым годом с тёплыми пожеланиями" data-bg="../img/letter4.png"></div>
+              <div class="card__img" role="img" aria-label="Открытка С новым годом с тёплыми пожеланиями" data-bg="../img/letter4.webp"></div>
               <div class="card__body">
                 <div class="card__top">
                   <div>
@@ -994,7 +994,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="postcard-4"
                           data-product-name="Открытка «С новым годом»" 
                           data-product-price="299"
-                          data-product-img="../img/letter4.png">
+                          data-product-img="../img/letter4.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -1037,7 +1037,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         <div class="grid4" role="list">
           <div data-product data-category="candles" data-id="candle-2" data-name="Свеча необычная" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Свеча необычная жёлтая с необычной формой" data-bg="../img/candle1.png"></div>
+              <div class="card__img" role="img" aria-label="Свеча необычная жёлтая с необычной формой" data-bg="../img/candle1.webp"></div>
               <span class="pbadge pbadge--new">Новинка</span>
               <div class="card__body">
                 <div class="card__top">
@@ -1055,7 +1055,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="candle-2"
                           data-product-name="Свеча «Необычная»" 
                           data-product-price="999"
-                          data-product-img="../img/candle1.png">
+                          data-product-img="../img/candle1.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -1084,7 +1084,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="candles" data-id="candle-3" data-name="Свеча Природа зеленая" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Свеча Природа с ароматом ели" data-bg="../img/candle2.png">
+              <div class="card__img" role="img" aria-label="Свеча Природа с ароматом ели" data-bg="../img/candle2.webp">
                 <span class="pbadge pbadge--hit">Хит</span>
               </div>
               <div class="card__body">
@@ -1103,7 +1103,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="candle-1"
                           data-product-name="Свеча «Природа»" 
                           data-product-price="1199"
-                          data-product-img="../img/candle2.png">
+                          data-product-img="../img/candle2.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -1132,7 +1132,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="candles" data-id="candle-4" data-name="Свеча Форма" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Свеча Форма декоративная для интерьера" data-bg="../img/candle3.png"></div>
+              <div class="card__img" role="img" aria-label="Свеча Форма декоративная для интерьера" data-bg="../img/candle3.webp"></div>
               <div class="card__body">
                 <div class="card__top">
                   <div>
@@ -1149,7 +1149,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="candle-4"
                           data-product-name="Свеча «Форма»" 
                           data-product-price="899"
-                          data-product-img="../img/candle3.png">
+                          data-product-img="../img/candle3.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -1178,7 +1178,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="candles" data-id="candle-5" data-name="Свеча Вечер" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Свеча Вечер компактная для уютных вечеров" data-bg="../img/candle4.png"></div>
+              <div class="card__img" role="img" aria-label="Свеча Вечер компактная для уютных вечеров" data-bg="../img/candle4.webp"></div>
               <div class="card__body">
                 <div class="card__top">
                   <div>
@@ -1195,7 +1195,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="candle-5"
                           data-product-name="Свеча «Вечер»" 
                           data-product-price="999"
-                          data-product-img="../img/candle4.png">
+                          data-product-img="../img/candle4.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -1238,7 +1238,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         <div class="grid4" role="list">
           <div data-product data-category="textile" data-id="textile-2" data-name="Игрушка Мишка большой" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Игрушка Мишка большая мягкая" data-bg="../img/textile1.png">
+              <div class="card__img" role="img" aria-label="Игрушка Мишка большая мягкая" data-bg="../img/textile1.webp">
                 <span class="pbadge pbadge--hit">Хит</span>
               </div>
               <div class="card__body">
@@ -1257,7 +1257,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="textile-1"
                           data-product-name="Игрушка «Мишка»" 
                           data-product-price="1699"
-                          data-product-img="../img/textile1.png">
+                          data-product-img="../img/textile1.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -1286,7 +1286,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="textile" data-id="textile-3" data-name="Мешочек Лён" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Мешочек Лён для хранения и подарков" data-bg="../img/textile2.png"></div>
+              <div class="card__img" role="img" aria-label="Мешочек Лён для хранения и подарков" data-bg="../img/textile2.webp"></div>
               <div class="card__body">
                 <div class="card__top">
                   <div>
@@ -1303,7 +1303,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="textile-3"
                           data-product-name="Мешочек «Лён»" 
                           data-product-price="499"
-                          data-product-img="../img/textile2.png">
+                          data-product-img="../img/textile2.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -1332,7 +1332,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="textile" data-id="textile-4" data-name="Панно Цветок" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Панно Цветок с вышивкой" data-bg="../img/textile3.png"></div>
+              <div class="card__img" role="img" aria-label="Панно Цветок с вышивкой" data-bg="../img/textile3.webp"></div>
               <div class="card__body">
                 <div class="card__top">
                   <div>
@@ -1349,7 +1349,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="textile-4"
                           data-product-name="Панно «Цветок»" 
                           data-product-price="1199"
-                          data-product-img="../img/textile3.png">
+                          data-product-img="../img/textile3.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -1378,7 +1378,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="textile" data-id="textile-5" data-name="Шарф Тепло" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Шарф Тепло из натуральных материалов" data-bg="../img/textile4.png"></div>
+              <div class="card__img" role="img" aria-label="Шарф Тепло из натуральных материалов" data-bg="../img/textile4.webp"></div>
               <div class="card__body">
                 <div class="card__top">
                   <div>
@@ -1395,7 +1395,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="textile-5"
                           data-product-name="Шарф «Тепло»" 
                           data-product-price="2999"
-                          data-product-img="../img/textile4.png">
+                          data-product-img="../img/textile4.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -1438,7 +1438,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         <div class="grid4" role="list">
           <div data-product data-category="decor" data-id="decor-2" data-name="Фигурка Кот" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Фигурка Кот из дерева" data-bg="../img/decor1.png">
+              <div class="card__img" role="img" aria-label="Фигурка Кот из дерева" data-bg="../img/decor1.webp">
                 <span class="pbadge pbadge--new">Новинка</span>
               </div>
               <div class="card__body">
@@ -1457,7 +1457,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="decor-2"
                           data-product-name="Фигурка «Кот»" 
                           data-product-price="1499"
-                          data-product-img="../img/decor1.png">
+                          data-product-img="../img/decor1.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -1486,7 +1486,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="decor" data-id="decor-3" data-name="Ваза Спокойствие большая" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Ваза Спокойствие большая для сухоцветов" data-bg="../img/decor2.png">
+              <div class="card__img" role="img" aria-label="Ваза Спокойствие большая для сухоцветов" data-bg="../img/decor2.webp">
                 <span class="pbadge pbadge--hit">Хит</span>
               </div>
               <div class="card__body">
@@ -1505,7 +1505,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="decor-1"
                           data-product-name="Ваза «Спокойствие»" 
                           data-product-price="1999"
-                          data-product-img="../img/decor2.png">
+                          data-product-img="../img/decor2.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -1534,7 +1534,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="decor" data-id="decor-4" data-name="Подсвечник Домик" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Подсвечник Домик из керамики" data-bg="../img/decor3.png"></div>
+              <div class="card__img" role="img" aria-label="Подсвечник Домик из керамики" data-bg="../img/decor3.webp"></div>
               <div class="card__body">
                 <div class="card__top">
                   <div>
@@ -1551,7 +1551,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="decor-4"
                           data-product-name="Подсвечник «Домик»" 
                           data-product-price="1499"
-                          data-product-img="../img/decor3.png">
+                          data-product-img="../img/decor3.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -1580,7 +1580,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="decor" data-id="decor-5" data-name="Мини-декор Сердце" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Мини-декор Сердце для полок" data-bg="../img/decor4.png"></div>
+              <div class="card__img" role="img" aria-label="Мини-декор Сердце для полок" data-bg="../img/decor4.webp"></div>
               <div class="card__body">
                 <div class="card__top">
                   <div>
@@ -1597,7 +1597,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="decor-5"
                           data-product-name="Мини-декор «Сердце»" 
                           data-product-price="799"
-                          data-product-img="../img/decor4.png">
+                          data-product-img="../img/decor4.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -1640,7 +1640,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         <div class="grid4" role="list">
           <div data-product data-category="sets" data-id="set-1" data-name="Набор Уют" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Набор Уют со свечой и тарелкой" data-bg="../img/box1.png">
+              <div class="card__img" role="img" aria-label="Набор Уют со свечой и тарелкой" data-bg="../img/box1.webp">
                 <span class="pbadge pbadge--new">Новинка</span>
               </div>
               <div class="card__body">
@@ -1659,7 +1659,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="set-1"
                           data-product-name="Набор «Уют»" 
                           data-product-price="2399"
-                          data-product-img="../img/box1.png">
+                          data-product-img="../img/box1.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -1688,7 +1688,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="sets" data-id="set-2" data-name="Набор Теплый дом" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Набор Тёплый дом со свечой, открыткой и фигуркой" data-bg="../img/box2.png"></div>
+              <div class="card__img" role="img" aria-label="Набор Тёплый дом со свечой, открыткой и фигуркой" data-bg="../img/box2.webp"></div>
               <div class="card__body">
                 <div class="card__top">
                   <div>
@@ -1705,7 +1705,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="set-2"
                           data-product-name="Набор «Тёплый дом»" 
                           data-product-price="2999"
-                          data-product-img="../img/box2.png">
+                          data-product-img="../img/box2.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -1734,7 +1734,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="sets" data-id="set-3" data-name="Набор Нежность" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Набор Нежность с игрушкой и открыткой" data-bg="../img/box3.png"></div>
+              <div class="card__img" role="img" aria-label="Набор Нежность с игрушкой и открыткой" data-bg="../img/box3.webp"></div>
               <div class="card__body">
                 <div class="card__top">
                   <div>
@@ -1751,7 +1751,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="set-3"
                           data-product-name="Набор «Нежность»" 
                           data-product-price="2199"
-                          data-product-img="../img/box3.png">
+                          data-product-img="../img/box3.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
@@ -1780,7 +1780,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
           <div data-product data-category="sets" data-id="set-4" data-name="Набор Малый" class="reveal" role="listitem">
             <div class="card">
-              <div class="card__img" role="img" aria-label="Набор Малый с фигуркой и открыткой" data-bg="../img/box4.png"></div>
+              <div class="card__img" role="img" aria-label="Набор Малый с фигуркой и открыткой" data-bg="../img/box4.webp"></div>
               <div class="card__body">
                 <div class="card__top">
                   <div>
@@ -1797,7 +1797,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                           data-product-id="set-4"
                           data-product-name="Набор «Малый»" 
                           data-product-price="1899"
-                          data-product-img="../img/box4.png">
+                          data-product-img="../img/box4.webp">
                     В корзину
                   </button>
                   <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->

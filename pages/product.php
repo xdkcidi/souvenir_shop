@@ -1,113 +1,38 @@
 <?php
-// pages/registration.php
 session_start();
 
-// если уже авторизован — сразу в личный кабинет
-if (isset($_SESSION['user_id'])) {
-    header('Location: account.php');
-    exit;
-}
-
-require_once __DIR__ . '/../php/db.php'; // $pdo
-
-$errors = [];
-$login   = trim($_POST['login'] ?? '');
-$email   = trim($_POST['email'] ?? '');
-$phone   = trim($_POST['phone'] ?? '');
-$address = trim($_POST['delivery_address'] ?? '');
-$password = $_POST['password'] ?? '';
-$password_confirm = $_POST['password_confirm'] ?? '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-    // ВАЛИДАЦИЯ
-    if ($login === '') {
-        $errors[] = 'Введите логин.';
-    }
-
-    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = 'Введите корректный email.';
-    }
-
-    if (mb_strlen($password) < 6) {
-        $errors[] = 'Пароль должен быть не короче 6 символов.';
-    }
-
-    if ($password !== $password_confirm) {
-        $errors[] = 'Пароли не совпадают.';
-    }
-
-    // ПРОВЕРКА ЛОГИНА / EMAIL
-    if (empty($errors)) {
-        $stmt = $pdo->prepare("
-            SELECT id, login, email 
-            FROM users 
-            WHERE login = :login OR email = :email 
-            LIMIT 1
-        ");
-        $stmt->execute([
-            ':login' => $login,
-            ':email' => $email
-        ]);
-        $row = $stmt->fetch();
-
-        if ($row) {
-            if (mb_strtolower($row['login']) === mb_strtolower($login)) {
-                $errors[] = 'Пользователь с таким логином уже существует.';
-            }
-            if (mb_strtolower($row['email']) === mb_strtolower($email)) {
-                $errors[] = 'Пользователь с таким email уже существует.';
-            }
-        }
-    }
-
-    // СОХРАНЕНИЕ ПОЛЬЗОВАТЕЛЯ
-    if (empty($errors)) {
-        $hash = password_hash($password, PASSWORD_DEFAULT);
-
-        $stmt = $pdo->prepare("
-            INSERT INTO users (login, email, password_hash, phone, delivery_address)
-            VALUES (:login, :email, :password_hash, :phone, :address)
-        ");
-
-        $ok = $stmt->execute([
-            ':login'         => $login,
-            ':email'         => $email,
-            ':password_hash' => $hash,
-            ':phone'         => $phone,
-            ':address'       => $address,
-        ]);
-
-        if ($ok) {
-            $newUserId = (int)$pdo->lastInsertId();
-            $_SESSION['user_id']    = $newUserId;
-            $_SESSION['user_login'] = $login;
-
-            header('Location: account.php');
-            exit;
-        } else {
-            $errors[] = 'Не удалось сохранить данные. Попробуйте ещё раз.';
-        }
-    }
-}
+require_once __DIR__ . '/../php/db.php';
 
 $isAuth = isset($_SESSION['user_id']);
 $hasAuthError = !empty($_SESSION['auth_error']);
+
+$product_code = $_GET['id'] ?? null;
+if (!$product_code) {
+  http_response_code(400);
+  exit('Не передан id товара');
+}
+
+// если ты передаёшь product_code (типа candle-1)
+$stmt = $pdo->prepare("SELECT * FROM products WHERE product_code = ? LIMIT 1");
+$stmt->execute([$product_code]);
+$product = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$product) {
+  http_response_code(404);
+  exit('Товар не найден');
+}
 ?>
 <!doctype html>
 <html lang="ru" data-auth="<?php echo $isAuth ? '1' : '0'; ?>">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Регистрация — Лавка</title>
-  <meta name="description" content="Регистрация в магазине Лавка: создайте аккаунт, чтобы сохранять избранное и быстрее оформлять заказы." />
-  <!-- стили подключаем ОТНОСИТЕЛЬНО, без слеша в начале -->
-  <link rel="stylesheet" href="../css/style.css"/>
-  <link rel="stylesheet" href="../css/main.css"/>
-  <link rel="stylesheet" href="../css/reg.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo htmlspecialchars($product['name']); ?> | Магазин сувениров</title>
+    <meta name="description" content="<?php echo htmlspecialchars($product['meta']); ?>">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/product.css">
 </head>
 <body>
-
 <header class="nav" role="banner">
   <div class="container nav__inner">
     <a class="brand" href="../index.php" aria-label="Лавка - вернуться на главную страницу">
@@ -149,32 +74,32 @@ $hasAuthError = !empty($_SESSION['auth_error']);
               <h2 class="mega__title" id="mega-title">Основные категории</h2>
 
               <div class="mega__cards" role="group" aria-labelledby="mega-title">
-                <a class="mega__card" href="catalog.php#group-candles" role="menuitem" data-close-mega>
+                <a class="mega__card" href="#group-candles" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Свечи</div>
                   <div class="mega__cardText">Интерьерные, ароматные, необычные</div>
                 </a>
 
-                <a class="mega__card" href="catalog.php#group-ceramics" role="menuitem" data-close-mega>
+                <a class="mega__card" href="#group-ceramics" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Керамика</div>
                   <div class="mega__cardText">Кружки, тарелки, миски, фигурки</div>
                 </a>
 
-                <a class="mega__card" href="catalog.php#group-decor" role="menuitem" data-close-mega>
+                <a class="mega__card" href="#group-decor" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Декор</div>
                   <div class="mega__cardText">Фигурки, вазы, подсвечники</div>
                 </a>
 
-                <a class="mega__card" href="catalog.php#group-textile" role="menuitem" data-close-mega>
+                <a class="mega__card" href="#group-textile" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Текстиль</div>
                   <div class="mega__cardText">Игрушки, мешочки, панно, шарфы</div>
                 </a>
 
-                <a class="mega__card" href="catalog.php#group-postcards" role="menuitem" data-close-mega>
+                <a class="mega__card" href="#group-postcards" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Открытки</div>
                   <div class="mega__cardText">Авторские, минимал, наборы</div>
                 </a>
 
-                <a class="mega__card" href="catalog.php#group-sets" role="menuitem" data-close-mega>
+                <a class="mega__card" href="#group-sets" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Подарочные наборы</div>
                   <div class="mega__cardText">Готовые боксы для подарка</div>
                 </a>
@@ -187,13 +112,13 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                   <div class="mega__featureTitle">Подбор по случаю</div>
                   <div class="mega__featureText">Для дома, "просто так", знак внимания</div>
                 </div>
-                <a class="btn btn--dark btn--sm" href="catalog.php#collectionsNav">Открыть</a>
+                <a class="btn btn--dark btn--sm" href="#collectionsNav">Открыть</a>
               </div>
 
               <div class="mega__preview"
                    role="img"
                    aria-label="Подарочный набор из свечи и керамической кружки"
-                   data-bg="../img/mega-preview.webp">
+                   data-bg="../img/mega-preview.png">
               </div>
 
               <div class="mega__note">Быстрая навигация и фильтры — сверху каталога.</div>
@@ -205,7 +130,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       <a class="nav__link" href="about.php">О компании</a>
 
       <div class="nav__actions">
-        <!-- 🔑 ИКОНКА АККАУНТА - показываем кнопку входа для неавторизованных -->
+        <!-- 🔑 ИКОНКА АККАУНТА -->
         <?php if ($isAuth): ?>
           <a class="iconBtn iconBtn--auth"
              href="../php/account.php"
@@ -252,116 +177,305 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   </div>
 </header>
 
-  <!-- ОСНОВНОЕ СОДЕРЖИМОЕ -->
-  <main class="container section auth-page" id="main-content" role="main" tabindex="-1">
-    <div class="auth-page__inner">
-      <!-- Хлебные крошки -->
-      <nav class="breadcrumbs" aria-label="Хлебные крошки">
-        <ol>
-          <li><a href="../index.php">Главная</a></li>
-          <li><span aria-current="page">Регистрация</span></li>
-        </ol>
-      </nav>
+<main class="pMain">
 
-      <h1 class="auth-title">Регистрация</h1>
-      <p class="auth-lead">
-        Создайте аккаунт, чтобы сохранять избранное и быстрее оформлять заказы.
-      </p>
+<div class="breadcrumbs">
+  <div class="container">
+    <a href="/souvenir_shop/">Главная</a>
+    <span class="sep">›</span>
+    <a href="/souvenir_shop/pages/catalog.php">Каталог</a>
+    <span class="sep">›</span>
+    <span><?php echo htmlspecialchars($product['name']); ?></span>
+  </div>
+</div>
 
-      <section class="auth-card" aria-label="Форма регистрации">
-        <?php if (!empty($errors)): ?>
-          <div class="auth-errors" aria-live="polite">
-            <ul>
-              <?php foreach ($errors as $e): ?>
-                <li><?php echo htmlspecialchars($e, ENT_QUOTES); ?></li>
-              <?php endforeach; ?>
-            </ul>
+  <div class="container">
+
+    <!-- HERO: фото + покупка -->
+    <section class="pHero" aria-label="Карточка товара">
+      <!-- Галерея -->
+      <div class="pHero__media">
+        <div class="pMedia">
+          <div class="pMedia__main">
+            <?php if (!empty($product['badge'])): ?>
+              <span class="pbadge pbadge--<?php echo htmlspecialchars($product['badge']); ?>">
+                <?php echo $product['badge'] === 'hit' ? 'Хит продаж' : 'Новинка'; ?>
+              </span>
+            <?php endif; ?>
+
+            <img
+              src="/souvenir_shop/<?php echo str_replace('../', '', $product['image']); ?>"
+              alt="<?php echo htmlspecialchars($product['name']); ?>"
+              loading="eager"
+              id="mainImage"
+              data-zoomable
+            >
           </div>
+
+          <!-- миниатюры (на будущее) -->
+          <div class="pMedia__thumbs" aria-label="Миниатюры" hidden></div>
+        </div>
+      </div>
+
+      <!-- Инфо + покупка -->
+      <div class="pHero__buy">
+
+        <h1 class="pTitle"><?php echo htmlspecialchars($product['name']); ?></h1>
+
+        <div class="pRating">
+          <div class="stars" aria-label="Рейтинг товара">
+            <?php
+              $rating = (int)($product['rating'] ?? 0);
+              $rating = max(0, min(5, $rating));
+              for ($i=1; $i<=5; $i++):
+            ?>
+              <span class="star <?php echo $i <= $rating ? 'filled' : ''; ?>">★</span>
+            <?php endfor; ?>
+          </div>
+
+          <a class="pRating__link" href="#reviews">
+            <?php echo (int)($product['reviews_count'] ?? 0); ?> отзывов
+          </a>
+        </div>
+
+        <?php if (!empty($product['meta'])): ?>
+          <p class="pSubtitle"><?php echo htmlspecialchars($product['meta']); ?></p>
         <?php endif; ?>
 
-        <form method="post" class="auth-form" novalidate>
-          <div class="auth-form__group">
-            <label class="auth-form__label" for="login">Логин</label>
-            <input
-              class="input auth-input"
-              type="text"
-              id="login"
-              name="login"
-              value="<?php echo htmlspecialchars($login, ENT_QUOTES); ?>"
-              required
-            />
+        <div class="pPriceBox">
+          <div class="pPriceBox__price" aria-label="Цена">
+            <span class="price-amount">
+              <?php echo number_format((float)$product['price'], 0, ',', ' '); ?>
+            </span> ₽
           </div>
 
-          <div class="auth-form__group">
-            <label class="auth-form__label" for="email">Email</label>
-            <input
-              class="input auth-input"
-              type="email"
-              id="email"
-              name="email"
-              value="<?php echo htmlspecialchars($email, ENT_QUOTES); ?>"
-              required
-            />
+          <div class="pPriceBox__stock <?php echo !empty($product['in_stock']) ? 'is-in' : 'is-out'; ?>">
+            <?php echo !empty($product['in_stock']) ? '✓ В наличии' : '✗ Нет в наличии'; ?>
+          </div>
+        </div>
+
+        <div class="pActions">
+          <button class="btn btn--dark btn--large"
+                  <?php echo empty($product['in_stock']) ? 'disabled' : ''; ?>
+                  data-add-to-cart
+                  data-product-id="<?php echo htmlspecialchars($product['product_code']); ?>"
+                  data-product-name="<?php echo htmlspecialchars($product['name']); ?>">
+            В корзину
+          </button>
+
+          <button class="iconBtn iconBtn--large"
+                  type="button"
+                  aria-label="Добавить в избранное"
+                  data-fav-btn
+                  data-product-id="<?php echo htmlspecialchars($product['product_code']); ?>"
+                  data-product-name="<?php echo htmlspecialchars($product['name']); ?>"
+                  data-product-price="<?php echo htmlspecialchars($product['price']); ?>"
+                  data-product-img="<?php echo htmlspecialchars($product['image']); ?>">
+            <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                    fill="none" stroke="currentColor" stroke-width="1.6"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Короткие характеристики -->
+        <div class="pFacts" aria-label="Короткие характеристики">
+          <?php if (!empty($product['material'])): ?>
+            <div class="pFact"><span>Материал</span><strong><?php echo htmlspecialchars($product['material']); ?></strong></div>
+          <?php endif; ?>
+
+          <?php if (!empty($product['color'])): ?>
+            <div class="pFact"><span>Цвет</span><strong><?php echo htmlspecialchars($product['color']); ?></strong></div>
+          <?php endif; ?>
+
+          <?php if (!empty($product['dimensions'])): ?>
+            <div class="pFact"><span>Размеры</span><strong><?php echo htmlspecialchars($product['dimensions']); ?></strong></div>
+          <?php endif; ?>
+
+          <div class="pFact"><span>Артикул</span><strong><?php echo htmlspecialchars($product['product_code']); ?></strong></div>
+        </div>
+
+        <!-- Плюсы (статичный контент) -->
+        <div class="pPerks" aria-label="Условия покупки">
+          <div class="pPerk">
+            <span class="pPerk__i">🚚</span>
+            <div>
+              <strong>Доставка</strong>
+              <div class="pPerk__t">По городу 1–2 дня, по РФ 3–7 дней</div>
+            </div>
           </div>
 
-          <div class="auth-form__group">
-            <label class="auth-form__label" for="password">Пароль</label>
-            <input
-              class="input auth-input"
-              type="password"
-              id="password"
-              name="password"
-              minlength="6"
-              required
-            />
-            <p class="auth-hint">Минимум 6 символов.</p>
+          <div class="pPerk">
+            <span class="pPerk__i">🎁</span>
+            <div>
+              <strong>Упаковка</strong>
+              <div class="pPerk__t">Можно оформить как подарок</div>
+            </div>
           </div>
 
-          <div class="auth-form__group">
-            <label class="auth-form__label" for="password_confirm">Повторите пароль</label>
-            <input
-              class="input auth-input"
-              type="password"
-              id="password_confirm"
-              name="password_confirm"
-              required
-            />
+          <div class="pPerk">
+            <span class="pPerk__i">↩️</span>
+            <div>
+              <strong>Возврат</strong>
+              <div class="pPerk__t">14 дней при сохранении товарного вида</div>
+            </div>
           </div>
 
-          <div class="auth-form__group">
-            <label class="auth-form__label" for="phone">Телефон (необязательно)</label>
-            <input
-              class="input auth-input"
-              type="tel"
-              id="phone"
-              name="phone"
-              placeholder="+7 (999) 000-00-00"
-              value="<?php echo htmlspecialchars($phone, ENT_QUOTES); ?>"
-            />
+          <?php if (!empty($product['is_personalizable'])): ?>
+            <div class="pPerk pPerk--accent">
+              <span class="pPerk__i">✨</span>
+              <div>
+                <strong>Персонализация</strong>
+                <div class="pPerk__t">Можно добавить надпись/бирку</div>
+              </div>
+            </div>
+          <?php endif; ?>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Описание + характеристики -->
+    <section class="pSection">
+      <div class="pSection__grid">
+        <article class="pCardBox" aria-label="Описание товара">
+          <h2 class="pH2">Описание</h2>
+          <div class="pText">
+            <?php
+              $description = !empty($product['description_full'])
+                ? $product['description_full']
+                : ($product['meta'] ?? '');
+              echo nl2br(htmlspecialchars($description));
+            ?>
           </div>
+        </article>
 
-          <div class="auth-form__group">
-            <label class="auth-form__label" for="delivery_address">Адрес доставки (необязательно)</label>
-            <textarea
-              class="input auth-input auth-input--area"
-              id="delivery_address"
-              name="delivery_address"
-              rows="3"
-              placeholder="Город, улица, дом, квартира"
-            ><?php echo htmlspecialchars($address, ENT_QUOTES); ?></textarea>
-          </div>
+        <article class="pCardBox" aria-label="Характеристики товара">
+          <h2 class="pH2">Характеристики</h2>
 
-          <button type="submit" class="btn btn--dark auth-btn">Зарегистрироваться</button>
+          <dl class="pSpecs">
+            <?php if (!empty($product['material'])): ?>
+              <div class="pSpec"><dt>Материал</dt><dd><?php echo htmlspecialchars($product['material']); ?></dd></div>
+            <?php endif; ?>
 
-          <div class="auth-bottom">
-            <span class="auth-bottom__text">Уже есть аккаунт?</span>
-            <a href="#" class="auth-bottom__link" data-open-modal="authModal">Войти</a>
-          </div>
-        </form>
-      </section>
-    </div>
-  </main>
+            <?php if (!empty($product['color'])): ?>
+              <div class="pSpec"><dt>Цвет</dt><dd><?php echo htmlspecialchars($product['color']); ?></dd></div>
+            <?php endif; ?>
 
+            <?php if (!empty($product['dimensions'])): ?>
+              <div class="pSpec"><dt>Размеры</dt><dd><?php echo htmlspecialchars($product['dimensions']); ?></dd></div>
+            <?php endif; ?>
+
+            <div class="pSpec"><dt>Артикул</dt><dd><?php echo htmlspecialchars($product['product_code']); ?></dd></div>
+
+            <div class="pSpec">
+              <dt>Наличие</dt>
+              <dd class="<?php echo !empty($product['in_stock']) ? 'is-in' : 'is-out'; ?>">
+                <?php echo !empty($product['in_stock']) ? 'В наличии' : 'Нет в наличии'; ?>
+              </dd>
+            </div>
+          </dl>
+        </article>
+      </div>
+    </section>
+
+    <!-- Похожие товары (всегда 4) -->
+    <section class="pSection" aria-label="Похожие товары">
+      <div class="pSection__head">
+        <h2 class="pH2">Похожие товары</h2>
+        <a class="pLink" href="catalog.php">Смотреть каталог →</a>
+      </div>
+
+      <?php
+        // 1) сначала по категории
+        $stmt = $pdo->prepare("SELECT * FROM products WHERE category = ? AND product_code != ? LIMIT 4");
+        $stmt->execute([$product['category'], $product_code]);
+        $related = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // 2) если меньше 4 — добираем любыми другими
+        if (count($related) < 4) {
+          $need = 4 - count($related);
+
+          $exclude = array_merge([$product_code], array_column($related, 'product_code'));
+          $placeholders = implode(',', array_fill(0, count($exclude), '?'));
+
+          $sql = "SELECT * FROM products WHERE product_code NOT IN ($placeholders) ORDER BY RAND() LIMIT $need";
+          $stmt2 = $pdo->prepare($sql);
+          $stmt2->execute($exclude);
+
+          $more = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+          $related = array_merge($related, $more);
+        }
+
+        $related = array_slice($related, 0, 4);
+      ?>
+
+      <div class="pGrid">
+        <?php foreach ($related as $rel): ?>
+          <article class="pMini" data-product data-id="<?php echo htmlspecialchars($rel['product_code']); ?>">
+            <div class="pMini__imgWrap">
+              <?php if (!empty($rel['badge'])): ?>
+                <span class="pbadge pbadge--<?php echo htmlspecialchars($rel['badge']); ?>">
+                  <?php echo $rel['badge'] === 'hit' ? 'Хит' : 'Новинка'; ?>
+                </span>
+              <?php endif; ?>
+
+              <img class="pMini__img"
+                   src="/souvenir_shop/<?php echo str_replace('../', '', $rel['image']); ?>"
+                   alt="<?php echo htmlspecialchars($rel['name']); ?>"
+                   loading="lazy">
+            </div>
+
+            <div class="pMini__body">
+              <h3 class="pMini__title"><?php echo htmlspecialchars($rel['name']); ?></h3>
+              <p class="pMini__meta"><?php echo htmlspecialchars($rel['meta']); ?></p>
+
+              <div class="pMini__bottom">
+                <div class="pMini__price">
+                  <?php echo number_format((float)$rel['price'], 0, ',', ' '); ?> ₽
+                </div>
+
+                <button class="btn btn--dark btn--sm"
+                        type="button"
+                        <?php echo empty($rel['in_stock']) ? 'disabled' : ''; ?>
+                        data-add-to-cart
+                        data-product-id="<?php echo htmlspecialchars($rel['product_code']); ?>"
+                        data-product-name="<?php echo htmlspecialchars($rel['name']); ?>">
+                  В корзину
+                </button>
+              </div>
+
+              <div class="pMini__stock <?php echo !empty($rel['in_stock']) ? 'is-in' : 'is-out'; ?>">
+                <?php echo !empty($rel['in_stock']) ? '✓ В наличии' : '✗ Нет в наличии'; ?>
+              </div>
+            </div>
+          </article>
+        <?php endforeach; ?>
+      </div>
+    </section>
+
+    <!-- Отзывы -->
+    <section class="pSection" id="reviews" aria-label="Отзывы покупателей">
+      <div class="pSection__head">
+        <h2 class="pH2">Отзывы покупателей</h2>
+        <button class="btn btn--outline" type="button" onclick="openReviewModal()">Написать отзыв</button>
+      </div>
+
+      <div class="pReviews">
+        <div class="pReviews__summary">
+          <div class="pBigRate"><?php echo htmlspecialchars($product['rating'] ?? '0'); ?></div>
+          <div class="pMuted"><?php echo (int)($product['reviews_count'] ?? 0); ?> отзывов</div>
+        </div>
+
+        <div class="pReviews__list">
+          <p class="pMuted">Пока нет отзывов. Будьте первым!</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+    
 <!-- FOOTER -->
 <footer class="footer" role="contentinfo">
   <!-- Кнопка "Наверх" -->
@@ -451,8 +565,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   // Скрипт для кнопки "Наверх"
   document.addEventListener('DOMContentLoaded', function() {
     const toTopBtn = document.getElementById('toTopBtn');
-    
-    // Показываем кнопку при прокрутке
+  
     window.addEventListener('scroll', function() {
       if (window.pageYOffset > 300) {
         toTopBtn.style.display = 'flex';
@@ -461,7 +574,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       }
     });
     
-    // Плавная прокрутка наверх
     toTopBtn.addEventListener('click', function() {
       window.scrollTo({
         top: 0,
@@ -469,7 +581,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       });
     });
     
-    // Обработка формы подписки (опционально)
     const newsletterForm = document.querySelector('[data-newsletter-form]');
     if (newsletterForm) {
       newsletterForm.addEventListener('submit', function(e) {
@@ -478,7 +589,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         const email = emailInput.value.trim();
         
         if (email && email.includes('@')) {
-          // Здесь можно добавить AJAX-запрос для отправки данных
           console.log('Подписка на рассылку:', email);
           alert('Спасибо за подписку! На ' + email + ' отправлено письмо с подтверждением.');
           emailInput.value = '';
@@ -487,8 +597,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
     }
   });
 </script>
-
-<!-- Модальные окна из index.php -->
 
 <div class="modal" id="authModal" aria-hidden="true"
      <?php if (!empty($_SESSION['auth_error'])) echo 'data-autoshow="1"'; ?>>
@@ -550,7 +658,8 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   </div>
 </aside>
 
-<script src="../js/script.js" defer></script>
+    <script src="../js/script.js"></script>
+    <script src="../js/product.js"></script>
 
 </body>
 </html>

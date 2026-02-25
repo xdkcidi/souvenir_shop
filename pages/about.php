@@ -101,7 +101,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
               <div class="mega__preview"
                    role="img"
                    aria-label="Подарочный набор из свечи и керамической кружки"
-                   data-bg="../img/mega-preview.png">
+                   data-bg="../img/mega-preview.webp">
               </div>
 
               <div class="mega__note">Быстрая навигация и фильтры — сверху каталога.</div>
@@ -173,7 +173,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
   <!-- HERO -->
   <section class="aboutHero" aria-labelledby="about-hero-title">
-    <div class="aboutHero__bg" aria-hidden="true" data-bg="../img/about-hero.png"></div>
+    <div class="aboutHero__bg" aria-hidden="true" data-bg="../img/about-hero.webp"></div>
 
     <div class="container aboutHero__inner">
       <div class="aboutHero__card reveal">
@@ -234,7 +234,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       </div>
 
       <div class="aboutSide">
-        <div class="aboutSide__img" role="img" aria-label="Предметы ручной работы" data-bg="../img/slide2.png"></div>
+        <div class="aboutSide__img" role="img" aria-label="Предметы ручной работы" data-bg="../img/slide2.webp"></div>
       </div>
     </div>
 
@@ -311,7 +311,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       </div>
 
       <div class="workshop__right">
-        <div class="workshop__img" role="img" aria-label="Мастерская" data-bg="../img/slide1.png"></div>
+        <div class="workshop__img" role="img" aria-label="Мастерская" data-bg="../img/slide1.webp"></div>
         <div class="workshop__mini">
           <div class="miniItem">
             <div class="miniItem__t">Тёплая эстетика</div>
@@ -378,7 +378,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
           <div class="deliveryMedia__img"
                role="img"
                aria-label="Упаковка и отправка подарка"
-               data-bg="../img/delivery.png"></div>
+               data-bg="../img/delivery.webp"></div>
         </div>
 
         <div class="deliveryHint">
@@ -501,15 +501,15 @@ $hasAuthError = !empty($_SESSION['auth_error']);
           <!-- Написать нам -->
           <div class="c2Chats">
             <a class="c2Chat" href="#" aria-label="WhatsApp">
-              <img class="c2Chat__img" src="../img/whatsapp.png" alt="WhatsApp">
+              <img class="c2Chat__img" src="../img/whatsapp.webp" alt="WhatsApp">
             </a>
 
             <a class="c2Chat" href="#" aria-label="Telegram">
-              <img class="c2Chat__img" src="../img/telegram.png" alt="Telegram">
+              <img class="c2Chat__img" src="../img/telegram.webp" alt="Telegram">
             </a>
 
             <a class="c2Chat" href="#" aria-label="VK">
-              <img class="c2Chat__img" src="../img/vk.png" alt="VK">
+              <img class="c2Chat__img" src="../img/vk.webp" alt="VK">
             </a>
           </div>
         </div>

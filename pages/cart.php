@@ -98,7 +98,7 @@ $isAuth = isset($_SESSION['user_id']);
               <div class="mega__preview"
                    role="img"
                    aria-label="Подарочный набор из свечи и керамической кружки"
-                   data-bg="../img/mega-preview.png">
+                   data-bg="../img/mega-preview.webp">
               </div>
 
               <div class="mega__note">Быстрая навигация и фильтры — сверху каталога.</div>
