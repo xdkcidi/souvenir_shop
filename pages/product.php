@@ -191,268 +191,306 @@ if (!$product) {
 
   <div class="container">
 
-    <!-- HERO: фото + покупка -->
-    <section class="pHero" aria-label="Карточка товара">
-      <!-- Галерея -->
-      <div class="pHero__media">
-        <div class="pMedia">
-          <div class="pMedia__main">
-            <?php if (!empty($product['badge'])): ?>
-              <span class="pbadge pbadge--<?php echo htmlspecialchars($product['badge']); ?>">
-                <?php echo $product['badge'] === 'hit' ? 'Хит продаж' : 'Новинка'; ?>
-              </span>
-            <?php endif; ?>
-
-            <img
-              src="/souvenir_shop/<?php echo str_replace('../', '', $product['image']); ?>"
-              alt="<?php echo htmlspecialchars($product['name']); ?>"
-              loading="eager"
-              id="mainImage"
-              data-zoomable
-            >
-          </div>
-
-          <!-- миниатюры (на будущее) -->
-          <div class="pMedia__thumbs" aria-label="Миниатюры" hidden></div>
-        </div>
-      </div>
-
-      <!-- Инфо + покупка -->
-      <div class="pHero__buy">
-
-        <h1 class="pTitle"><?php echo htmlspecialchars($product['name']); ?></h1>
-
-        <div class="pRating">
-          <div class="stars" aria-label="Рейтинг товара">
-            <?php
-              $rating = (int)($product['rating'] ?? 0);
-              $rating = max(0, min(5, $rating));
-              for ($i=1; $i<=5; $i++):
-            ?>
-              <span class="star <?php echo $i <= $rating ? 'filled' : ''; ?>">★</span>
-            <?php endfor; ?>
-          </div>
-
-          <a class="pRating__link" href="#reviews">
-            <?php echo (int)($product['reviews_count'] ?? 0); ?> отзывов
-          </a>
-        </div>
-
-        <?php if (!empty($product['meta'])): ?>
-          <p class="pSubtitle"><?php echo htmlspecialchars($product['meta']); ?></p>
+<!-- HERO: фото + покупка -->
+<section class="pHero" aria-label="Карточка товара">
+  <!-- Галерея -->
+  <div class="pHero__media">
+    <div class="pMedia">
+      <div class="pMedia__main">
+        <?php if (!empty($product['badge'])): ?>
+          <span class="pbadge pbadge--<?php echo htmlspecialchars($product['badge']); ?>">
+            <?php echo $product['badge'] === 'hit' ? 'Хит продаж' : 'Новинка'; ?>
+          </span>
         <?php endif; ?>
 
-        <div class="pPriceBox">
-          <div class="pPriceBox__price" aria-label="Цена">
-            <span class="price-amount">
-              <?php echo number_format((float)$product['price'], 0, ',', ' '); ?>
-            </span> ₽
-          </div>
+        <?php
+          $img1 = !empty($product['image'])
+            ? "/souvenir_shop/" . ltrim(str_replace('../', '', $product['image']), '/')
+            : "";
 
-          <div class="pPriceBox__stock <?php echo !empty($product['in_stock']) ? 'is-in' : 'is-out'; ?>">
-            <?php echo !empty($product['in_stock']) ? '✓ В наличии' : '✗ Нет в наличии'; ?>
+          $img2 = !empty($product['image2'])
+            ? "/souvenir_shop/" . ltrim(str_replace('../', '', $product['image2']), '/')
+            : "";
+
+          $gallery = array_values(array_filter([$img1, $img2]));
+          $mainSrc = $gallery[0] ?? $img1;
+        ?>
+
+        <img
+          src="<?php echo htmlspecialchars($mainSrc); ?>"
+          alt="<?php echo htmlspecialchars($product['name']); ?>"
+          loading="eager"
+          id="mainImage"
+          data-zoomable
+        >
+      </div>
+
+      <?php if (count($gallery) > 1): ?>
+        <div class="pMedia__thumbs" aria-label="Миниатюры">
+          <?php foreach ($gallery as $i => $src): ?>
+            <button
+              class="pThumb <?php echo $i === 0 ? 'is-active' : ''; ?>"
+              type="button"
+              aria-label="Фото <?php echo $i + 1; ?>"
+              data-thumb
+              data-src="<?php echo htmlspecialchars($src); ?>">
+              <img src="<?php echo htmlspecialchars($src); ?>" alt="" loading="lazy">
+            </button>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+    </div>
+  </div>
+
+  <!-- Инфо + покупка -->
+  <div class="pHero__buy">
+    <h1 class="pTitle"><?php echo htmlspecialchars($product['name']); ?></h1>
+
+    <div class="pRating">
+      <div class="stars" aria-label="Рейтинг товара">
+        <?php
+          $rating = (int)($product['rating'] ?? 0);
+          $rating = max(0, min(5, $rating));
+          for ($i = 1; $i <= 5; $i++):
+        ?>
+          <span class="star <?php echo $i <= $rating ? 'filled' : ''; ?>">★</span>
+        <?php endfor; ?>
+      </div>
+
+      <a class="pRating__link" href="#reviews">
+        <?php echo (int)($product['reviews_count'] ?? 0); ?> отзывов
+      </a>
+    </div>
+
+    <?php if (!empty($product['meta'])): ?>
+      <p class="pSubtitle"><?php echo htmlspecialchars($product['meta']); ?></p>
+    <?php endif; ?>
+
+    <div class="pPriceBox">
+      <div class="pPriceBox__price" aria-label="Цена">
+        <span class="price-amount">
+          <?php echo number_format((float)$product['price'], 0, ',', ' '); ?>
+        </span> ₽
+      </div>
+
+      <div class="pPriceBox__stock <?php echo !empty($product['in_stock']) ? 'is-in' : 'is-out'; ?>">
+        <?php echo !empty($product['in_stock']) ? '✓ В наличии' : '✗ Нет в наличии'; ?>
+      </div>
+    </div>
+
+    <div class="pActions">
+      <button class="btn btn--dark btn--large"
+              <?php echo empty($product['in_stock']) ? 'disabled' : ''; ?>
+              data-add-to-cart
+              data-product-id="<?php echo htmlspecialchars($product['product_code']); ?>"
+              data-product-name="<?php echo htmlspecialchars($product['name']); ?>"
+              data-product-price="<?php echo htmlspecialchars($product['price']); ?>"
+              data-product-img="<?php echo htmlspecialchars($img1); ?>">
+        В корзину
+      </button>
+
+      <button class="iconBtn iconBtn--large"
+              type="button"
+              aria-label="Добавить в избранное"
+              data-fav-btn
+              data-product-id="<?php echo htmlspecialchars($product['product_code']); ?>"
+              data-product-name="<?php echo htmlspecialchars($product['name']); ?>"
+              data-product-price="<?php echo htmlspecialchars($product['price']); ?>"
+              data-product-img="<?php echo htmlspecialchars($img1); ?>">
+        <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                fill="none" stroke="currentColor" stroke-width="1.6"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Короткие характеристики -->
+    <div class="pFacts" aria-label="Короткие характеристики">
+      <?php if (!empty($product['material'])): ?>
+        <div class="pFact"><span>Материал</span><strong><?php echo htmlspecialchars($product['material']); ?></strong></div>
+      <?php endif; ?>
+
+      <?php if (!empty($product['color'])): ?>
+        <div class="pFact"><span>Цвет</span><strong><?php echo htmlspecialchars($product['color']); ?></strong></div>
+      <?php endif; ?>
+
+      <?php if (!empty($product['dimensions'])): ?>
+        <div class="pFact"><span>Размеры</span><strong><?php echo htmlspecialchars($product['dimensions']); ?></strong></div>
+      <?php endif; ?>
+
+      <div class="pFact"><span>Артикул</span><strong><?php echo htmlspecialchars($product['product_code']); ?></strong></div>
+    </div>
+
+    <!-- Плюсы -->
+    <div class="pPerks" aria-label="Условия покупки">
+      <div class="pPerk">
+        <span class="pPerk__i">🚚</span>
+        <div>
+          <strong>Доставка</strong>
+          <div class="pPerk__t">По городу 1–2 дня, по РФ 3–7 дней</div>
+        </div>
+      </div>
+
+      <?php if (!empty($product['is_personalizable'])): ?>
+        <div class="pPerk pPerk--accent">
+          <span class="pPerk__i">✨</span>
+          <div>
+            <strong>Персонализация</strong>
+            <div class="pPerk__t">Можно добавить надпись/бирку</div>
           </div>
         </div>
+      <?php endif; ?>
+    </div>
+  </div>
+</section>
 
-        <div class="pActions">
-          <button class="btn btn--dark btn--large"
-                  <?php echo empty($product['in_stock']) ? 'disabled' : ''; ?>
-                  data-add-to-cart
-                  data-product-id="<?php echo htmlspecialchars($product['product_code']); ?>"
-                  data-product-name="<?php echo htmlspecialchars($product['name']); ?>">
-            В корзину
-          </button>
+<!-- Описание + характеристики -->
+<section class="pSection">
+  <div class="pSection__grid">
+    <article class="pCardBox" aria-label="Описание товара">
+      <h2 class="pH2">Описание</h2>
+      <div class="pText">
+        <?php
+          $description = !empty($product['description_full'])
+            ? $product['description_full']
+            : ($product['meta'] ?? '');
+          echo nl2br(htmlspecialchars($description));
+        ?>
+      </div>
+    </article>
 
-          <button class="iconBtn iconBtn--large"
-                  type="button"
-                  aria-label="Добавить в избранное"
-                  data-fav-btn
-                  data-product-id="<?php echo htmlspecialchars($product['product_code']); ?>"
-                  data-product-name="<?php echo htmlspecialchars($product['name']); ?>"
-                  data-product-price="<?php echo htmlspecialchars($product['price']); ?>"
-                  data-product-img="<?php echo htmlspecialchars($product['image']); ?>">
-            <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-                    fill="none" stroke="currentColor" stroke-width="1.6"/>
-            </svg>
-          </button>
+    <article class="pCardBox" aria-label="Характеристики товара">
+      <h2 class="pH2">Характеристики</h2>
+
+      <dl class="pSpecs">
+        <?php if (!empty($product['material'])): ?>
+          <div class="pSpec"><dt>Материал</dt><dd><?php echo htmlspecialchars($product['material']); ?></dd></div>
+        <?php endif; ?>
+
+        <?php if (!empty($product['color'])): ?>
+          <div class="pSpec"><dt>Цвет</dt><dd><?php echo htmlspecialchars($product['color']); ?></dd></div>
+        <?php endif; ?>
+
+        <?php if (!empty($product['dimensions'])): ?>
+          <div class="pSpec"><dt>Размеры</dt><dd><?php echo htmlspecialchars($product['dimensions']); ?></dd></div>
+        <?php endif; ?>
+
+        <div class="pSpec"><dt>Артикул</dt><dd><?php echo htmlspecialchars($product['product_code']); ?></dd></div>
+
+        <div class="pSpec">
+          <dt>Наличие</dt>
+          <dd class="<?php echo !empty($product['in_stock']) ? 'is-in' : 'is-out'; ?>">
+            <?php echo !empty($product['in_stock']) ? 'В наличии' : 'Нет в наличии'; ?>
+          </dd>
         </div>
+      </dl>
+    </article>
+  </div>
+</section>
 
-        <!-- Короткие характеристики -->
-        <div class="pFacts" aria-label="Короткие характеристики">
-          <?php if (!empty($product['material'])): ?>
-            <div class="pFact"><span>Материал</span><strong><?php echo htmlspecialchars($product['material']); ?></strong></div>
-          <?php endif; ?>
+<!-- Похожие товары (всегда 4) -->
+<section class="hits reveal" aria-label="Похожие товары" data-filter-exclude>
+<div class="catalog-head">
+  <div>
+    <h2 class="h2">Похожие товары</h2>
+  </div>
 
-          <?php if (!empty($product['color'])): ?>
-            <div class="pFact"><span>Цвет</span><strong><?php echo htmlspecialchars($product['color']); ?></strong></div>
-          <?php endif; ?>
+  <a class="btn btn--ghost" href="catalog.php">Смотреть каталог →</a>
+</div>
 
-          <?php if (!empty($product['dimensions'])): ?>
-            <div class="pFact"><span>Размеры</span><strong><?php echo htmlspecialchars($product['dimensions']); ?></strong></div>
-          <?php endif; ?>
+  <?php
+    // 1) сначала по категории
+    $stmt = $pdo->prepare("SELECT * FROM products WHERE category = ? AND product_code != ? LIMIT 4");
+    $stmt->execute([$product['category'], $product_code]);
+    $related = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-          <div class="pFact"><span>Артикул</span><strong><?php echo htmlspecialchars($product['product_code']); ?></strong></div>
-        </div>
+    // 2) если меньше 4 — добираем любыми другими (кроме текущего и уже выбранных)
+    if (count($related) < 4) {
+      $need = 4 - count($related);
 
-        <!-- Плюсы (статичный контент) -->
-        <div class="pPerks" aria-label="Условия покупки">
-          <div class="pPerk">
-            <span class="pPerk__i">🚚</span>
-            <div>
-              <strong>Доставка</strong>
-              <div class="pPerk__t">По городу 1–2 дня, по РФ 3–7 дней</div>
-            </div>
+      $exclude = array_merge([$product_code], array_column($related, 'product_code'));
+      $placeholders = implode(',', array_fill(0, count($exclude), '?'));
+
+      $sql = "SELECT * FROM products WHERE product_code NOT IN ($placeholders) ORDER BY RAND() LIMIT $need";
+      $stmt2 = $pdo->prepare($sql);
+      $stmt2->execute($exclude);
+
+      $more = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+      $related = array_merge($related, $more);
+    }
+
+    $related = array_slice($related, 0, 4);
+  ?>
+
+  <div class="grid4" role="list">
+    <?php foreach ($related as $rel): ?>
+      <div class="reveal" data-product data-id="<?php echo htmlspecialchars($rel['product_code']); ?>" role="listitem">
+        <div class="card">
+          <div class="card__img"
+               role="img"
+               aria-label="<?php echo htmlspecialchars($rel['name']); ?>"
+               data-bg="/souvenir_shop/<?php echo str_replace('../', '', $rel['image']); ?>">
+            <?php if (!empty($rel['badge'])): ?>
+              <span class="pbadge pbadge--<?php echo htmlspecialchars($rel['badge']); ?>">
+                <?php echo $rel['badge'] === 'hit' ? 'Хит' : 'Новинка'; ?>
+              </span>
+            <?php endif; ?>
           </div>
 
-          <div class="pPerk">
-            <span class="pPerk__i">🎁</span>
-            <div>
-              <strong>Упаковка</strong>
-              <div class="pPerk__t">Можно оформить как подарок</div>
-            </div>
-          </div>
-
-          <div class="pPerk">
-            <span class="pPerk__i">↩️</span>
-            <div>
-              <strong>Возврат</strong>
-              <div class="pPerk__t">14 дней при сохранении товарного вида</div>
-            </div>
-          </div>
-
-          <?php if (!empty($product['is_personalizable'])): ?>
-            <div class="pPerk pPerk--accent">
-              <span class="pPerk__i">✨</span>
+          <div class="card__body">
+            <div class="card__top">
               <div>
-                <strong>Персонализация</strong>
-                <div class="pPerk__t">Можно добавить надпись/бирку</div>
+                <h3 class="card__title"><?php echo htmlspecialchars($rel['name']); ?></h3>
+                <div class="card__meta"><?php echo htmlspecialchars($rel['meta'] ?? ''); ?></div>
+              </div>
+
+              <div class="card__price">
+                <span class="price-amount"><?php echo number_format((float)$rel['price'], 0, ',', ' '); ?></span> ₽
               </div>
             </div>
-          <?php endif; ?>
-        </div>
 
-      </div>
-    </section>
+            <div class="card__actions">
+              <button class="btn btn--dark btn--full"
+                      type="button"
+                      <?php echo empty($rel['in_stock']) ? 'disabled' : ''; ?>
+                      data-add-to-cart
+                      data-product-id="<?php echo htmlspecialchars($rel['product_code']); ?>"
+                      data-product-name="<?php echo htmlspecialchars($rel['name']); ?>"
+                      data-product-price="<?php echo htmlspecialchars($rel['price']); ?>"
+                      data-product-img="/souvenir_shop/<?php echo str_replace('../', '', $rel['image']); ?>">
+                В корзину
+              </button>
 
-    <!-- Описание + характеристики -->
-    <section class="pSection">
-      <div class="pSection__grid">
-        <article class="pCardBox" aria-label="Описание товара">
-          <h2 class="pH2">Описание</h2>
-          <div class="pText">
-            <?php
-              $description = !empty($product['description_full'])
-                ? $product['description_full']
-                : ($product['meta'] ?? '');
-              echo nl2br(htmlspecialchars($description));
-            ?>
+              <!-- счетчик (если у тебя уже работает на главной) -->
+              <div class="qty qty--card"
+                   data-qty-wrap="<?php echo htmlspecialchars($rel['product_code']); ?>"
+                   style="display:none;">
+                <button class="qty__btn" type="button" aria-label="Уменьшить количество"
+                        data-qty-minus="<?php echo htmlspecialchars($rel['product_code']); ?>">−</button>
+                <span class="qty__val" id="cardQty-<?php echo htmlspecialchars($rel['product_code']); ?>">1</span>
+                <button class="qty__btn" type="button" aria-label="Увеличить количество"
+                        data-qty-plus="<?php echo htmlspecialchars($rel['product_code']); ?>">+</button>
+              </div>
+
+              <button class="iconBtn"
+                      type="button"
+                      aria-label="Добавить в избранное"
+                      aria-pressed="false"
+                      data-fav-btn
+                      data-product-id="<?php echo htmlspecialchars($rel['product_code']); ?>"
+                      data-product-name="<?php echo htmlspecialchars($rel['name']); ?>">
+                <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                        fill="none" stroke="currentColor" stroke-width="1.6"/>
+                </svg>
+              </button>
+            </div>
           </div>
-        </article>
-
-        <article class="pCardBox" aria-label="Характеристики товара">
-          <h2 class="pH2">Характеристики</h2>
-
-          <dl class="pSpecs">
-            <?php if (!empty($product['material'])): ?>
-              <div class="pSpec"><dt>Материал</dt><dd><?php echo htmlspecialchars($product['material']); ?></dd></div>
-            <?php endif; ?>
-
-            <?php if (!empty($product['color'])): ?>
-              <div class="pSpec"><dt>Цвет</dt><dd><?php echo htmlspecialchars($product['color']); ?></dd></div>
-            <?php endif; ?>
-
-            <?php if (!empty($product['dimensions'])): ?>
-              <div class="pSpec"><dt>Размеры</dt><dd><?php echo htmlspecialchars($product['dimensions']); ?></dd></div>
-            <?php endif; ?>
-
-            <div class="pSpec"><dt>Артикул</dt><dd><?php echo htmlspecialchars($product['product_code']); ?></dd></div>
-
-            <div class="pSpec">
-              <dt>Наличие</dt>
-              <dd class="<?php echo !empty($product['in_stock']) ? 'is-in' : 'is-out'; ?>">
-                <?php echo !empty($product['in_stock']) ? 'В наличии' : 'Нет в наличии'; ?>
-              </dd>
-            </div>
-          </dl>
-        </article>
+        </div>
       </div>
-    </section>
-
-    <!-- Похожие товары (всегда 4) -->
-    <section class="pSection" aria-label="Похожие товары">
-      <div class="pSection__head">
-        <h2 class="pH2">Похожие товары</h2>
-        <a class="pLink" href="catalog.php">Смотреть каталог →</a>
-      </div>
-
-      <?php
-        // 1) сначала по категории
-        $stmt = $pdo->prepare("SELECT * FROM products WHERE category = ? AND product_code != ? LIMIT 4");
-        $stmt->execute([$product['category'], $product_code]);
-        $related = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // 2) если меньше 4 — добираем любыми другими
-        if (count($related) < 4) {
-          $need = 4 - count($related);
-
-          $exclude = array_merge([$product_code], array_column($related, 'product_code'));
-          $placeholders = implode(',', array_fill(0, count($exclude), '?'));
-
-          $sql = "SELECT * FROM products WHERE product_code NOT IN ($placeholders) ORDER BY RAND() LIMIT $need";
-          $stmt2 = $pdo->prepare($sql);
-          $stmt2->execute($exclude);
-
-          $more = $stmt2->fetchAll(PDO::FETCH_ASSOC);
-          $related = array_merge($related, $more);
-        }
-
-        $related = array_slice($related, 0, 4);
-      ?>
-
-      <div class="pGrid">
-        <?php foreach ($related as $rel): ?>
-          <article class="pMini" data-product data-id="<?php echo htmlspecialchars($rel['product_code']); ?>">
-            <div class="pMini__imgWrap">
-              <?php if (!empty($rel['badge'])): ?>
-                <span class="pbadge pbadge--<?php echo htmlspecialchars($rel['badge']); ?>">
-                  <?php echo $rel['badge'] === 'hit' ? 'Хит' : 'Новинка'; ?>
-                </span>
-              <?php endif; ?>
-
-              <img class="pMini__img"
-                   src="/souvenir_shop/<?php echo str_replace('../', '', $rel['image']); ?>"
-                   alt="<?php echo htmlspecialchars($rel['name']); ?>"
-                   loading="lazy">
-            </div>
-
-            <div class="pMini__body">
-              <h3 class="pMini__title"><?php echo htmlspecialchars($rel['name']); ?></h3>
-              <p class="pMini__meta"><?php echo htmlspecialchars($rel['meta']); ?></p>
-
-              <div class="pMini__bottom">
-                <div class="pMini__price">
-                  <?php echo number_format((float)$rel['price'], 0, ',', ' '); ?> ₽
-                </div>
-
-                <button class="btn btn--dark btn--sm"
-                        type="button"
-                        <?php echo empty($rel['in_stock']) ? 'disabled' : ''; ?>
-                        data-add-to-cart
-                        data-product-id="<?php echo htmlspecialchars($rel['product_code']); ?>"
-                        data-product-name="<?php echo htmlspecialchars($rel['name']); ?>">
-                  В корзину
-                </button>
-              </div>
-
-              <div class="pMini__stock <?php echo !empty($rel['in_stock']) ? 'is-in' : 'is-out'; ?>">
-                <?php echo !empty($rel['in_stock']) ? '✓ В наличии' : '✗ Нет в наличии'; ?>
-              </div>
-            </div>
-          </article>
-        <?php endforeach; ?>
-      </div>
-    </section>
+    <?php endforeach; ?>
+  </div>
+</section>
 
     <!-- Отзывы -->
     <section class="pSection" id="reviews" aria-label="Отзывы покупателей">
@@ -657,6 +695,21 @@ if (!$product) {
     </div>
   </div>
 </aside>
+
+<div class="imgModal" id="imgModal" aria-hidden="true">
+  <div class="imgModal__backdrop" data-close></div>
+
+  <div class="imgModal__toolbar">
+    <button type="button" class="imgModal__btn" data-zoom-out aria-label="Уменьшить">−</button>
+    <button type="button" class="imgModal__btn" data-zoom-in aria-label="Увеличить">+</button>
+    <button type="button" class="imgModal__btn" data-zoom-reset aria-label="Сброс">100%</button>
+    <button type="button" class="imgModal__btn imgModal__btn--close" data-close aria-label="Закрыть">✕</button>
+  </div>
+
+  <div class="imgModal__stage">
+    <img id="imgModalImg" alt="">
+  </div>
+</div>
 
     <script src="../js/script.js"></script>
     <script src="../js/product.js"></script>
