@@ -222,9 +222,9 @@ $isAuth = isset($_SESSION['user_id']);
           </div>
           <div class="muted small">Товаров: <span id="cartTotalQty">0</span></div>
 
-          <button class="btn btn--dark btn--full" type="button" style="margin-top:12px;" disabled>
-            Оформить заказ
-          </button>
+<a class="btn btn--dark btn--full" href="checkout.php" style="margin-top:12px;">
+  Оформить заказ
+</a>
 
           <div class="muted small" style="margin-top:10px;">
             Оформление можно подключить позже — сейчас это рабочая корзина.
