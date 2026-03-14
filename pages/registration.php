@@ -208,7 +208,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         <!-- 🔑 ИКОНКА АККАУНТА - показываем кнопку входа для неавторизованных -->
         <?php if ($isAuth): ?>
           <a class="iconBtn iconBtn--auth"
-             href="../php/account.php"
+             href="account.php"
              aria-label="Личный кабинет">
             <svg viewBox="0 0 24 24" aria-hidden="true" class="iconUser">
               <circle cx="12" cy="8" r="3.2" />
@@ -373,7 +373,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
   <div class="container">
     <div class="footer__grid">
-      <!-- Блок с логотипом -->
       <div>
         <a href="../index.php" class="footer__brand-link">
           <div class="footer__brand">
@@ -385,7 +384,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         </a>
         <p class="muted">Сувениры ручной работы и забота о деталях.</p>
         
-        <!-- Соцсети с иконками -->
         <div class="footer__social-icons">
           <div class="social-icons">
             <a href="#" class="social-icon" aria-label="ВКонтакте" title="ВКонтакте">
@@ -407,7 +405,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         </div>
       </div>
 
-      <!-- Навигация -->
       <div>
         <h3 class="footer__title">Навигация</h3>
         <ul class="footer__list">
@@ -418,7 +415,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         </ul>
       </div>
 
-      <!-- Информация -->
       <div>
         <h3 class="footer__title">Информация</h3>
         <ul class="footer__list">
@@ -429,7 +425,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         </ul>
       </div>
 
-      <!-- Рассылка -->
       <div>
         <h3 class="footer__title">Рассылка</h3>
         <p class="muted small">Новости и новые коллекции без спама. Первым узнавайте о скидках!</p>
@@ -469,7 +464,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       });
     });
     
-    // Обработка формы подписки (опционально)
     const newsletterForm = document.querySelector('[data-newsletter-form]');
     if (newsletterForm) {
       newsletterForm.addEventListener('submit', function(e) {
@@ -478,7 +472,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         const email = emailInput.value.trim();
         
         if (email && email.includes('@')) {
-          // Здесь можно добавить AJAX-запрос для отправки данных
           console.log('Подписка на рассылку:', email);
           alert('Спасибо за подписку! На ' + email + ' отправлено письмо с подтверждением.');
           emailInput.value = '';
@@ -487,8 +480,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
     }
   });
 </script>
-
-<!-- Модальные окна из index.php -->
 
 <div class="modal" id="authModal" aria-hidden="true"
      <?php if (!empty($_SESSION['auth_error'])) echo 'data-autoshow="1"'; ?>>

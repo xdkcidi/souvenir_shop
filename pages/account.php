@@ -2,59 +2,395 @@
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
+  header('Location: login.php');
+  exit;
 }
 
 require_once __DIR__ . '/../php/db.php'; // $pdo
 
-$userId = (int)$_SESSION['user_id'];
-$errors = [];
+$userId  = (int)$_SESSION['user_id'];
+$errors  = [];
 $success = '';
 
-// Загрузка данных пользователя
+// ===== 1) Загружаем пользователя (без delivery_address, но с avatar) =====
 $stmt = $pdo->prepare("
-    SELECT id, login, email, phone, delivery_address
-    FROM users
-    WHERE id = :id
-    LIMIT 1
+  SELECT id, login, email, phone, avatar
+  FROM users
+  WHERE id = :id
+  LIMIT 1
 ");
 $stmt->execute([':id' => $userId]);
-$user = $stmt->fetch();
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user) {
-    // если вдруг в сессии мусор — выходим
-    session_destroy();
-    header('Location: login.php');
-    exit;
+  session_destroy();
+  header('Location: login.php');
+  exit;
 }
 
-// Обновление профиля (телефон, адрес)
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $phone   = trim($_POST['phone'] ?? '');
-    $address = trim($_POST['delivery_address'] ?? '');
+// ===== CSRF =====
+if (empty($_SESSION['csrf_token'])) {
+  $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+}
+$csrf = $_SESSION['csrf_token'];
 
-    // тут можно добавить валидацию телефона/адреса, если хочется
-    $stmt = $pdo->prepare("
-        UPDATE users
-        SET phone = :phone,
-            delivery_address = :address
-        WHERE id = :id
-    ");
-    $ok = $stmt->execute([
-        ':phone'   => $phone,
-        ':address' => $address,
-        ':id'      => $userId,
-    ]);
+// ===== 2) Функция статуса заказа (лейбл + класс) =====
+function orderStatusMeta(string $status): array {
+  $s = strtolower(trim($status));
+  return match ($s) {
+    'new' => ['НОВЫЙ', 'status-processing'],
+    'processing' => ['В ОБРАБОТКЕ', 'status-processing'],
+    'delivered' => ['ДОСТАВЛЕН', 'status-delivered'],
+    'canceled' => ['ОТМЕНЁН', 'status-canceled'],
+    default => ['В ОБРАБОТКЕ', 'status-processing'],
+  };
+}
 
-    if ($ok) {
+// ===== 3) POST: Профиль (телефон + аватар) =====
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['profile_action'])) {
+  $token = $_POST['csrf_token'] ?? '';
+  if (!$token || !hash_equals($_SESSION['csrf_token'], $token)) {
+    $errors[] = 'Ошибка безопасности. Обновите страницу и попробуйте снова.';
+  } else {
+    $action = (string)($_POST['profile_action'] ?? '');
+
+    // 3.1 сохранить телефон
+    if ($action === 'save_profile') {
+      $phone = trim($_POST['phone'] ?? '');
+
+      $stmt = $pdo->prepare("UPDATE users SET phone = :phone WHERE id = :id");
+      $ok = $stmt->execute([':phone' => $phone, ':id' => $userId]);
+
+      if ($ok) {
         $success = 'Данные профиля обновлены.';
         $user['phone'] = $phone;
-        $user['delivery_address'] = $address;
-    } else {
+      } else {
         $errors[] = 'Не удалось обновить данные. Попробуйте ещё раз.';
+      }
     }
+
+    // 3.2 загрузить аватар (users.avatar)
+    if ($action === 'upload_avatar') {
+      if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+        $errors[] = 'Не удалось загрузить файл.';
+      } else {
+        $file = $_FILES['avatar'];
+
+        if (($file['size'] ?? 0) > 2 * 1024 * 1024) {
+          $errors[] = 'Файл слишком большой (макс. 2MB).';
+        } else {
+          $tmp = $file['tmp_name'];
+
+          $finfo = finfo_open(FILEINFO_MIME_TYPE);
+          $mime = finfo_file($finfo, $tmp);
+          finfo_close($finfo);
+
+          $allowed = [
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png',
+            'image/webp' => 'webp',
+          ];
+
+          if (!isset($allowed[$mime])) {
+            $errors[] = 'Можно загрузить только JPG / PNG / WEBP.';
+          } else {
+            $ext = $allowed[$mime];
+
+            $dirFs  = __DIR__ . '/../img/avatars';
+            $dirWeb = '../img/avatars';
+
+            if (!is_dir($dirFs)) {
+              @mkdir($dirFs, 0775, true);
+            }
+
+            $name = 'u' . $userId . '_' . time() . '.' . $ext;
+            $pathFs  = $dirFs . '/' . $name;
+            $pathWeb = $dirWeb . '/' . $name;
+
+            if (!move_uploaded_file($tmp, $pathFs)) {
+              $errors[] = 'Не удалось сохранить файл.';
+            } else {
+              // удалить старый аватар (если был)
+              $old = trim((string)($user['avatar'] ?? ''));
+              if ($old && str_contains($old, '/img/avatars/')) {
+                $oldFs = __DIR__ . '/../' . ltrim($old, '/');
+                if (is_file($oldFs)) @unlink($oldFs);
+              }
+
+              $upd = $pdo->prepare("UPDATE users SET avatar = :p WHERE id = :id");
+              $upd->execute([':p' => $pathWeb, ':id' => $userId]);
+
+              $user['avatar'] = $pathWeb;
+              $success = 'Фото профиля обновлено.';
+            }
+          }
+        }
+      }
+    }
+  }
 }
+
+// ===== 4) Экспорт данных (JSON) =====
+if (isset($_GET['export']) && $_GET['export'] === '1') {
+  header('Content-Type: application/json; charset=utf-8');
+  header('Content-Disposition: attachment; filename="lavka_account_data.json"');
+
+  $profile = [
+    'id'    => (int)$user['id'],
+    'login' => (string)$user['login'],
+    'email' => (string)$user['email'],
+    'phone' => (string)($user['phone'] ?? ''),
+    'avatar'=> (string)($user['avatar'] ?? ''),
+  ];
+
+  $stmt = $pdo->prepare("
+    SELECT id, total_sum, status, created_at,
+           delivery_type, delivery_fee, delivery_address, pickup_address,
+           delivery_date, delivery_slot,
+           promo_code, discount_percent, discount_sum, items_sum
+    FROM orders
+    WHERE user_id = :uid
+    ORDER BY id DESC
+  ");
+  $stmt->execute([':uid' => $userId]);
+  $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+  $stmt = $pdo->prepare("
+    SELECT p.product_code, p.name, p.price, p.meta
+    FROM favorites f
+    JOIN products p ON p.id = f.product_id
+    WHERE f.user_id = :uid
+    ORDER BY f.created_at DESC
+  ");
+  $stmt->execute([':uid' => $userId]);
+  $favoritesExport = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+  echo json_encode([
+    'profile' => $profile,
+    'orders' => $orders,
+    'favorites' => $favoritesExport,
+    'exported_at' => date('c'),
+  ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+
+  exit;
+}
+
+// ===== 5) POST: Безопасность (пароль + удаление) =====
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['security_action'])) {
+  $action = (string)($_POST['security_action'] ?? '');
+
+  $token = $_POST['csrf_token'] ?? '';
+  if (!$token || !hash_equals($_SESSION['csrf_token'], $token)) {
+    $errors[] = 'Ошибка безопасности (CSRF). Обновите страницу и попробуйте снова.';
+  } else {
+
+    // 5.1 смена пароля
+    if ($action === 'change_password') {
+      $current = (string)($_POST['current_password'] ?? '');
+      $new1    = (string)($_POST['new_password'] ?? '');
+      $new2    = (string)($_POST['new_password2'] ?? '');
+
+      if (mb_strlen($new1) < 6) {
+        $errors[] = 'Новый пароль должен быть не короче 6 символов.';
+      } elseif ($new1 !== $new2) {
+        $errors[] = 'Пароли не совпадают.';
+      } else {
+        $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $userId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row || empty($row['password_hash'])) {
+          $errors[] = 'Не найден хэш пароля в базе (password_hash).';
+        } elseif (!password_verify($current, $row['password_hash'])) {
+          $errors[] = 'Текущий пароль неверный.';
+        } else {
+          $hash = password_hash($new1, PASSWORD_DEFAULT);
+          $upd = $pdo->prepare("UPDATE users SET password_hash = :h WHERE id = :id");
+          $upd->execute([':h' => $hash, ':id' => $userId]);
+          $success = 'Пароль успешно изменён.';
+        }
+      }
+    }
+
+    // 5.2 удаление аккаунта
+    if ($action === 'delete_account') {
+      $confirm = trim((string)($_POST['confirm_delete'] ?? ''));
+      if ($confirm !== 'УДАЛИТЬ') {
+        $errors[] = 'Для удаления аккаунта введите слово: УДАЛИТЬ';
+      } else {
+        try {
+          $pdo->beginTransaction();
+
+          $pdo->prepare("DELETE FROM favorites WHERE user_id = ?")->execute([$userId]);
+          $pdo->prepare("DELETE FROM cart_items WHERE user_id = ?")->execute([$userId]);
+          $pdo->prepare("DELETE FROM promo_redemptions WHERE user_id = ?")->execute([$userId]);
+
+          $stmt = $pdo->prepare("SELECT id FROM orders WHERE user_id = ?");
+          $stmt->execute([$userId]);
+          $orderIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+          if ($orderIds) {
+            $in = implode(',', array_fill(0, count($orderIds), '?'));
+            $pdo->prepare("DELETE FROM order_items WHERE order_id IN ($in)")->execute($orderIds);
+          }
+          $pdo->prepare("DELETE FROM orders WHERE user_id = ?")->execute([$userId]);
+
+          $pdo->prepare("DELETE FROM users WHERE id = ?")->execute([$userId]);
+
+          $pdo->commit();
+          session_destroy();
+          header('Location: ../index.php');
+          exit;
+
+        } catch (Throwable $e) {
+          if ($pdo->inTransaction()) $pdo->rollBack();
+          $errors[] = 'Не удалось удалить аккаунт. Попробуйте позже.';
+        }
+      }
+    }
+  }
+}
+
+// ===== 6) Избранное (для вкладки + счётчик) =====
+$stmt = $pdo->prepare("
+  SELECT
+    f.id AS fav_row_id,
+    p.id AS product_db_id,
+    p.product_code AS product_code,
+    p.name AS name,
+    p.image AS image,
+    p.price AS price,
+    p.meta AS meta
+  FROM favorites f
+  JOIN products p ON f.product_id = p.id
+  WHERE f.user_id = :uid
+  ORDER BY f.created_at DESC, f.id DESC
+");
+$stmt->execute([':uid' => $userId]);
+$favorites = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$favoritesCount = count($favorites);
+
+foreach ($favorites as &$f) {
+  $img = $f['image'] ?? null;
+  if ($img) {
+    $img = ltrim((string)$img, './');
+    $img = '../' . $img;
+  } else {
+    $img = '../img/placeholder.webp';
+  }
+  $f['img'] = $img;
+}
+unset($f);
+
+// ===== 7) Заказы (топ-5 + все) =====
+$stmt = $pdo->prepare("
+  SELECT id, total_sum, status, created_at,
+         delivery_type, delivery_fee, delivery_address, pickup_address,
+         delivery_date, delivery_slot,
+         promo_code, discount_percent, discount_sum, items_sum
+  FROM orders
+  WHERE user_id = :uid
+  ORDER BY id DESC
+  LIMIT 5
+");
+$stmt->execute([':uid' => $userId]);
+$ordersTop = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$stmt = $pdo->prepare("
+  SELECT id, total_sum, status, created_at,
+         delivery_type, delivery_fee, delivery_address, pickup_address,
+         delivery_date, delivery_slot,
+         promo_code, discount_percent, discount_sum, items_sum
+  FROM orders
+  WHERE user_id = :uid
+  ORDER BY id DESC
+");
+$stmt->execute([':uid' => $userId]);
+$ordersAll = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$topIds = array_map(fn($o) => (int)$o['id'], $ordersTop);
+$restOrders = array_values(array_filter($ordersAll, fn($o) => !in_array((int)$o['id'], $topIds, true)));
+
+// товары по заказам
+$orderItems = [];
+if (!empty($ordersAll)) {
+  $allIds = array_map(fn($o) => (int)$o['id'], $ordersAll);
+  $in = implode(',', array_fill(0, count($allIds), '?'));
+
+  $stmt = $pdo->prepare("
+    SELECT oi.order_id, oi.product_code, oi.name, oi.qty,
+           p.image
+    FROM order_items oi
+    LEFT JOIN products p ON p.product_code = oi.product_code
+    WHERE oi.order_id IN ($in)
+    ORDER BY oi.order_id DESC, oi.id ASC
+  ");
+  $stmt->execute($allIds);
+  $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+  foreach ($rows as $r) {
+    $oid = (int)$r['order_id'];
+    if (!isset($orderItems[$oid])) $orderItems[$oid] = [];
+
+    $img = $r['image'] ?? null;
+    if ($img) {
+      $img = ltrim((string)$img, './');
+      $img = '../' . $img;
+    } else {
+      $img = '../img/placeholder.webp';
+    }
+
+    $orderItems[$oid][] = [
+      'name' => (string)$r['name'],
+      'qty'  => (int)$r['qty'],
+      'img'  => $img,
+    ];
+  }
+}
+
+// ===== 8) Профиль: реальные цифры + статус/прогресс + последний заказ =====
+$stmt = $pdo->prepare("
+  SELECT COUNT(*) AS orders_count,
+         COALESCE(SUM(items_sum),0) AS items_total
+  FROM orders
+  WHERE user_id = :uid
+");
+$stmt->execute([':uid' => $userId]);
+$stats = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$ordersCount = (int)($stats['orders_count'] ?? 0);
+$itemsTotal  = (int)($stats['items_total'] ?? 0);
+
+$BONUS_RATE = 3;
+$bonusBalance = (int)round($itemsTotal * ($BONUS_RATE / 100));
+
+if ($itemsTotal >= 30000) {
+  $statusName = 'VIP';
+  $nextName = null; $nextGoal = null;
+} elseif ($itemsTotal >= 10000) {
+  $statusName = 'Постоянный';
+  $nextName = 'VIP'; $nextGoal = 30000;
+} else {
+  $statusName = 'Новичок';
+  $nextName = 'Постоянный'; $nextGoal = 10000;
+}
+
+$progressPct = 0;
+$leftToNext = 0;
+if ($nextGoal) {
+  $progressPct = (int)round(min(100, ($itemsTotal / $nextGoal) * 100));
+  $leftToNext  = max(0, $nextGoal - $itemsTotal);
+}
+
+$stmt = $pdo->prepare("
+  SELECT id, total_sum, status, created_at
+  FROM orders
+  WHERE user_id = :uid
+  ORDER BY id DESC
+  LIMIT 1
+");
+$stmt->execute([':uid' => $userId]);
+$lastOrder = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
 $isAuth = true;
 $hasAuthError = !empty($_SESSION['auth_error']);
@@ -66,7 +402,8 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Личный кабинет — Лавка</title>
   <meta name="description" content="Личный кабинет Лавка: ваши данные, адрес доставки, избранное и купоны." />
-  <link rel="stylesheet" href="../css/account.css" />
+  <link rel="stylesheet" href="../css/cart.css"/>
+  <link rel="stylesheet" href="../css/account.css"/>
   <link rel="stylesheet" href="../css/style.css"/>
 </head>
 <body>
@@ -250,7 +587,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
                 </svg>
                 Избранное
-                <span class="badge">3</span>
+                <span class="badge"><?= (int)$favoritesCount ?></span>
             </button>
             <button class="account-tab" role="tab" data-tab="coupons">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -269,373 +606,817 @@ $hasAuthError = !empty($_SESSION['auth_error']);
             </button>
         </div>
 
-        <!-- Вкладка "Профиль" -->
-        <section class="account-card active" id="profile-tab" role="tabpanel" aria-labelledby="profile-tab">
-            <div class="profile-header">
-                <div class="avatar-section">
-                    <div class="avatar" style="background: linear-gradient(135deg, #398550 0%, #164324 100%);">
-                        <?= mb_strtoupper(mb_substr($user['login'], 0, 1, 'UTF-8')) ?>
-                    </div>
-                    <button class="avatar-change" type="button">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                        Изменить фото
-                    </button>
+<?php
+// ===== CSRF =====
+if (empty($_SESSION['csrf_token'])) {
+  $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+}
+$csrf = $_SESSION['csrf_token'];
+
+// ===== Статистика профиля (заказы / сумма товаров) =====
+$stmt = $pdo->prepare("
+  SELECT
+    COUNT(*) AS orders_count,
+    COALESCE(SUM(items_sum), 0) AS items_total
+  FROM orders
+  WHERE user_id = :uid
+");
+$stmt->execute([':uid' => $userId]);
+$stats = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$ordersCount = (int)($stats['orders_count'] ?? 0);
+$itemsTotal  = (int)($stats['items_total'] ?? 0);
+
+// бонусы (как у тебя): 3%
+$BONUS_RATE = 3;
+$bonusBalance = (int)round($itemsTotal * ($BONUS_RATE / 100));
+
+// статус пользователя
+if ($itemsTotal >= 30000) {
+  $statusName = 'VIP';
+} elseif ($itemsTotal >= 10000) {
+  $statusName = 'Постоянный';
+} else {
+  $statusName = 'Новичок';
+}
+
+// ===== Обработка формы профиля (телефон) и загрузка аватара =====
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $token = $_POST['csrf_token'] ?? '';
+  if (!$token || !hash_equals($_SESSION['csrf_token'], $token)) {
+    $errors[] = 'Ошибка безопасности. Обновите страницу и попробуйте снова.';
+  } else {
+
+    $action = $_POST['profile_action'] ?? 'save_profile';
+
+    // 1) Сохранить телефон
+    if ($action === 'save_profile') {
+      $phone = trim($_POST['phone'] ?? '');
+
+      $stmt = $pdo->prepare("UPDATE users SET phone = :phone WHERE id = :id");
+      $ok = $stmt->execute([':phone' => $phone, ':id' => $userId]);
+
+      if ($ok) {
+        $success = 'Данные профиля обновлены.';
+        $user['phone'] = $phone;
+      } else {
+        $errors[] = 'Не удалось обновить данные. Попробуйте ещё раз.';
+      }
+    }
+
+    // 2) Загрузить аватар (users.avatar)
+    if ($action === 'upload_avatar') {
+      if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+        $errors[] = 'Не удалось загрузить файл.';
+      } else {
+        $file = $_FILES['avatar'];
+
+        if (($file['size'] ?? 0) > 2 * 1024 * 1024) {
+          $errors[] = 'Файл слишком большой (макс. 2MB).';
+        } else {
+          $tmp = $file['tmp_name'];
+
+          $finfo = finfo_open(FILEINFO_MIME_TYPE);
+          $mime = finfo_file($finfo, $tmp);
+          finfo_close($finfo);
+
+          $allowed = [
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png',
+            'image/webp' => 'webp',
+          ];
+
+          if (!isset($allowed[$mime])) {
+            $errors[] = 'Можно загрузить только JPG / PNG / WEBP.';
+          } else {
+            $ext = $allowed[$mime];
+
+            $dirFs  = __DIR__ . '/../img/avatars';
+            $dirWeb = '../img/avatars';
+
+            if (!is_dir($dirFs)) {
+              @mkdir($dirFs, 0775, true);
+            }
+
+            $name = 'u' . $userId . '_' . time() . '.' . $ext;
+            $pathFs  = $dirFs . '/' . $name;
+            $pathWeb = $dirWeb . '/' . $name;
+
+            if (!move_uploaded_file($tmp, $pathFs)) {
+              $errors[] = 'Не удалось сохранить файл.';
+            } else {
+
+              // опционально удаляем старый аватар
+              $old = trim((string)($user['avatar'] ?? ''));
+              if ($old && str_contains($old, '/img/avatars/')) {
+                $oldFs = __DIR__ . '/../' . ltrim($old, '/');
+                if (is_file($oldFs)) @unlink($oldFs);
+              }
+
+              $upd = $pdo->prepare("UPDATE users SET avatar = :p WHERE id = :id");
+              $upd->execute([':p' => $pathWeb, ':id' => $userId]);
+
+              $user['avatar'] = $pathWeb;
+              $success = 'Фото профиля обновлено.';
+            }
+          }
+        }
+      }
+    }
+  }
+}
+?>
+<!-- Вкладка "Профиль" -->
+<section class="account-card active" id="profile-tab" role="tabpanel" aria-labelledby="profile-tab">
+  <div class="profile-header">
+    <div class="avatar-section">
+
+      <div class="avatar" style="background: linear-gradient(135deg, #398550 0%, #164324 100%); overflow:hidden;">
+        <?php if (!empty($user['avatar'])): ?>
+          <img src="<?= htmlspecialchars($user['avatar'], ENT_QUOTES) ?>"
+               alt="Аватар"
+               style="width:100%;height:100%;object-fit:cover;display:block;">
+        <?php else: ?>
+          <?= mb_strtoupper(mb_substr($user['login'], 0, 1, 'UTF-8')) ?>
+        <?php endif; ?>
+      </div>
+
+      <form method="post" enctype="multipart/form-data" style="margin:0;" id="avatarForm">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf, ENT_QUOTES) ?>">
+        <input type="hidden" name="profile_action" value="upload_avatar">
+        <input type="file" name="avatar" id="avatarInput" accept="image/jpeg,image/png,image/webp" hidden>
+
+        <button class="avatar-change" type="button" id="avatarPickBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          Изменить фото
+        </button>
+      </form>
+    </div>
+
+    <div class="profile-info">
+
+      <div class="profile-nameRow">
+        <h2 class="profile-name"><?= htmlspecialchars($user['login'], ENT_QUOTES) ?></h2>
+        <span class="status-badge status-badge--<?= $statusName === 'VIP' ? 'vip' : ($statusName === 'Постоянный' ? 'loyal' : 'new') ?>">
+          <?= htmlspecialchars($statusName, ENT_QUOTES) ?>
+        </span>
+      </div>
+
+      <p class="profile-email"><?= htmlspecialchars($user['email'], ENT_QUOTES) ?></p>
+
+      <div class="profile-stats">
+        <div class="stat stat--card">
+          <span class="stat-value"><?= (int)$ordersCount ?></span>
+          <span class="stat-label">заказов</span>
+        </div>
+
+        <div class="stat stat--card">
+          <span class="stat-value"><?= (int)$bonusBalance ?></span>
+          <span class="stat-label">бонусов</span>
+        </div>
+
+        <div class="stat stat--card">
+          <span class="stat-value"><?= (int)$favoritesCount ?></span>
+          <span class="stat-label">в избранном</span>
+        </div>
+      </div>
+
+      <!-- Статус и прогресс -->
+      <div class="status-progress">
+        <?php if ($nextGoal): ?>
+          <div class="status-progress__top">
+            <span class="muted small">
+              До уровня <b><?= htmlspecialchars($nextName, ENT_QUOTES) ?></b> осталось:
+              <b><?= number_format((int)$leftToNext, 0, '', ' ') ?> ₽</b>
+            </span>
+            <span class="muted small"><?= (int)$progressPct ?>%</span>
+          </div>
+
+          <div class="status-progress__bar" role="progressbar"
+               aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= (int)$progressPct ?>">
+            <div class="status-progress__fill" style="width: <?= (int)$progressPct ?>%"></div>
+          </div>
+        <?php else: ?>
+          <div class="muted small">Вы на максимальном уровне ✅</div>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+
+  <!-- Последний заказ / empty -->
+  <div class="profile-latest">
+    <?php if ($lastOrder): ?>
+      <?php [$lbl, $cls] = orderStatusMeta((string)$lastOrder['status']); ?>
+      <div class="card" style="padding:16px;">
+        <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+          <div>
+            <div class="muted small">Последний заказ</div>
+            <div style="font-weight:800; font-size:18px; margin-top:4px;">
+              №<?= (int)$lastOrder['id'] ?>
+              <span class="order-status <?= $cls ?>" style="margin-left:10px; font-size:12px; padding:6px 10px;">
+                <?= htmlspecialchars($lbl, ENT_QUOTES) ?>
+              </span>
+            </div>
+            <div class="muted small" style="margin-top:6px;">
+              <?= date('d.m.Y', strtotime((string)$lastOrder['created_at'])) ?>
+            </div>
+          </div>
+
+          <div style="font-weight:900; font-size:22px; white-space:nowrap;">
+            <?= number_format((int)$lastOrder['total_sum'], 0, '', ' ') ?> ₽
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <a class="btn btn--dark btn--sm" href="account.php?tab=orders">Открыть историю заказов</a>
+        </div>
+      </div>
+    <?php else: ?>
+      <div class="card" style="padding:16px;">
+        <div style="font-weight:800; font-size:18px;">Пока нет заказов</div>
+        <div class="muted" style="margin-top:6px;">
+          Сделайте первый заказ — начислим бонусы 🙂
+        </div>
+        <div style="margin-top:12px;">
+          <a class="btn btn--dark btn--sm" href="catalog.php">Перейти в каталог</a>
+        </div>
+      </div>
+    <?php endif; ?>
+  </div>
+
+  <div class="profile-card">
+    <h3 class="profile-card__title">Личные данные</h3>
+
+    <form method="post" class="profile-form" novalidate>
+      <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf, ENT_QUOTES) ?>">
+      <input type="hidden" name="profile_action" value="save_profile">
+
+      <div class="profile-form__grid">
+        <div class="profile-form__group">
+          <label class="profile-form__label" for="phone">Телефон</label>
+          <input class="profile-input"
+                 type="tel"
+                 id="phone"
+                 name="phone"
+                 placeholder="+7 (999) 000-00-00"
+                 value="<?= htmlspecialchars($user['phone'] ?? '', ENT_QUOTES) ?>">
+        </div>
+      </div>
+
+ <div class="profile-form__actions profile-form__actions--row">
+  <button class="btn btn--dark" type="submit">Сохранить изменения</button>
+
+  <a href="../php/logout.php" class="btn btn--outline logout-link">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+      <polyline points="16 17 21 12 16 7"></polyline>
+      <line x1="21" y1="12" x2="9" y2="12"></line>
+    </svg>
+    Выйти из аккаунта
+  </a>
+</div>
+    </form>
+  </div>
+</section>
+
+<!-- Вкладка "Заказы" -->
+<section class="account-card" id="orders-tab" role="tabpanel" aria-labelledby="orders-tab" hidden>
+  <div class="section-header">
+    <h2 class="section-title">История заказов</h2>
+
+    <div style="display:flex; gap:12px; align-items:center;">
+      <button type="button" class="link-all" id="showAllOrdersBtn">Все заказы →</button>
+      <button type="button" class="link-all" id="collapseOrdersBtn" style="display:none;">Свернуть</button>
+    </div>
+  </div>
+
+  <div class="orders-list" id="ordersList">
+    <?php
+      $renderOrderCard = function(array $o) use ($orderItems) {
+
+        $oid = (int)$o['id'];
+        [$label, $cls] = orderStatusMeta((string)$o['status']);
+        $date = date('d.m.Y', strtotime((string)$o['created_at']));
+
+        $deliveryType = (string)($o['delivery_type'] ?? 'delivery');
+        $deliveryText = ($deliveryType === 'pickup') ? 'Самовывоз' : 'Доставка';
+        $addr = (string)($o['delivery_address'] ?? ($o['pickup_address'] ?? ''));
+        $deliveryFee = (int)($o['delivery_fee'] ?? 0);
+
+        $deliveryDate = (string)($o['delivery_date'] ?? '');
+        $deliverySlot = (string)($o['delivery_slot'] ?? '');
+
+        $itemsSum = (int)($o['items_sum'] ?? 0);
+        $discountSum = (int)($o['discount_sum'] ?? 0);
+        $discountPercent = (int)($o['discount_percent'] ?? 0);
+        $promo = trim((string)($o['promo_code'] ?? ''));
+
+        $totalNum = (int)($o['total_sum'] ?? 0);
+
+        // для строки итогов:
+        $itemsSumNum = $itemsSum;
+        $discountSumNum = $discountSum;
+        $deliveryFeeNum = ($deliveryType === 'pickup') ? 0 : $deliveryFee;
+
+        // товары
+        $items = $orderItems[$oid] ?? [];
+
+        ob_start();
+    ?>
+      <div class="order-card">
+        <div class="order-header">
+          <div>
+            <h3 class="order-number">Заказ №<?= $oid ?></h3>
+            <span class="order-date"><?= $date ?></span>
+          </div>
+          <span class="order-status <?= $cls ?>"><?= htmlspecialchars($label) ?></span>
+        </div>
+
+        <div class="order-body">
+          <!-- товары (фото + кол-во) -->
+          <div class="order-products" style="gap:12px;">
+            <?php if ($items): ?>
+              <?php foreach ($items as $it): ?>
+                <div class="product-preview" style="align-items:center;">
+                  <div class="product-preview__image"
+                      style="width:64px;height:64px;border-radius:14px;overflow:hidden;background:#f3f3f3;flex:0 0 auto;">
+                    <img src="<?= htmlspecialchars($it['img']) ?>"
+                        alt="<?= htmlspecialchars($it['name']) ?>"
+                        style="width:100%;height:100%;object-fit:cover;display:block;">
+                  </div>
+
+                  <div style="display:flex;flex-direction:column;gap:2px;">
+                    <span class="product-preview__name"><?= htmlspecialchars($it['name']) ?></span>
+                    <span class="muted small">Количество: <?= (int)$it['qty'] ?></span>
+                  </div>
                 </div>
-                
-                <div class="profile-info">
-                    <h2 class="profile-name"><?= htmlspecialchars($user['login']) ?></h2>
-                    <p class="profile-email"><?= htmlspecialchars($user['email']) ?></p>
-                    
-                    <div class="profile-stats">
-                        <div class="stat">
-                            <span class="stat-value">5</span>
-                            <span class="stat-label">заказов</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-value">350</span>
-                            <span class="stat-label">бонусов</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-value">3</span>
-                            <span class="stat-label">в избранном</span>
-                        </div>
-                    </div>
-                </div>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <div class="muted small">Товары не найдены</div>
+            <?php endif; ?>
+          </div>
+
+          <!-- данные заказа -->
+          <div class="order-footer" style="margin-top:14px; display:grid; gap:8px;">
+            <!-- итог крупно -->
+            <div class="order-total"><?= number_format($totalNum, 0, '', ' ') ?> ₽</div>
+
+            <!-- строка итогов (сразу под суммой) -->
+            <div class="muted small">
+              Товары <b><?= number_format($itemsSumNum, 0, '', ' ') ?> ₽</b>
+              <span aria-hidden="true"> • </span>
+              Скидка <b>−<?= number_format($discountSumNum, 0, '', ' ') ?> ₽</b>
+              <span aria-hidden="true"> • </span>
+              Доставка <b><?= number_format($deliveryFeeNum, 0, '', ' ') ?> ₽</b>
+              <span aria-hidden="true"> • </span>
+              Итог <b><?= number_format($totalNum, 0, '', ' ') ?> ₽</b>
             </div>
 
-            <div class="profile-card">
-                <h3 class="profile-card__title">Личные данные</h3>
-                
-                <form method="post" class="profile-form" novalidate>
-                    <div class="profile-form__grid">
-                        <div class="profile-form__group">
-                            <label class="profile-form__label" for="phone">Телефон</label>
-                            <input
-                                class="profile-input"
-                                type="tel"
-                                id="phone"
-                                name="phone"
-                                placeholder="+7 (999) 000-00-00"
-                                value="<?php echo htmlspecialchars($user['phone'] ?? '', ENT_QUOTES); ?>"
-                            />
-                        </div>
-
-                        <div class="profile-form__group">
-                            <label class="profile-form__label" for="delivery_address">Адрес доставки</label>
-                            <textarea
-                                class="profile-input profile-input--area"
-                                id="delivery_address"
-                                name="delivery_address"
-                                rows="3"
-                                placeholder="Город, улица, дом, квартира"
-                            ><?php echo htmlspecialchars($user['delivery_address'] ?? '', ENT_QUOTES); ?></textarea>
-                        </div>
-                    </div>
-
-                    <div class="profile-form__actions">
-                        <button class="btn btn--dark" type="submit">Сохранить изменения</button>
-                    </div>
-
-                    <div class="profile-logout">
-                        <a href="../php/logout.php" class="btn btn--outline logout-link">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                                <polyline points="16 17 21 12 16 7"></polyline>
-                                <line x1="21" y1="12" x2="9" y2="12"></line>
-                            </svg>
-                            Выйти из аккаунта
-                        </a>
-                    </div>
-                </form>
-            </div>
-        </section>
-
-        <!-- Вкладка "Заказы" -->
-        <section class="account-card" id="orders-tab" role="tabpanel" aria-labelledby="orders-tab" hidden>
-            <div class="section-header">
-                <h2 class="section-title">История заказов</h2>
-                <a href="orders.php" class="link-all">Все заказы →</a>
-            </div>
-            
-            <div class="orders-list">
-                <!-- Пример заказа 1 -->
-                <div class="order-card">
-                    <div class="order-header">
-                        <div>
-                            <h3 class="order-number">Заказ №14257</h3>
-                            <span class="order-date">15.03.2025</span>
-                        </div>
-                        <span class="order-status status-delivered">
-                            Доставлен
-                        </span>
-                    </div>
-                    
-                    <div class="order-body">
-                        <div class="order-products">
-                            <div class="product-preview">
-                                <div class="product-preview__image" style="background-color: #398550;"></div>
-                                <span class="product-preview__name">Свеча "Весенний ветер"</span>
-                            </div>
-                            <div class="product-preview">
-                                <div class="product-preview__image" style="background-color: #164324;"></div>
-                                <span class="product-preview__name">Керамическая кружка</span>
-                            </div>
-                        </div>
-                        
-                        <div class="order-footer">
-                            <div class="order-total">3 450 ₽</div>
-                            <div class="order-tracking">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                    <circle cx="12" cy="10" r="3"></circle>
-                                </svg>
-                                <span>Трекер: RA789654321RU</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="order-actions">
-                        <button class="btn btn--outline btn--sm" data-order-details>
-                            Подробнее
-                        </button>
-                        <button class="btn btn--outline btn--sm" data-order-repeat>
-                            Повторить заказ
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Пример заказа 2 -->
-                <div class="order-card">
-                    <div class="order-header">
-                        <div>
-                            <h3 class="order-number">Заказ №14201</h3>
-                            <span class="order-date">02.03.2025</span>
-                        </div>
-                        <span class="order-status status-processing">
-                            В обработке
-                        </span>
-                    </div>
-                    
-                    <div class="order-body">
-                        <div class="order-products">
-                            <div class="product-preview">
-                                <div class="product-preview__image" style="background-color: #398550;"></div>
-                                <span class="product-preview__name">Набор открыток</span>
-                            </div>
-                        </div>
-                        
-                        <div class="order-footer">
-                            <div class="order-total">890 ₽</div>
-                        </div>
-                    </div>
-                    
-                    <div class="order-actions">
-                        <button class="btn btn--outline btn--sm" data-order-details>
-                            Подробнее
-                        </button>
-                    </div>
-                </div>
+            <!-- способ получения -->
+            <div class="muted small">
+              Способ получения: <b><?= htmlspecialchars($deliveryText) ?></b>
+              <?php if ($deliveryType !== 'pickup'): ?>
+                <span class="muted small">(+<?= (int)$deliveryFee ?> ₽)</span>
+              <?php endif; ?>
             </div>
 
-            <div class="empty-state" style="display: none;">
-                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <path d="M16 10a4 4 0 0 1-8 0"></path>
-                </svg>
-                <h3>Заказов пока нет</h3>
-                <p>Совершите первую покупку в нашем магазине</p>
-                <a href="catalog.php" class="btn btn--dark">Перейти в каталог</a>
-            </div>
-        </section>
+            <!-- дата/интервал или часы самовывоза -->
+            <?php if ($deliveryType !== 'pickup' && $deliveryDate && $deliverySlot): ?>
+              <div class="muted small">
+                Доставка: <b><?= htmlspecialchars(date('d.m.Y', strtotime($deliveryDate))) ?></b>,
+                интервал <b><?= htmlspecialchars($deliverySlot) ?></b>
+              </div>
+            <?php elseif ($deliveryType === 'pickup'): ?>
+              <div class="muted small">
+                Самовывоз: <b>ежедневно 10:00–20:00</b>
+              </div>
+            <?php endif; ?>
 
-        <!-- Вкладка "Избранное" -->
-        <section class="account-card" id="favorites-tab" role="tabpanel" aria-labelledby="favorites-tab" hidden>
-            <div class="section-header">
-                <h2 class="section-title">Избранное</h2>
-                <button class="btn btn--outline btn--sm" id="clear-favorites-btn">
-                    Очистить все
+            <!-- адрес -->
+            <div class="muted small">
+              Адрес: <b><?= htmlspecialchars($addr) ?></b>
+            </div>
+
+            <!-- промокод (только если была скидка) -->
+            <?php if ($discountSumNum > 0): ?>
+              <div class="muted small">
+                Промокод: <b><?= htmlspecialchars($promo ?: '—') ?></b>
+                <?php if ($discountPercent > 0): ?>
+                  <span class="muted small">(−<?= (int)$discountPercent ?>%)</span>
+                <?php endif; ?>
+              </div>
+            <?php endif; ?>
+          </div>
+        </div>
+      </div>
+    <?php
+        return ob_get_clean();
+      };
+
+      // первые 5
+      foreach ($ordersTop as $o) {
+        echo $renderOrderCard($o);
+      }
+    ?>
+    <div id="ordersTopEndMarker"></div>
+  </div>
+
+  <div id="ordersRest" style="display:none;">
+    <?php foreach ($restOrders as $o) echo $renderOrderCard($o); ?>
+  </div>
+
+  <!-- если заказов нет -->
+  <div class="empty-state" id="ordersEmptyState" style="<?= empty($ordersAll) ? 'display:block;' : 'display:none;' ?>">
+    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <path d="M16 10a4 4 0 0 1-8 0"></path>
+    </svg>
+    <h3>Заказов пока нет</h3>
+    <p>Совершите первую покупку в нашем магазине</p>
+    <a href="catalog.php" class="btn btn--dark">Перейти в каталог</a>
+  </div>
+</section>
+
+<!-- Вкладка "Избранное" -->
+<section class="account-card" id="favorites-tab" role="tabpanel" aria-labelledby="favorites-tab" hidden>
+  <div class="section-header">
+    <h2 class="section-title">Избранное</h2>
+
+    <?php if (!empty($favorites)): ?>
+      <button class="btn btn--outline btn--sm" id="clear-favorites-btn" type="button">
+        Очистить все
+      </button>
+    <?php endif; ?>
+  </div>
+
+  <?php if (!empty($favorites)): ?>
+    <!-- ВАЖНО: cartList, чтобы применились стили корзины -->
+    <div class="cartList" id="favoritesGrid">
+      <?php foreach ($favorites as $f): ?>
+        <?php
+          $code  = (string)$f['product_code'];
+          $name  = (string)$f['name'];
+          $price = (int)$f['price'];
+          $img   = (string)$f['img'];
+          $pidDb = (int)$f['product_db_id'];
+          $meta  = trim((string)($f['meta'] ?? ''));
+        ?>
+
+        <div class="card"
+             style="padding:14px; margin-bottom:12px; position:relative;"
+             data-fav-item
+             data-product-code="<?= htmlspecialchars($code, ENT_QUOTES) ?>">
+
+          <div class="cartRow">
+            <div class="cartItemImg">
+              <a href="product.php?id=<?= urlencode($code) ?>" style="display:block;">
+                <img
+                  src="<?= htmlspecialchars($img, ENT_QUOTES) ?>"
+                  alt="<?= htmlspecialchars($name, ENT_QUOTES) ?>"
+                  loading="lazy"
+                >
+              </a>
+            </div>
+
+            <div style="flex:1;">
+              <div class="cartTitle">
+                <a href="product.php?id=<?= urlencode($code) ?>" style="color:inherit; text-decoration:none;">
+                  <?= htmlspecialchars($name, ENT_QUOTES) ?>
+                </a>
+              </div>
+
+              <?php if ($meta !== ''): ?>
+                <div class="muted small cartMeta" style="color:#999;">
+                  <?= htmlspecialchars($meta, ENT_QUOTES) ?>
+                </div><br>
+              <?php endif; ?>
+
+              <div style="display:flex; align-items:center; gap:12px; margin-top:10px; flex-wrap:wrap;">
+                <button class="btn btn--dark btn--sm"
+                        type="button"
+                        data-add-to-cart
+                        data-product-id="<?= htmlspecialchars($code, ENT_QUOTES) ?>"
+                        data-product-name="<?= htmlspecialchars($name, ENT_QUOTES) ?>">
+                  В корзину
                 </button>
-            </div>
-            
-            <div class="favorites-grid">
-                <!-- Пример товара в избранном -->
-                <div class="favorite-item">
-                    <div class="favorite-item__image" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
-                    <div class="favorite-item__info">
-                        <h3 class="favorite-item__name">Ароматическая свеча "Лаванда"</h3>
-                        <p class="favorite-item__price">1 890 ₽</p>
-                        <div class="favorite-item__actions">
-                            <button class="btn btn--dark btn--sm">В корзину</button>
-                            <button class="btn btn--text btn--sm" data-remove-favorite>
-                                Удалить
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="favorite-item">
-                    <div class="favorite-item__image" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"></div>
-                    <div class="favorite-item__info">
-                        <h3 class="favorite-item__name">Керамическая ваза "Минимал"</h3>
-                        <p class="favorite-item__price">3 250 ₽</p>
-                        <div class="favorite-item__actions">
-                            <button class="btn btn--dark btn--sm">В корзину</button>
-                            <button class="btn btn--text btn--sm" data-remove-favorite>
-                                Удалить
-                            </button>
-                        </div>
-                    </div>
-                </div>
+
+                <button class="btn btn--outline btn--sm"
+                        type="button"
+                        data-fav-remove
+                        data-product-db-id="<?= (int)$pidDb ?>"
+                        data-product-code="<?= htmlspecialchars($code, ENT_QUOTES) ?>">
+                  Удалить
+                </button>
+              </div>
             </div>
 
-            <div class="empty-state" style="display: none;">
-                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                </svg>
-                <h3>В избранном пока пусто</h3>
-                <p>Добавляйте понравившиеся товары, чтобы не потерять</p>
-                <a href="catalog.php" class="btn btn--dark">Перейти в каталог</a>
-            </div>
-        </section>
+            <!-- Цена ТОЛЬКО здесь (как в корзине) -->
+            <div class="cartRight"><?= number_format($price, 0, '', ' ') ?> ₽</div>
+          </div>
+        </div>
 
-        <!-- Вкладка "Бонусы" -->
-        <section class="account-card" id="coupons-tab" role="tabpanel" aria-labelledby="coupons-tab" hidden>
-            <div class="coupons-header">
-                <div class="bonus-summary">
-                    <h2 class="section-title">Мои бонусы</h2>
-                    <div class="bonus-balance-card">
-                        <div class="bonus-balance">
-                            <span class="bonus-balance__label">Баланс</span>
-                            <span class="bonus-balance__value">350</span>
-                            <span class="bonus-balance__unit">баллов</span>
-                        </div>
-                        <p class="bonus-info">1 балл = 1 ₽ при оплате</p>
-                    </div>
-                </div>
-                
-                <div class="coupon-activate">
-                    <input 
-                        type="text" 
-                        class="input coupon-input" 
-                        placeholder="Введите код купона"
-                        id="coupon-code"
-                    >
-                    <button class="btn btn--dark" id="activate-coupon-btn">
-                        Активировать
-                    </button>
-                </div>
-            </div>
+      <?php endforeach; ?>
+    </div>
 
-            <div class="bonus-progress">
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 35%"></div>
-                </div>
-                <div class="progress-labels">
-                    <span>350/1000 баллов</span>
-                    <span>До статуса "Постоянный"</span>
-                </div>
-            </div>
+    <div class="empty-state" id="favoritesEmptyState" style="display:none;">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+      </svg>
+      <h3>В избранном пока пусто</h3>
+      <p>Добавляйте понравившиеся товары, чтобы не потерять</p>
+      <a href="catalog.php" class="btn btn--dark">Перейти в каталог</a>
+    </div>
 
-            <div class="coupons-section">
-                <h3 class="coupons-section__title">Активные купоны</h3>
-                <div class="coupons-grid">
-                    <div class="coupon-card coupon-card--active">
-                        <div class="coupon-discount">10%</div>
-                        <div class="coupon-info">
-                            <h4 class="coupon-title">На первую покупку</h4>
-                            <p class="coupon-code">WELCOME10</p>
-                            <p class="coupon-expiry">Действует до 30.04.2025</p>
-                        </div>
-                        <button class="btn btn--dark btn--sm coupon-copy" data-coupon-code="WELCOME10">
-                            Скопировать
-                        </button>
-                    </div>
-                    
-                    <div class="coupon-card coupon-card--active">
-                        <div class="coupon-discount">15%</div>
-                        <div class="coupon-info">
-                            <h4 class="coupon-title">Весенняя скидка</h4>
-                            <p class="coupon-code">SPRING15</p>
-                            <p class="coupon-expiry">Действует до 15.05.2025</p>
-                        </div>
-                        <button class="btn btn--dark btn--sm coupon-copy" data-coupon-code="SPRING15">
-                            Скопировать
-                        </button>
-                    </div>
-                </div>
-            </div>
+  <?php else: ?>
+    <div class="empty-state" id="favoritesEmptyState">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3  16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+      </svg>
+      <h3>В избранном пока пусто</h3>
+      <p>Добавляйте понравившиеся товары, чтобы не потерять</p>
+      <a href="catalog.php" class="btn btn--dark">Перейти в каталог</a>
+    </div>
+  <?php endif; ?>
+</section>
 
-            <div class="coupons-section">
-                <h3 class="coupons-section__title">История начислений</h3>
-                <div class="bonus-history">
-                    <div class="bonus-history-item bonus-history-item--plus">
-                        <div class="bonus-history-info">
-                            <h4 class="bonus-history-title">Начисление бонусов</h4>
-                            <p class="bonus-history-date">12.03.2025</p>
-                        </div>
-                        <div class="bonus-history-amount">+50</div>
-                    </div>
-                    
-                    <div class="bonus-history-item bonus-history-item--plus">
-                        <div class="bonus-history-info">
-                            <h4 class="bonus-history-title">За отзыв</h4>
-                            <p class="bonus-history-date">05.03.2025</p>
-                        </div>
-                        <div class="bonus-history-amount">+20</div>
-                    </div>
-                    
-                    <div class="bonus-history-item bonus-history-item--minus">
-                        <div class="bonus-history-info">
-                            <h4 class="bonus-history-title">Списание бонусов</h4>
-                            <p class="bonus-history-date">01.03.2025</p>
-                        </div>
-                        <div class="bonus-history-amount">-100</div>
-                    </div>
-                </div>
+<?php
+// ===== БОНУСЫ: персонализация на основе заказов =====
+
+// общая сумма товаров по всем заказам (без доставки и скидок)
+$stmt = $pdo->prepare("
+  SELECT
+    COUNT(*) AS orders_count,
+    COALESCE(SUM(items_sum), 0) AS items_total,
+    COALESCE(SUM(discount_sum), 0) AS discounts_total
+  FROM orders
+  WHERE user_id = :uid
+");
+$stmt->execute([':uid' => $userId]);
+$bonusStats = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$ordersCount = (int)($bonusStats['orders_count'] ?? 0);
+$itemsTotal  = (int)($bonusStats['items_total'] ?? 0);
+$discountsTotal = (int)($bonusStats['discounts_total'] ?? 0);
+
+// начисляем 3% бонусов от суммы товаров (можешь поменять процент)
+$BONUS_RATE = 3; // %
+$bonusBalance = (int)round($itemsTotal * ($BONUS_RATE / 100));
+
+// статус по сумме покупок
+if ($itemsTotal >= 30000) {
+  $statusName = 'VIP';
+  $statusGoal = 50000;
+} elseif ($itemsTotal >= 10000) {
+  $statusName = 'Постоянный';
+  $statusGoal = 30000;
+} else {
+  $statusName = 'Новичок';
+  $statusGoal = 10000;
+}
+
+$progressPct = $statusGoal > 0 ? min(100, (int)round(($itemsTotal / $statusGoal) * 100)) : 0;
+$leftToNext = max(0, $statusGoal - $itemsTotal);
+
+// персональные купоны (пример логики)
+$personalCoupons = [];
+
+if ($ordersCount === 0) {
+  $personalCoupons[] = ['title' => 'На первую покупку', 'code' => 'WELCOME10', 'discount' => '10%', 'expiry' => '30.04.2026'];
+} else {
+  // всем покупавшим
+  $personalCoupons[] = ['title' => 'Скидка для клиента', 'code' => 'SPRING15', 'discount' => '15%', 'expiry' => '15.05.2026'];
+}
+
+if ($statusName === 'Постоянный') {
+  $personalCoupons[] = ['title' => 'Постоянному клиенту', 'code' => 'LOYAL20', 'discount' => '20%', 'expiry' => '01.06.2026'];
+}
+if ($statusName === 'VIP') {
+  $personalCoupons[] = ['title' => 'VIP-бонус', 'code' => 'VIP25', 'discount' => '25%', 'expiry' => '01.06.2026'];
+}
+
+// какие промокоды уже использованы пользователем
+$stmt = $pdo->prepare("SELECT promo_code FROM promo_redemptions WHERE user_id = :uid");
+$stmt->execute([':uid' => $userId]);
+$used = array_flip(array_map('strtoupper', array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'promo_code')));
+
+// helper: проверка "не использован"
+$notUsed = fn(string $code) => !isset($used[strtoupper($code)]);
+
+// собираем доступные купоны
+$personalCoupons = [];
+
+// WELCOME10 — только если заказов 0 и не использован
+if ($ordersCount === 0 && $notUsed('WELCOME10')) {
+  $personalCoupons[] = ['title' => 'На первый заказ', 'code' => 'WELCOME10', 'discount' => '10%', 'expiry' => '—'];
+}
+
+// Новичок — кроме WELCOME10 ничего
+// Постоянный — одноразовый LOYAL20
+if ($statusName === 'Постоянный' && $notUsed('LOYAL20')) {
+  $personalCoupons[] = ['title' => 'Постоянному клиенту', 'code' => 'LOYAL20', 'discount' => '20%', 'expiry' => '—'];
+}
+
+// VIP — одноразовый VIP25
+if ($statusName === 'VIP' && $notUsed('VIP25')) {
+  $personalCoupons[] = ['title' => 'VIP-бонус', 'code' => 'VIP25', 'discount' => '25%', 'expiry' => '—'];
+}
+
+// SPRING15 — одноразовый для всех (если не использован)
+if ($notUsed('SPRING15')) {
+  $personalCoupons[] = ['title' => 'Сезонная скидка', 'code' => 'SPRING15', 'discount' => '15%', 'expiry' => '—'];
+}
+
+// история начислений: начисление бонусов за последние 5 заказов
+$stmt = $pdo->prepare("
+  SELECT id, created_at, items_sum
+  FROM orders
+  WHERE user_id = :uid
+  ORDER BY id DESC
+  LIMIT 5
+");
+$stmt->execute([':uid' => $userId]);
+$lastOrdersForBonus = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$bonusHistory = [];
+foreach ($lastOrdersForBonus as $o) {
+  $sum = (int)$o['items_sum'];
+  $earned = (int)round($sum * ($BONUS_RATE / 100));
+  $bonusHistory[] = [
+    'type' => 'plus',
+    'title' => 'Начисление за заказ №' . (int)$o['id'],
+    'date' => date('d.m.Y', strtotime($o['created_at'])),
+    'amount' => '+' . $earned
+  ];
+}
+?>
+<section class="account-card" id="coupons-tab" role="tabpanel" aria-labelledby="coupons-tab" hidden>
+  <div class="coupons-header">
+    <div class="bonus-summary">
+      <h2 class="section-title">Бонусы для <?= htmlspecialchars($user['login']) ?></h2>
+
+      <div class="bonus-balance-card">
+        <div class="bonus-balance">
+          <span class="bonus-balance__label">Ваш статус</span>
+          <span class="bonus-balance__value"><?= htmlspecialchars($statusName) ?></span>
+          <span class="bonus-balance__unit">• <?= $ordersCount ?> заказ(ов)</span>
+        </div>
+
+        <p class="bonus-info">
+          Начисляем <b><?= $BONUS_RATE ?>%</b> бонусами от суммы товаров (без доставки).
+          Сейчас доступно: <b><?= number_format($bonusBalance, 0, '', ' ') ?></b> баллов.
+        </p>
+      </div>
+    </div>
+
+    <div class="coupon-activate">
+      <input type="text" class="input coupon-input" placeholder="Введите код купона" id="coupon-code">
+      <button class="btn btn--dark" id="activate-coupon-btn">Активировать</button>
+    </div>
+  </div>
+
+  <div class="bonus-progress">
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: <?= (int)$progressPct ?>%"></div>
+    </div>
+    <div class="progress-labels">
+      <span><?= number_format($itemsTotal, 0, '', ' ') ?> ₽ из <?= number_format($statusGoal, 0, '', ' ') ?> ₽</span>
+      <span>До следующего уровня: <?= number_format($leftToNext, 0, '', ' ') ?> ₽</span>
+    </div>
+  </div>
+
+  <div class="coupons-section">
+    <h3 class="coupons-section__title">Ваши персональные купоны</h3>
+
+    <?php if (!empty($personalCoupons)): ?>
+      <div class="coupons-grid">
+        <?php foreach ($personalCoupons as $c): ?>
+          <div class="coupon-card coupon-card--active">
+            <div class="coupon-discount"><?= htmlspecialchars($c['discount']) ?></div>
+            <div class="coupon-info">
+              <h4 class="coupon-title"><?= htmlspecialchars($c['title']) ?></h4>
+              <p class="coupon-code"><?= htmlspecialchars($c['code']) ?></p>
+              <p class="coupon-expiry">Действует до <?= htmlspecialchars($c['expiry']) ?></p>
             </div>
-        </section>
+            <button class="btn btn--dark btn--sm coupon-copy" data-coupon-code="<?= htmlspecialchars($c['code']) ?>">
+              Скопировать
+            </button>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    <?php else: ?>
+      <p class="muted">Пока нет персональных купонов. Оформите заказ — появятся предложения 🙂</p>
+    <?php endif; ?>
+  </div>
+
+  <div class="coupons-section">
+    <h3 class="coupons-section__title">Статистика</h3>
+    <div class="bonus-history">
+      <div class="bonus-history-item bonus-history-item--plus">
+        <div class="bonus-history-info">
+          <h4 class="bonus-history-title">Сумма покупок (товары)</h4>
+          <p class="bonus-history-date">За всё время</p>
+        </div>
+        <div class="bonus-history-amount">+<?= number_format($itemsTotal, 0, '', ' ') ?> ₽</div>
+      </div>
+
+      <div class="bonus-history-item bonus-history-item--minus">
+        <div class="bonus-history-info">
+          <h4 class="bonus-history-title">Экономия по скидкам</h4>
+          <p class="bonus-history-date">Промокоды и скидки</p>
+        </div>
+        <div class="bonus-history-amount">-<?= number_format($discountsTotal, 0, '', ' ') ?> ₽</div>
+      </div>
+
+      <div class="bonus-history-item bonus-history-item--plus">
+        <div class="bonus-history-info">
+          <h4 class="bonus-history-title">Бонусы к начислению</h4>
+          <p class="bonus-history-date"><?= $BONUS_RATE ?>% от суммы товаров</p>
+        </div>
+        <div class="bonus-history-amount">+<?= number_format($bonusBalance, 0, '', ' ') ?></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="coupons-section">
+    <h3 class="coupons-section__title">Последние начисления</h3>
+
+    <?php if (!empty($bonusHistory)): ?>
+      <div class="bonus-history">
+        <?php foreach ($bonusHistory as $h): ?>
+          <div class="bonus-history-item bonus-history-item--<?= $h['type'] ?>">
+            <div class="bonus-history-info">
+              <h4 class="bonus-history-title"><?= htmlspecialchars($h['title']) ?></h4>
+              <p class="bonus-history-date"><?= htmlspecialchars($h['date']) ?></p>
+            </div>
+            <div class="bonus-history-amount"><?= htmlspecialchars($h['amount']) ?></div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    <?php else: ?>
+      <p class="muted">Пока нет начислений — оформите первый заказ 🙂</p>
+    <?php endif; ?>
+  </div>
+</section>
 
         <!-- Вкладка "Безопасность" -->
-        <section class="account-card" id="security-tab" role="tabpanel" aria-labelledby="security-tab" hidden>
-            <h2 class="section-title">Безопасность</h2>
-            
-            <div class="security-list">
-                <div class="security-item">
-                    <div class="security-item__info">
-                        <h3 class="security-item__title">Смена пароля</h3>
-                        <p class="security-item__desc">Рекомендуем менять пароль каждые 3 месяца</p>
-                    </div>
-                    <button class="btn btn--outline" id="change-password-btn">
-                        Изменить пароль
-                    </button>
-                </div>
-                
-                <div class="security-item">
-                    <div class="security-item__info">
-                        <h3 class="security-item__title">Двухфакторная аутентификация</h3>
-                        <p class="security-item__desc">Дополнительная защита вашего аккаунта</p>
-                    </div>
-                    <div class="toggle-switch">
-                        <input type="checkbox" id="2fa-toggle" class="toggle-switch__input">
-                        <label for="2fa-toggle" class="toggle-switch__label"></label>
-                    </div>
-                </div>
-                
-                <div class="security-item security-item--danger">
-                    <div class="security-item__info">
-                        <h3 class="security-item__title">Удаление аккаунта</h3>
-                        <p class="security-item__desc">Это действие необратимо. Все данные будут удалены.</p>
-                    </div>
-                    <button class="btn btn--danger" id="delete-account-btn">
-                        Удалить аккаунт
-                    </button>
-                </div>
-            </div>
-        </section>
+<section class="account-card" id="security-tab" role="tabpanel" aria-labelledby="security-tab" hidden>
+  <h2 class="section-title">Безопасность</h2>
+
+  <div class="security-list">
+
+    <!-- 1) Смена пароля -->
+    <div class="security-item">
+      <div class="security-item__info">
+        <h3 class="security-item__title">Смена пароля</h3>
+        <p class="security-item__desc">Рекомендуем менять пароль каждые 3 месяца</p>
+
+        <form method="post" style="margin-top:12px; display:grid; gap:10px; max-width:420px;">
+          <input type="hidden" name="security_action" value="change_password">
+          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf, ENT_QUOTES) ?>">
+
+          <input class="input" type="password" name="current_password" placeholder="Текущий пароль" required>
+          <input class="input" type="password" name="new_password" placeholder="Новый пароль (мин. 6 символов)" required>
+          <input class="input" type="password" name="new_password2" placeholder="Повторите новый пароль" required>
+
+          <button class="btn btn--outline" type="submit">Изменить пароль</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 2) Экспорт данных -->
+    <div class="security-item">
+      <div class="security-item__info">
+        <h3 class="security-item__title">Экспорт данных</h3>
+        <p class="security-item__desc">Скачайте данные аккаунта: профиль, заказы и избранное</p>
+      </div>
+
+      <a class="btn btn--outline" href="account.php?export=1">
+        Скачать JSON
+      </a>
+    </div>
+
+    <!-- 3) Удаление аккаунта -->
+    <div class="security-item security-item--danger">
+      <div class="security-item__info">
+        <h3 class="security-item__title">Удаление аккаунта</h3>
+        <p class="security-item__desc">Это действие необратимо. Все данные будут удалены.</p>
+
+        <form method="post" style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <input type="hidden" name="security_action" value="delete_account">
+          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf, ENT_QUOTES) ?>">
+
+          <input class="input" type="text" name="confirm_delete" placeholder='Введите "УДАЛИТЬ"' required style="max-width:220px;">
+          <button class="btn btn--danger" type="submit">Удалить аккаунт</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</section>
     </div>
 </main>
 
@@ -765,8 +1546,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   });
 </script>
 
-<!-- Модальные окна из index.php -->
-
 <!-- FAVORITES SHEET -->
 <aside class="sheet" id="favoritesSheet" aria-hidden="true">
   <div class="sheet__backdrop" data-close></div>
@@ -787,265 +1566,8 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 </aside>
 
 <script src="../js/script.js" defer></script>
-
-<script>
-// Переключение вкладок личного кабинета
-document.addEventListener('DOMContentLoaded', function() {
-    // Инициализация вкладок
-    const tabs = document.querySelectorAll('.account-tab');
-    const tabPanels = document.querySelectorAll('.account-card');
-    
-    // Показываем первую вкладку при загрузке
-    if (tabs.length > 0) {
-        showTab('profile');
-        
-        tabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                const tabId = this.dataset.tab;
-                showTab(tabId);
-            });
-        });
-    }
-    
-    function showTab(tabId) {
-        // Обновляем активную вкладку
-        tabs.forEach(tab => {
-            if (tab.dataset.tab === tabId) {
-                tab.classList.add('active');
-                tab.setAttribute('aria-selected', 'true');
-            } else {
-                tab.classList.remove('active');
-                tab.setAttribute('aria-selected', 'false');
-            }
-        });
-        
-        // Показываем активную панель
-        tabPanels.forEach(panel => {
-            if (panel.id === `${tabId}-tab`) {
-                panel.style.display = 'block';
-                panel.setAttribute('hidden', false);
-                panel.classList.add('active');
-            } else {
-                panel.style.display = 'none';
-                panel.setAttribute('hidden', true);
-                panel.classList.remove('active');
-            }
-        });
-        
-        // Прокручиваем к началу раздела
-        document.querySelector('.account-page__inner').scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-        });
-    }
-    
-    // Копирование купонов
-    document.querySelectorAll('.coupon-copy').forEach(button => {
-        button.addEventListener('click', function() {
-            const couponCode = this.dataset.couponCode;
-            navigator.clipboard.writeText(couponCode).then(() => {
-                const originalText = this.textContent;
-                this.textContent = 'Скопировано!';
-                this.classList.add('btn--success');
-                
-                setTimeout(() => {
-                    this.textContent = originalText;
-                    this.classList.remove('btn--success');
-                }, 2000);
-            });
-        });
-    });
-    
-    // Активация купона
-    const activateCouponBtn = document.getElementById('activate-coupon-btn');
-    const couponCodeInput = document.getElementById('coupon-code');
-    
-    if (activateCouponBtn && couponCodeInput) {
-        activateCouponBtn.addEventListener('click', function() {
-            const code = couponCodeInput.value.trim();
-            if (!code) {
-                showNotification('Введите код купона', 'error');
-                return;
-            }
-            
-            // Эмуляция отправки на сервер
-            this.disabled = true;
-            this.textContent = 'Активация...';
-            
-            setTimeout(() => {
-                showNotification(`Купон ${code} успешно активирован!`, 'success');
-                this.disabled = false;
-                this.textContent = 'Активировать';
-                couponCodeInput.value = '';
-                
-                // Обновляем список купонов (в реальном приложении здесь был бы AJAX)
-                updateCouponsList(code);
-            }, 1000);
-        });
-    }
-    
-    // Удаление из избранного
-    document.querySelectorAll('[data-remove-favorite]').forEach(button => {
-        button.addEventListener('click', function() {
-            const favoriteItem = this.closest('.favorite-item');
-            if (favoriteItem) {
-                favoriteItem.style.animation = 'fadeOut 0.3s ease';
-                setTimeout(() => {
-                    favoriteItem.remove();
-                    updateFavoritesCount();
-                    checkEmptyFavorites();
-                }, 300);
-            }
-        });
-    });
-    
-    // Очистка всего избранного
-    const clearFavoritesBtn = document.getElementById('clear-favorites-btn');
-    if (clearFavoritesBtn) {
-        clearFavoritesBtn.addEventListener('click', function() {
-            if (confirm('Удалить все товары из избранного?')) {
-                const favoritesGrid = document.querySelector('.favorites-grid');
-                if (favoritesGrid) {
-                    favoritesGrid.innerHTML = '';
-                    updateFavoritesCount();
-                    checkEmptyFavorites();
-                    showNotification('Избранное очищено', 'info');
-                }
-            }
-        });
-    }
-    
-    // Изменение пароля
-    const changePasswordBtn = document.getElementById('change-password-btn');
-    if (changePasswordBtn) {
-        changePasswordBtn.addEventListener('click', function() {
-            const newPassword = prompt('Введите новый пароль:');
-            if (newPassword && newPassword.length >= 6) {
-                showNotification('Пароль успешно изменен', 'success');
-            } else if (newPassword) {
-                showNotification('Пароль должен содержать не менее 6 символов', 'error');
-            }
-        });
-    }
-    
-    // Удаление аккаунта
-    const deleteAccountBtn = document.getElementById('delete-account-btn');
-    if (deleteAccountBtn) {
-        deleteAccountBtn.addEventListener('click', function() {
-            if (confirm('Вы уверены? Это действие нельзя отменить. Все ваши данные будут удалены.')) {
-                const secondConfirm = prompt('Для подтверждения введите "УДАЛИТЬ":');
-                if (secondConfirm === 'УДАЛИТЬ') {
-                    showNotification('Запрос на удаление аккаунта отправлен', 'info');
-                    // В реальном приложении здесь был бы AJAX запрос
-                }
-            }
-        });
-    }
-    
-    // Вспомогательные функции
-    function showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `notification notification--${type}`;
-        notification.textContent = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 20px;
-            background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
-            color: white;
-            border-radius: 8px;
-            z-index: 10000;
-            animation: slideIn 0.3s ease;
-        `;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-    }
-    
-    function updateFavoritesCount() {
-        const favoritesCount = document.querySelectorAll('.favorite-item').length;
-        const badge = document.querySelector('.account-tab[data-tab="favorites"] .badge');
-        if (badge) {
-            badge.textContent = favoritesCount;
-        }
-    }
-    
-    function checkEmptyFavorites() {
-        const favoritesGrid = document.querySelector('.favorites-grid');
-        const emptyState = document.querySelector('#favorites-tab .empty-state');
-        if (favoritesGrid && emptyState) {
-            if (favoritesGrid.children.length === 0) {
-                emptyState.style.display = 'block';
-            } else {
-                emptyState.style.display = 'none';
-            }
-        }
-    }
-    
-    function updateCouponsList(code) {
-        // В реальном приложении здесь было бы обновление через AJAX
-        const couponsGrid = document.querySelector('.coupons-grid');
-        if (couponsGrid) {
-            const newCoupon = document.createElement('div');
-            newCoupon.className = 'coupon-card coupon-card--active';
-            newCoupon.innerHTML = `
-                <div class="coupon-discount">5%</div>
-                <div class="coupon-info">
-                    <h4 class="coupon-title">Новый купон</h4>
-                    <p class="coupon-code">${code}</p>
-                    <p class="coupon-expiry">Действует 30 дней</p>
-                </div>
-                <button class="btn btn--dark btn--sm coupon-copy" data-coupon-code="${code}">
-                    Скопировать
-                </button>
-            `;
-            
-            couponsGrid.insertBefore(newCoupon, couponsGrid.firstChild);
-            
-            // Добавляем обработчик для новой кнопки
-            newCoupon.querySelector('.coupon-copy').addEventListener('click', function() {
-                navigator.clipboard.writeText(code).then(() => {
-                    const originalText = this.textContent;
-                    this.textContent = 'Скопировано!';
-                    setTimeout(() => {
-                        this.textContent = originalText;
-                    }, 2000);
-                });
-            });
-        }
-    }
-    
-    // Анимации
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-        
-        @keyframes fadeOut {
-            from { opacity: 1; transform: scale(1); }
-            to { opacity: 0; transform: scale(0.95); }
-        }
-    `;
-    document.head.appendChild(style);
-});
-
-// Интеграция с главным скриптом
-if (typeof window.initAccountPage === 'function') {
-    window.initAccountPage();
-}
-</script>
+<script src="../js/account.js" defer></script>
+<script src="../js/cart.js" defer></script>
 
 </body>
 </html>

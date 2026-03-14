@@ -738,18 +738,17 @@
 
 /* HERO: больше места правой колонке, меньше пустоты у фото */
 .pHero{
-  grid-template-columns: .95fr 1.05fr; /* было наоборот */
+  grid-template-columns: .95fr 1.05fr; 
 }
 
 /* фото не центрируем контейнером, чтобы не было "пустоты" */
 .pMedia__main{
   max-width: 100%;
-  margin: 0;            /* убираем auto */
+  margin: 0;      
 }
 
-/* но картинку оставляем адекватной по высоте */
 .pMedia__main img{
-  max-height: 660px;    /* можно 620–700 на вкус */
+  max-height: 660px;    
   object-fit: cover;   
 }
 
@@ -810,5 +809,397 @@
   cursor: grab;
   user-select: none;
   -webkit-user-drag: none;
-  touch-action: none; /* важно для pinch/drag на мобильном */
+  touch-action: none;
+}
+
+.revItem{ border-top: 1px solid rgba(0,0,0,.08); padding: 14px 0; }
+.revItem:first-child{ border-top: none; padding-top: 0; }
+.revItem__top{ display:flex; justify-content: space-between; gap:10px; margin-bottom:6px; }
+.revItem__date{ color:#7b7b7b; font-size:13px; }
+.revItem__stars .star{ opacity:.25; }
+.revItem__stars .star.filled{ opacity:1; color:#c4161c; }
+.revItem__text{ margin-top:8px; line-height:1.6; }
+
+.revRate{ display:flex; gap:6px; }
+.revStar{
+  background: transparent;
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 10px;
+  width: 44px; height: 44px;
+  font-size: 20px;
+  cursor: pointer;
+  opacity: .55;
+}
+.revStar.is-on{ opacity:1; color:#c4161c; border-color: rgba(196,22,28,.35); }
+
+/* ===== stars in review list ===== */
+.revItem__stars{
+  display:flex;
+  gap: 4px;
+  margin: 6px 0 2px;
+}
+.revItem__stars .star{
+  font-size: 16px;
+  line-height: 1;
+  opacity: .25;
+  color: #191919;
+}
+.revItem__stars[data-rating="1"] .star[data-i="1"],
+.revItem__stars[data-rating="2"] .star[data-i="1"],
+.revItem__stars[data-rating="2"] .star[data-i="2"],
+.revItem__stars[data-rating="3"] .star[data-i="1"],
+.revItem__stars[data-rating="3"] .star[data-i="2"],
+.revItem__stars[data-rating="3"] .star[data-i="3"],
+.revItem__stars[data-rating="4"] .star[data-i="1"],
+.revItem__stars[data-rating="4"] .star[data-i="2"],
+.revItem__stars[data-rating="4"] .star[data-i="3"],
+.revItem__stars[data-rating="4"] .star[data-i="4"],
+.revItem__stars[data-rating="5"] .star{
+  opacity: 1;
+  color: #c4161c;
+}
+
+/* ===== rating control in modal (pretty, no radio circles) ===== */
+.rate{
+  display:flex;
+  gap: 8px;
+  align-items:center;
+}
+
+.rate__inp{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+
+.rate__star{
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: #fff;
+
+  display:grid;
+  place-items:center;
+
+  font-size: 20px;
+  cursor:pointer;
+  color:#191919;
+  opacity:.55;
+  transition: transform .12s ease, opacity .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+
+.rate__star:hover{
+  opacity: 1;
+  transform: translateY(-1px);
+  border-color: rgba(196,22,28,.35);
+  box-shadow: 0 10px 22px rgba(196,22,28,.10);
+}
+
+.rate:has(#rate-1:checked) label[for="rate-1"],
+.rate:has(#rate-2:checked) label[for="rate-1"],
+.rate:has(#rate-2:checked) label[for="rate-2"],
+.rate:has(#rate-3:checked) label[for="rate-1"],
+.rate:has(#rate-3:checked) label[for="rate-2"],
+.rate:has(#rate-3:checked) label[for="rate-3"],
+.rate:has(#rate-4:checked) label[for="rate-1"],
+.rate:has(#rate-4:checked) label[for="rate-2"],
+.rate:has(#rate-4:checked) label[for="rate-3"],
+.rate:has(#rate-4:checked) label[for="rate-4"],
+.rate:has(#rate-5:checked) label[for="rate-1"],
+.rate:has(#rate-5:checked) label[for="rate-2"],
+.rate:has(#rate-5:checked) label[for="rate-3"],
+.rate:has(#rate-5:checked) label[for="rate-4"],
+.rate:has(#rate-5:checked) label[for="rate-5"]{
+  opacity: 1;
+  color:#c4161c;
+  border-color: rgba(196,22,28,.35);
+}
+
+.revItem__stars{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin: 6px 0 2px;
+  font-size: 16px;
+  letter-spacing: 2px;
+  color: #c4161c;      
+}
+
+.revItem__stars .revItem__score{
+  letter-spacing: 0;
+  color: #7b7b7b;
+  font-size: 13px;
+}
+
+/* ===== Review modal: tighter header ===== */
+#reviewModal .modal__head{
+  padding: 14px 18px !important;
+}
+#reviewModal .modal__title{
+  font-size: 22px !important;   /* было слишком крупно */
+  line-height: 1.15 !important;
+}
+#reviewModal .modal__body{
+  padding: 10px 18px 18px !important;  /* меньше отступ после заголовка */
+}
+
+/* меньше вертикальные отступы у mb-3 внутри модалки */
+#reviewModal .mb-3{
+  margin-bottom: 12px !important;
+}
+#reviewModal label.small{
+  margin: 0 0 6px !important;
+}
+
+/* ===== Rating: clean tiles (no glow, no double outline) ===== */
+#reviewModal .rate{
+  gap: 10px !important;
+}
+
+#reviewModal .rate__opt{
+  width: 64px !important;
+  height: 54px !important;
+
+  border-radius: 14px !important;
+  border: 1px solid rgba(0,0,0,.14) !important;  /* один аккуратный контур */
+  background: #fff !important;
+
+  box-shadow: none !important;      /* убираем тень */
+  outline: none !important;         /* убираем контур */
+}
+
+#reviewModal .rate__opt:hover{
+  transform: none !important;       /* без подпрыгивания */
+  box-shadow: none !important;      /* без свечения */
+  border-color: rgba(0,0,0,.22) !important;
+}
+
+#reviewModal .rate__star{
+  font-size: 22px !important;
+  color: #1f8a4c !important;        /* зелёная звезда */
+  opacity: .5 !important;
+}
+
+#reviewModal .rate__num{
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: #191919 !important;
+  opacity: .85 !important;
+}
+
+/* выбранные 1..N — делаем просто чуть ярче и с тонким зелёным бордером, без свечения */
+#reviewModal .rate:has(#rate-1:checked) label[for="rate-1"],
+#reviewModal .rate:has(#rate-2:checked) label[for="rate-1"],
+#reviewModal .rate:has(#rate-2:checked) label[for="rate-2"],
+#reviewModal .rate:has(#rate-3:checked) label[for="rate-1"],
+#reviewModal .rate:has(#rate-3:checked) label[for="rate-2"],
+#reviewModal .rate:has(#rate-3:checked) label[for="rate-3"],
+#reviewModal .rate:has(#rate-4:checked) label[for="rate-1"],
+#reviewModal .rate:has(#rate-4:checked) label[for="rate-2"],
+#reviewModal .rate:has(#rate-4:checked) label[for="rate-3"],
+#reviewModal .rate:has(#rate-4:checked) label[for="rate-4"],
+#reviewModal .rate:has(#rate-5:checked) label[for="rate-1"],
+#reviewModal .rate:has(#rate-5:checked) label[for="rate-2"],
+#reviewModal .rate:has(#rate-5:checked) label[for="rate-3"],
+#reviewModal .rate:has(#rate-5:checked) label[for="rate-4"],
+#reviewModal .rate:has(#rate-5:checked) label[for="rate-5"]{
+  border-color: rgba(31,138,76,.55) !important;
+  box-shadow: none !important;
+}
+
+#reviewModal .rate:has(#rate-1:checked) label[for="rate-1"] .rate__star,
+#reviewModal .rate:has(#rate-2:checked) label[for="rate-1"] .rate__star,
+#reviewModal .rate:has(#rate-2:checked) label[for="rate-2"] .rate__star,
+#reviewModal .rate:has(#rate-3:checked) label[for="rate-1"] .rate__star,
+#reviewModal .rate:has(#rate-3:checked) label[for="rate-2"] .rate__star,
+#reviewModal .rate:has(#rate-3:checked) label[for="rate-3"] .rate__star,
+#reviewModal .rate:has(#rate-4:checked) label[for="rate-1"] .rate__star,
+#reviewModal .rate:has(#rate-4:checked) label[for="rate-2"] .rate__star,
+#reviewModal .rate:has(#rate-4:checked) label[for="rate-3"] .rate__star,
+#reviewModal .rate:has(#rate-4:checked) label[for="rate-4"] .rate__star,
+#reviewModal .rate:has(#rate-5:checked) label[for="rate-1"] .rate__star,
+#reviewModal .rate:has(#rate-5:checked) label[for="rate-2"] .rate__star,
+#reviewModal .rate:has(#rate-5:checked) label[for="rate-3"] .rate__star,
+#reviewModal .rate:has(#rate-5:checked) label[for="rate-4"] .rate__star,
+#reviewModal .rate:has(#rate-5:checked) label[for="rate-5"] .rate__star{
+  opacity: 1 !important;
+}
+
+/* textarea rounding чуть меньше (чтобы не "пузырь") */
+#reviewModal textarea.input{
+  border-radius: 16px !important;
+}
+
+/* ===== Review modal: compact spacing ===== */
+#reviewModal .modal__head{ padding: 12px 18px !important; }
+#reviewModal .modal__title{ font-size: 22px !important; line-height: 1.15 !important; }
+#reviewModal .modal__body{ padding: 8px 18px 18px !important; }
+
+/* уменьшить отступ над "Оценка" */
+#reviewModal .mb-3{ margin: 8px 0 12px !important; }
+#reviewModal label.small{ margin: 0 0 6px !important; display:block !important; }
+
+/* ===== Rating: clean, no green outline/shadow ===== */
+#reviewModal .rate{
+  display:flex !important;
+  gap: 16px !important;
+  align-items:flex-start !important;
+  flex-wrap: nowrap !important;
+}
+
+/* hide radios */
+#reviewModal .rate__inp{
+  position:absolute !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+
+/* option becomes a "tile + number under" layout */
+#reviewModal .rate__opt{
+  /* reset any global button/label styles that create inner boxes */
+  all: unset !important;
+  box-sizing: border-box !important;
+
+  width: 72px !important;
+  display: grid !important;
+  grid-template-rows: 56px 18px !important;
+  justify-items: center !important;
+  row-gap: 8px !important;
+
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+/* the tile itself */
+#reviewModal .rate__star{
+  width: 72px !important;
+  height: 56px !important;
+
+  border-radius: 16px !important;
+  border: 1px solid rgba(0,0,0,.14) !important;
+  background: #fff !important;
+
+  display:grid !important;
+  place-items:center !important;
+
+  /* star look */
+  font-size: 26px !important;
+  line-height: 1 !important;
+  color: #1f8a4c !important;
+
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* number under tile */
+#reviewModal .rate__num{
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: #191919 !important;
+  opacity: .8 !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+}
+
+/* hover: subtle (no glow) */
+#reviewModal .rate__opt:hover .rate__star{
+  border-color: rgba(0,0,0,.22) !important;
+}
+
+/* selected (and previous 1..N): only border a bit greener, no glow */
+#reviewModal .rate:has(#rate-1:checked) label[for="rate-1"] .rate__star,
+#reviewModal .rate:has(#rate-2:checked) label[for="rate-1"] .rate__star,
+#reviewModal .rate:has(#rate-2:checked) label[for="rate-2"] .rate__star,
+#reviewModal .rate:has(#rate-3:checked) label[for="rate-1"] .rate__star,
+#reviewModal .rate:has(#rate-3:checked) label[for="rate-2"] .rate__star,
+#reviewModal .rate:has(#rate-3:checked) label[for="rate-3"] .rate__star,
+#reviewModal .rate:has(#rate-4:checked) label[for="rate-1"] .rate__star,
+#reviewModal .rate:has(#rate-4:checked) label[for="rate-2"] .rate__star,
+#reviewModal .rate:has(#rate-4:checked) label[for="rate-3"] .rate__star,
+#reviewModal .rate:has(#rate-4:checked) label[for="rate-4"] .rate__star,
+#reviewModal .rate:has(#rate-5:checked) label[for="rate-1"] .rate__star,
+#reviewModal .rate:has(#rate-5:checked) label[for="rate-2"] .rate__star,
+#reviewModal .rate:has(#rate-5:checked) label[for="rate-3"] .rate__star,
+#reviewModal .rate:has(#rate-5:checked) label[for="rate-4"] .rate__star,
+#reviewModal .rate:has(#rate-5:checked) label[for="rate-5"] .rate__star{
+  border-color: rgba(31,138,76,.55) !important;
+}
+
+/* textarea rounding smaller */
+#reviewModal textarea.input{ border-radius: 16px !important; }
+
+/* ===== Страница товара: счётчик слева ===== */
+.pHero__buy .pActions.card__actions {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+}
+
+.pHero__buy .pActions .qty.qty--card {
+  margin-right: 0;
+}
+
+.pHero__buy .pActions .iconBtn--large,
+.pHero__buy .pActions .iconBtn {
+  margin-left: 0;
+}
+
+/* если кнопка "В корзину" скрывается, счётчик остаётся прижатым влево */
+.pHero__buy .pActions .btn.btn--large[style*="display: none"] + .qty.qty--card {
+  margin-left: 0;
+}
+
+
+/* ===== Похожие товары: одинаковая высота карточек ===== */
+.hits .grid4 {
+  align-items: stretch;
+}
+
+.hits .grid4 > [role="listitem"],
+.hits .grid4 > .reveal {
+  height: 100%;
+}
+
+.hits .grid4 .card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.hits .grid4 .card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.hits .grid4 .card__top {
+  flex: 1;
+}
+
+.hits .grid4 .card__actions {
+  margin-top: auto;
+}
+
+.pBuyCard .card__actions {
+  justify-content: flex-start;
+}
+
+.pHero__buy .pActions,
+.pHero__buy .pActions.card__actions,
+.pHero__buy .pBuyCard .card__actions {
+  display: flex;
+  align-items: center;
+}
+
+.pHero__buy .qty.qty--card {
+  margin-right: auto;
+}
+
+.pHero__buy .card .pActions.card__actions {
+  justify-content: flex-start !important;
+}
+
+.pHero__buy .card .qty.qty--card {
+  margin-right: auto !important;
 }

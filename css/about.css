@@ -89,13 +89,13 @@
 }
 
 
-
 /* company grid */
 .aboutGrid{
   display:grid;
   grid-template-columns: 1.35fr .65fr;
   gap: 16px;
   align-items: stretch;
+  margin-top: 50px;
 }
 
 .aboutSide__img{

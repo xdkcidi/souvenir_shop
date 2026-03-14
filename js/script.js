@@ -32,6 +32,14 @@
     document.documentElement.style.overflow = lock ? "hidden" : "";
   };
 
+  const escapeHtml = (s) =>
+  String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
   const safeParse = (raw, fallback) => {
     try {
       const v = JSON.parse(raw);
@@ -81,20 +89,23 @@
     return "/";
   })();
 
-  const toRootPath = (path) => {
-    if (!path) return "";
-    if (/^(https?:)?\/\//i.test(path)) return path;
-    if (/^data:/i.test(path)) return path;
+const toRootPath = (path) => {
+  if (!path) return "";
+  if (/^(https?:)?\/\//i.test(path)) return path;
+  if (/^data:/i.test(path)) return path;
 
-    path = path.replace(/^\.\//, "");
-    while (path.startsWith("../")) path = path.slice(3);
+  path = String(path).trim().replace(/^\.\//, "");
+  while (path.startsWith("../")) path = path.slice(3);
 
-    if (window.location.protocol === "file:") return path;
+  if (window.location.protocol === "file:") return path;
 
-    if (path.startsWith("/")) path = path.slice(1);
+  const appRootNoSlash = APP_ROOT.replace(/\/+$/, "");
+  if (path.startsWith(appRootNoSlash + "/")) return path;
 
-    return APP_ROOT + path;
-  };
+  if (path.startsWith("/")) path = path.slice(1);
+
+  return APP_ROOT + path;
+};
 
   const toAbsUrl = (path) => {
     const p = toRootPath(path);
@@ -120,24 +131,24 @@
   let favorites = [];
   let favoritesSet = new Set();
 
-  const normalizeFavItem = (it) => {
-    if (!it || typeof it !== "object") return null;
-    const id = String(it.id || "").trim();
-    if (!id) return null;
+const normalizeFavItem = (it) => {
+  if (!it || typeof it !== "object") return null;
 
-    const name = String(it.name || "").trim() || "Товар";
-    const price = Number(it.price || 0) || 0;
-    const img = it.image || it.img || "";
-    const qty = 1;
+  const id = String(it.product_code || it.id || "").trim();
+  if (!id) return null;
 
-    return {
-      id,
-      name,
-      price,
-      img: img ? toRootPath(String(img)) : "",
-      qty
-    };
+  const name = String(it.name || "").trim() || "Товар";
+  const price = Number(it.price || 0) || 0;
+  const img = it.image || it.img || "";
+
+  return {
+    id,
+    name,
+    price,
+    img: img ? toRootPath(String(img)) : "",
+    qty: 1
   };
+};
 
   const getFavBtnData = (btn) => {
     logFav.log('Получаем данные кнопки');
@@ -451,66 +462,84 @@ const isFavorite = (id) => {
   };
 
   const renderFavoritesSheet = () => {
-    const content = document.getElementById("favorites-content");
-    const actions = document.querySelector(".favorites-actions");
-    if (!content) return;
+  const content = document.getElementById("favorites-content");
+  const actions = document.querySelector(".favorites-actions");
+  if (!content) return;
 
-    logFav.log('Рендер боковой панели избранного');
-    logFav.log('Авторизован?', isAuthorized());
-    logFav.log('Товаров в избранном:', favorites.length);
+  logFav.log("Рендер боковой панели избранного");
+  logFav.log("Авторизован?", isAuthorized());
+  logFav.log("Товаров в избранном:", favorites.length);
 
-    if (!isAuthorized()) {
-      content.innerHTML = '<p class="muted">Чтобы пользоваться избранным, войдите в аккаунт.</p>';
-      if (actions) actions.style.display = "none";
-      return;
+  if (!isAuthorized()) {
+    content.innerHTML = '<p class="muted">Чтобы пользоваться избранным, войдите в аккаунт.</p>';
+    if (actions) actions.style.display = "none";
+    return;
+  }
+
+  if (!favorites.length) {
+    content.innerHTML = '<p class="muted">В избранном пока ничего нет.</p>';
+    if (actions) actions.style.display = "none";
+    return;
+  }
+
+  content.innerHTML = `
+    <div class="favorites-items">
+      ${favorites.map((item) => {
+        const id = escapeHtml(item.id);
+        const name = escapeHtml(item.name);
+        const price = formatMoney(item.price);
+        const img = escapeHtml(item.img || toRootPath("img/placeholder.webp"));
+
+        return `
+          <div class="favorites-item" data-favorite-id="${id}">
+            <div class="favorites-item__image">
+              <img src="${img}" alt="${name}" loading="lazy">
+            </div>
+
+            <div class="favorites-item__info">
+              <div class="favorites-item__name">${name}</div>
+              <div class="favorites-item__price">${price} ₽</div>
+            </div>
+
+            <div class="favorites-item__actions">
+              <button
+                class="btn btn--dark btn--sm"
+                type="button"
+                data-add-to-cart
+                data-product-id="${id}"
+                data-product-name="${name}"
+                aria-label="Добавить ${name} в корзину"
+              >
+                В корзину
+              </button>
+
+              <button
+                class="iconBtn"
+                type="button"
+                data-remove-favorite
+                data-id="${id}"
+                aria-label="Удалить ${name} из избранного"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+
+  if (actions) actions.style.display = "block";
+
+  if (typeof window.syncHitsWithCart === "function") {
+  requestAnimationFrame(() => {
+    const p = window.syncHitsWithCart();
+    if (p && typeof p.catch === "function") {
+      p.catch((e) => console.error("Ошибка syncHitsWithCart:", e));
     }
-
-    if (!favorites.length) {
-      content.innerHTML = '<p class="muted">В избранном пока ничего нет.</p>';
-      if (actions) actions.style.display = "none";
-      return;
-    }
-
-    content.innerHTML = `
-      <div class="favorites-items">
-        ${favorites
-          .map((item) => {
-            const imgUrl = toAbsUrl(item.img || "");
-            const escapedName = item.name.replace(/"/g, '&quot;');
-            
-            return `
-              <div class="favorites-item" data-favorite-id="${item.id}">
-                <div class="favorites-item__image"
-                     style="background-image:url('${imgUrl}')"
-                     role="img" aria-label="${escapedName}"></div>
-
-                <div class="favorites-item__info">
-                  <div class="favorites-item__name">${item.name}</div>
-                  <div class="favorites-item__price">${formatMoney(item.price)} ₽</div>
-                </div>
-
-                <div class="favorites-item__actions">
-                  <button class="btn btn--dark btn--sm"
-                          type="button"
-                          data-favorite-add-to-cart
-                          data-id="${item.id}"
-                          aria-label="Добавить ${escapedName} в корзину">В корзину</button>
-
-                  <button class="iconBtn"
-                          type="button"
-                          data-remove-favorite
-                          data-id="${item.id}"
-                          aria-label="Удалить ${escapedName} из избранного">✕</button>
-                </div>
-              </div>
-            `;
-          })
-          .join("")}
-      </div>
-    `;
-
-    if (actions) actions.style.display = "block";
-  };
+  });
+}
+};
 
   // ==================== LAZY BACKGROUNDS ====================
   const initLazyBg = () => {

@@ -1,5 +1,43 @@
 <?php
 session_start();
+
+require_once __DIR__ . '/../php/db.php';
+$userId = (int)$_SESSION['user_id'];
+
+// статистика заказов
+$stmt = $pdo->prepare("
+  SELECT COUNT(*) AS orders_count,
+         COALESCE(SUM(items_sum),0) AS items_total
+  FROM orders WHERE user_id = :uid
+");
+$stmt->execute([':uid' => $userId]);
+$st = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$ordersCount = (int)($st['orders_count'] ?? 0);
+$itemsTotal  = (int)($st['items_total'] ?? 0);
+
+// уровень
+if ($itemsTotal >= 30000) $statusName = 'VIP';
+elseif ($itemsTotal >= 10000) $statusName = 'Постоянный';
+else $statusName = 'Новичок';
+
+// использованные промокоды
+$stmt = $pdo->prepare("SELECT promo_code FROM promo_redemptions WHERE user_id = :uid");
+$stmt->execute([':uid' => $userId]);
+$used = array_flip(array_map('strtoupper', array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'promo_code')));
+
+$notUsed = fn(string $code) => !isset($used[strtoupper($code)]);
+
+// доступные промокоды -> code => percent
+$availablePromos = [];
+
+if ($ordersCount === 0 && $notUsed('WELCOME10')) $availablePromos['WELCOME10'] = 10;
+if ($notUsed('SPRING15')) $availablePromos['SPRING15'] = 15;
+
+if ($statusName === 'Постоянный' && $notUsed('LOYAL20')) $availablePromos['LOYAL20'] = 20;
+if ($statusName === 'VIP' && $notUsed('VIP25')) $availablePromos['VIP25'] = 25;
+
+
 if (!isset($_SESSION['user_id'])) {
   header('Location: cart.php');
   exit;
@@ -29,6 +67,11 @@ if (!isset($_SESSION['user_id'])) {
       <div style="display:flex; justify-content:space-between; gap:12px;">
         <span class="muted small">Товары</span>
         <span class="muted small"><span id="itemsSum">0</span> ₽</span>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; gap:12px;">
+        <span class="muted small">Скидка</span>
+        <span class="muted small">−<span id="discountSum">0</span> ₽</span>
       </div>
 
       <div style="display:flex; justify-content:space-between; gap:12px;">
@@ -88,6 +131,34 @@ if (!isset($_SESSION['user_id'])) {
       </div>
     </div>
 
+    <!-- ДАТА И ВРЕМЯ (только для доставки) -->
+    <div id="deliveryTimeBlock" class="mb-3">
+      <div class="small" style="margin-bottom:8px;">Дата и время доставки</div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+        <div>
+          <input class="input" type="date" name="delivery_date" id="deliveryDate" required>
+          <div class="muted small" style="margin-top:6px;">Доставка доступна с завтрашнего дня</div>
+        </div>
+
+        <div>
+          <select class="input" name="delivery_slot" id="deliverySlot" required>
+            <option value="">Выберите интервал</option>
+            <option value="10:00-14:00">10:00–14:00</option>
+            <option value="14:00-18:00">14:00–18:00</option>
+            <option value="18:00-22:00">18:00–22:00</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="muted small" id="deliveryTimeHint" style="margin-top:6px;"></div>
+    </div>
+
+    <!-- Подсказка для самовывоза -->
+    <div id="pickupHint" class="muted small" style="display:none; margin-top:-6px; margin-bottom:12px;">
+      Самовывоз доступен ежедневно с <b>10:00</b> до <b>20:00</b>.
+    </div>
+
     <!-- АДРЕС ДОСТАВКИ -->
     <div id="deliveryAddressBlock" class="mb-3">
       <div class="small" style="margin-bottom:8px;">Адрес доставки</div>
@@ -117,7 +188,7 @@ if (!isset($_SESSION['user_id'])) {
       <div class="muted small" id="addrHint" style="margin-top:6px;"></div>
     </div>
 
-    <!-- ОПЛАТА (без настоящей оплаты, просто выбор) -->
+    <!-- ОПЛАТА -->
     <div class="mb-3">
       <div class="small" style="margin-bottom:8px;">Способ оплаты</div>
 
@@ -135,6 +206,26 @@ if (!isset($_SESSION['user_id'])) {
         <input type="radio" name="payment_method" value="transfer">
         <span>Переводом</span>
       </label>
+    </div>
+
+    <!-- ПРОМОКОД -->
+    <div class="mb-3">
+      <div class="small" style="margin-bottom:8px;">Промокод</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <input class="input" id="promoInput" name="promo_code" placeholder="Введите промокод (например WELCOME10)" style="flex:1; min-width:220px;">
+        <button class="btn btn--outline" type="button" id="applyPromoBtn">Применить</button>
+      </div>
+      <div class="muted small" id="promoHint" style="margin-top:6px;"></div>
+<div class="muted small" style="margin-top:6px;">
+  <?php if (!empty($availablePromos)): ?>
+    Доступно сейчас:
+    <?php foreach ($availablePromos as $c => $p): ?>
+      <b><?= htmlspecialchars($c) ?></b> (−<?= (int)$p ?>%)&nbsp;
+    <?php endforeach; ?>
+  <?php else: ?>
+    Сейчас нет доступных промокодов.
+  <?php endif; ?>
+</div>
     </div>
 
     <!-- КОММЕНТАРИЙ -->
@@ -165,11 +256,11 @@ if (!isset($_SESSION['user_id'])) {
         Ваш заказ № <b id="successOrderId">—</b> оформлен.
       </p>
       <p class="muted small" style="margin-top:8px;">
-        Сейчас вы будете перенаправлены в личный кабинет → «История заказов».
+        Вы можете перейти в личный кабинет → «История заказов» или остаться на странице.
       </p>
 
       <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
-        <a class="btn btn--dark" id="goAccountBtn" href="account.php#orders">Перейти сейчас</a>
+        <a class="btn btn--dark" id="goAccountBtn" href="account.php?tab=orders">Перейти сейчас</a>
         <button class="btn" type="button" data-close>Остаться здесь</button>
       </div>
     </div>
@@ -187,6 +278,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const msg  = document.getElementById('msg');
 
   const itemsSumEl = document.getElementById('itemsSum');
+  const discountSumEl = document.getElementById('discountSum');
   const deliveryFeeEl = document.getElementById('deliveryFee');
   const totalSumEl = document.getElementById('totalSum');
   const totalQtyEl = document.getElementById('totalQty');
@@ -207,9 +299,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   const emailHint = document.getElementById('emailHint');
   const addrHint = document.getElementById('addrHint');
 
+  const deliveryTimeBlock = document.getElementById('deliveryTimeBlock');
+  const pickupHint = document.getElementById('pickupHint');
+  const deliveryDate = document.getElementById('deliveryDate');
+  const deliverySlot = document.getElementById('deliverySlot');
+  const deliveryTimeHint = document.getElementById('deliveryTimeHint');
+
+  const promoInput = document.getElementById('promoInput');
+  const applyPromoBtn = document.getElementById('applyPromoBtn');
+  const promoHint = document.getElementById('promoHint');
+
   let cartItems = [];
   let baseItemsSum = 0;
   let baseQty = 0;
+
+  const PROMOS = <?php echo json_encode($availablePromos, JSON_UNESCAPED_UNICODE); ?>;
+  let appliedPromo = null; // {code, percent}
+  let discountSum = 0;
 
   function rub(n){ return Number(n || 0).toLocaleString('ru-RU'); }
 
@@ -226,12 +332,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     return getDeliveryType() === 'delivery' ? DELIVERY_FEE : 0;
   }
 
+  function computeDiscount(itemsSum) {
+    if (!appliedPromo) return 0;
+    return Math.round(itemsSum * (appliedPromo.percent / 100));
+  }
+
   function renderTotals() {
     const fee = calcDeliveryFee();
+    discountSum = computeDiscount(baseItemsSum);
+
     itemsSumEl.textContent = rub(baseItemsSum);
+    discountSumEl.textContent = rub(discountSum);
+
     deliveryFeeEl.textContent = rub(fee);
-    totalSumEl.textContent = rub(baseItemsSum + fee);
+    totalSumEl.textContent = rub(Math.max(0, baseItemsSum - discountSum) + fee);
     totalQtyEl.textContent = baseQty;
+  }
+
+  function toggleDeliveryExtras() {
+    const type = getDeliveryType();
+
+    if (type === 'pickup') {
+      if (deliveryTimeBlock) deliveryTimeBlock.style.display = 'none';
+      if (pickupHint) pickupHint.style.display = 'block';
+      if (deliveryDate) { deliveryDate.required = false; deliveryDate.style.borderColor = ''; }
+      if (deliverySlot) { deliverySlot.required = false; deliverySlot.style.borderColor = ''; }
+      if (deliveryTimeHint) deliveryTimeHint.textContent = '';
+    } else {
+      if (deliveryTimeBlock) deliveryTimeBlock.style.display = '';
+      if (pickupHint) pickupHint.style.display = 'none';
+      if (deliveryDate) deliveryDate.required = true;
+      if (deliverySlot) deliverySlot.required = true;
+    }
   }
 
   function toggleAddressUI() {
@@ -252,16 +384,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       streetInput.required = true;
       houseInput.required = true;
     }
+
+    toggleDeliveryExtras();
     renderTotals();
   }
 
-  // ===== 1) грузим корзину (это и есть причина твоего "0", если код не доходил сюда)
+  // min date = tomorrow
+  if (deliveryDate) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    deliveryDate.min = tomorrow.toISOString().slice(0,10);
+  }
+
+  // грузим корзину
   try {
     const data = await cartApi('list');
     cartItems = data.items || [];
 
     if (!cartItems.length) {
-      // если корзина пуста или API отдал пусто — вернёмся в корзину
       location.href = 'cart.php';
       return;
     }
@@ -277,7 +417,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // ===== 2) маска телефона (твоя) — отдельно, НЕ внутри других функций!
+  // маска телефона (твоя)
   phoneInput.addEventListener("input", function () {
     let value = this.value.replace(/\D/g, "");
 
@@ -296,7 +436,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     this.value = formattedValue;
   });
 
-  // ===== 3) валидация
+  // промокод
+  applyPromoBtn?.addEventListener('click', () => {
+    const code = (promoInput.value || '').trim().toUpperCase();
+
+    if (!code) {
+      promoHint.textContent = 'Введите промокод.';
+      appliedPromo = null;
+      renderTotals();
+      return;
+    }
+
+    const percent = PROMOS[code];
+    if (!percent) {
+      promoHint.textContent = 'Промокод не найден.';
+      appliedPromo = null;
+      renderTotals();
+      return;
+    }
+
+    appliedPromo = { code, percent };
+    promoHint.textContent = `Промокод ${code} применён: скидка ${percent}%`;
+    renderTotals();
+  });
+
+  // validation
   function validateName() {
     const v = (nameInput.value || '').trim();
     const ok = /^[А-Яа-яЁё][А-Яа-яЁё\s\-]{1,79}$/u.test(v);
@@ -346,6 +510,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     return (cityOk && streetOk && houseOk);
   }
 
+  function validateDeliveryTimeIfNeeded() {
+    if (getDeliveryType() === 'pickup') return true;
+
+    let ok = true;
+    const min = deliveryDate?.min || '';
+    const vDate = (deliveryDate?.value || '').trim();
+    const vSlot = (deliverySlot?.value || '').trim();
+
+    if (!vDate || (min && vDate < min)) ok = false;
+    if (!vSlot) ok = false;
+
+    if (deliveryDate) deliveryDate.style.borderColor = (!vDate || (min && vDate < min)) ? '#b00020' : '';
+    if (deliverySlot) deliverySlot.style.borderColor = (!vSlot) ? '#b00020' : '';
+
+    if (deliveryTimeHint) {
+      deliveryTimeHint.textContent = ok ? '' : 'Выберите дату (не раньше завтра) и интервал времени.';
+    }
+
+    return ok;
+  }
+
   nameInput.addEventListener('blur', validateName);
   phoneInput.addEventListener('blur', validatePhone);
   emailInput.addEventListener('blur', validateEmail);
@@ -354,31 +539,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   streetInput.addEventListener('blur', validateAddressIfNeeded);
   houseInput.addEventListener('blur', validateAddressIfNeeded);
 
+  deliveryDate?.addEventListener('blur', validateDeliveryTimeIfNeeded);
+  deliverySlot?.addEventListener('change', validateDeliveryTimeIfNeeded);
+
   form.addEventListener('change', (e) => {
     if (e.target.name === 'delivery_type') toggleAddressUI();
   });
 
-  // ===== 4) модалка: открытие/закрытие (без автоперехода!)
+  // modal
   function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
     modal.setAttribute('aria-hidden', 'false');
     modal.classList.add('is-open');
   }
-
   function closeModal(el) {
     const modal = el.closest('.modal');
     if (!modal) return;
     modal.setAttribute('aria-hidden', 'true');
     modal.classList.remove('is-open');
   }
-
   document.addEventListener('click', (e) => {
     const c = e.target.closest('[data-close]');
     if (c) closeModal(c);
   });
 
-  // ===== 5) submit
+  // submit
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     msg.textContent = '';
@@ -388,7 +574,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       validateName() &
       validatePhone() &
       validateEmail() &
-      validateAddressIfNeeded();
+      validateAddressIfNeeded() &
+      validateDeliveryTimeIfNeeded();
 
     if (!ok) {
       msg.textContent = 'Проверьте поля формы — есть ошибки.';
@@ -403,6 +590,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       qty: parseInt(it.qty, 10) || 1
     }));
 
+    const promoCode = appliedPromo?.code || ((promoInput.value || '').trim().toUpperCase());
+
     const payload = {
       customer_name: nameInput.value.trim(),
       phone: phoneInput.value.trim(),
@@ -416,6 +605,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       house: (deliveryType === 'delivery') ? houseInput.value.trim() : '',
       apartment: (deliveryType === 'delivery') ? aptInput.value.trim() : '',
       entrance_info: (deliveryType === 'delivery') ? entranceInput.value.trim() : '',
+
+      delivery_date: (deliveryType === 'delivery') ? (deliveryDate.value || '') : '',
+      delivery_slot: (deliveryType === 'delivery') ? (deliverySlot.value || '') : '',
+
+      promo_code: promoCode || '',
 
       items: minimalItems
     };
@@ -435,26 +629,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      // чистим корзину на сервере
       try { await cartApi('clear'); } catch(e) {}
 
-      // обновим итог на странице (чисто визуально)
+      // визуально очистим итог
       baseItemsSum = 0;
       baseQty = 0;
+      appliedPromo = null;
+      promoInput.value = '';
+      promoHint.textContent = '';
       renderTotals();
 
-      // модалка успеха
       const idEl = document.getElementById('successOrderId');
       if (idEl) idEl.textContent = out.order_id;
 
       const goBtn = document.getElementById('goAccountBtn');
-      if (goBtn) goBtn.href = 'account.php#orders';
+      if (goBtn) goBtn.href = 'account.php?tab=orders';
 
       openModal('orderSuccessModal');
 
-      setTimeout(() => {
-        location.href = 'account.php#orders';
-      }, 8000);
+      setTimeout(() => { location.href = 'account.php?tab=orders'; }, 8000);
 
     } catch (err) {
       msg.textContent = 'Ошибка сети.';

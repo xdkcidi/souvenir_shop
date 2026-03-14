@@ -2,6 +2,268 @@
 session_start();
 $isAuth = isset($_SESSION['user_id']);
 $hasAuthError = !empty($_SESSION['auth_error']);
+
+require_once '../php/db.php';
+
+function e(string $value): string
+{
+    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+}
+
+function getDbConnection(): PDO|mysqli|null
+{
+    foreach (['pdo', 'db', 'conn', 'mysqli', 'link'] as $key) {
+        if (!isset($GLOBALS[$key])) {
+            continue;
+        }
+
+        $candidate = $GLOBALS[$key];
+
+        if ($candidate instanceof PDO || $candidate instanceof mysqli) {
+            return $candidate;
+        }
+    }
+
+    return null;
+}
+
+function dbFetchAll(string $sql): array
+{
+    $db = getDbConnection();
+
+    if ($db instanceof PDO) {
+        $stmt = $db->query($sql);
+        return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+    }
+
+    if ($db instanceof mysqli) {
+        $result = $db->query($sql);
+        if (!$result) {
+            return [];
+        }
+
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    return [];
+}
+
+function productImageUrl(?string $path): string
+{
+    $path = trim((string)$path);
+
+    if ($path === '') {
+        return '../img/placeholder.webp';
+    }
+
+    if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+        return $path;
+    }
+
+    if (str_starts_with($path, '../img/')) {
+        return $path;
+    }
+
+    if (str_starts_with($path, './img/')) {
+        return '../' . substr($path, 2); 
+    }
+
+    if (str_starts_with($path, 'img/')) {
+        return '../' . $path; 
+    }
+
+    if (str_starts_with($path, '/')) {
+        return $path;
+    }
+
+    return '../' . ltrim($path, '/');
+}
+
+function badgeClass(?string $badge): ?string
+{
+    return match ($badge) {
+        'hit' => 'pbadge pbadge--hit',
+        'new' => 'pbadge pbadge--new',
+        default => null,
+    };
+}
+
+function badgeText(?string $badge): ?string
+{
+    return match ($badge) {
+        'hit' => 'Хит',
+        'new' => 'Новинка',
+        default => null,
+    };
+}
+
+function formatRubles(int|string|null $price): string
+{
+    return number_format((int)$price, 0, '', ' ');
+}
+
+function renderProductCard(array $product): void
+{
+    $productCode = e((string)($product['product_code'] ?? ''));
+    $category = e((string)($product['category'] ?? ''));
+    $name = e((string)($product['name'] ?? ''));
+    $meta = e((string)($product['meta'] ?? ''));
+    $price = (int)($product['price'] ?? 0);
+    $image = e(productImageUrl($product['image'] ?? ''));
+    $badgeCls = badgeClass($product['badge'] ?? null);
+    $badgeLbl = badgeText($product['badge'] ?? null);
+    $ariaLabel = trim((string)($product['name'] ?? '') . ' ' . (string)($product['meta'] ?? ''));
+    $ariaLabel = e($ariaLabel !== '' ? $ariaLabel : (string)($product['name'] ?? 'Товар'));
+
+    ?>
+    <div class="reveal"
+         data-product
+         data-category="<?= $category ?>"
+         data-id="<?= $productCode ?>"
+         data-name="<?= $name ?>"
+         role="listitem">
+      <div class="card">
+        <div class="card__img"
+             role="img"
+             aria-label="<?= $ariaLabel ?>"
+             data-bg="<?= $image ?>">
+          <?php if ($badgeCls && $badgeLbl): ?>
+            <span class="<?= e($badgeCls) ?>"><?= e($badgeLbl) ?></span>
+          <?php endif; ?>
+        </div>
+
+        <div class="card__body">
+          <div class="card__top">
+            <div>
+              <h3 class="card__title"><?= $name ?></h3>
+              <div class="card__meta"><?= $meta ?></div>
+            </div>
+
+            <div class="card__price">
+              <span class="price-amount"><?= formatRubles($price) ?></span> ₽
+            </div>
+          </div>
+
+          <div class="card__actions">
+            <button class="btn btn--dark btn--full"
+                    type="button"
+                    data-add-to-cart
+                    data-product-id="<?= $productCode ?>"
+                    data-product-name="<?= $name ?>"
+                    data-product-price="<?= $price ?>"
+                    data-product-img="<?= $image ?>">
+              В корзину
+            </button>
+
+            <div class="qty qty--card" data-qty-wrap="<?= $productCode ?>" style="display:none;">
+              <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="<?= $productCode ?>">−</button>
+              <span class="qty__val">1</span>
+              <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="<?= $productCode ?>">+</button>
+            </div>
+
+            <button class="iconBtn"
+                    type="button"
+                    aria-label="Добавить <?= $name ?> в избранное"
+                    aria-pressed="false"
+                    data-fav-btn
+                    data-product-id="<?= $productCode ?>"
+                    data-product-name="<?= $name ?>"
+                    data-product-price="<?= $price ?>"
+                    data-product-img="<?= $image ?>">
+              <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <?php
+}
+
+function renderCategorySection(string $categoryCode, string $title, string $desc, array $products): void
+{
+    ?>
+    <section class="group-block group-block--hero reveal"
+             id="group-<?= e($categoryCode) ?>"
+             data-group="<?= e($categoryCode) ?>"
+             aria-labelledby="<?= e($categoryCode) ?>-title">
+      <div class="group-head">
+        <div>
+          <h3 id="<?= e($categoryCode) ?>-title" class="group-title"><?= e($title) ?></h3>
+          <p class="group-desc"><?= e($desc) ?></p>
+        </div>
+      </div>
+
+      <div class="grid4" role="list" id="<?= e($categoryCode) ?>-products">
+        <?php if (!empty($products)): ?>
+          <?php foreach ($products as $product): ?>
+            <?php renderProductCard($product); ?>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <div class="muted" style="grid-column:1/-1;">Пока нет товаров в этой категории.</div>
+        <?php endif; ?>
+      </div>
+    </section>
+    <?php
+}
+
+$categoryTitles = [
+    'ceramics' => [
+        'title' => 'Керамика',
+        'desc'  => 'Ручная лепка, приятные формы и спокойные оттенки — для ежедневных маленьких ритуалов.',
+    ],
+    'postcards' => [
+        'title' => 'Открытки',
+        'desc'  => 'Тёплые слова в красивой форме — идеально как самостоятельный подарок или дополнение к набору.',
+    ],
+    'candles' => [
+        'title' => 'Свечи',
+        'desc'  => 'Интерьерные и ароматные свечи — для настроения и уюта.',
+    ],
+    'textile' => [
+        'title' => 'Текстиль',
+        'desc'  => 'Мягкие и тёплые вещи ручной работы: игрушки, мешочки, панно и шарфы.',
+    ],
+    'decor' => [
+        'title' => 'Декор',
+        'desc'  => 'Небольшие элементы для полок и столов: фигурки, вазы и подсвечники.',
+    ],
+    'sets' => [
+        'title' => 'Подарочные наборы',
+        'desc'  => 'Красиво упакованные боксы — можно дарить сразу, без лишних забот.',
+    ],
+];
+
+$allProducts = dbFetchAll("
+    SELECT *
+    FROM products
+    ORDER BY
+      FIELD(category, 'ceramics', 'postcards', 'candles', 'textile', 'decor', 'sets'),
+      CASE
+        WHEN badge = 'hit' THEN 0
+        WHEN badge = 'new' THEN 1
+        ELSE 2
+      END,
+      id ASC
+");
+
+$groupedProducts = [];
+foreach ($allProducts as $product) {
+    $category = (string)($product['category'] ?? '');
+    if ($category !== '') {
+        $groupedProducts[$category][] = $product;
+    }
+}
+
+$hitProducts = array_values(array_filter(
+    $allProducts,
+    fn($product) => ($product['badge'] ?? null) === 'hit'
+));
+$hitProducts = array_slice($hitProducts, 0, 4);
 ?>
 <!doctype html>
 <html lang="ru" data-auth="<?php echo $isAuth ? '1' : '0'; ?>">
@@ -52,7 +314,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
           </svg>
         </button>
 
-        <!-- MEGA MENU -->
         <div class="mega" id="mega-menu" data-dropdown-menu role="menu" aria-label="Категории товаров">
           <div class="mega__grid">
             <div>
@@ -115,10 +376,9 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       <a class="nav__link" href="about.php">О компании</a>
 
       <div class="nav__actions">
-        <!-- 🔑 ИКОНКА АККАУНТА -->
         <?php if ($isAuth): ?>
           <a class="iconBtn iconBtn--auth"
-             href="../php/account.php"
+             href="account.php"
              aria-label="Личный кабинет">
             <svg viewBox="0 0 24 24" aria-hidden="true" class="iconUser">
               <circle cx="12" cy="8" r="3.2" />
@@ -162,281 +422,90 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   </div>
 </header>
 
-  <!-- MAIN CONTENT -->
-  <main class="container section" id="main-content" role="main" tabindex="-1">
+<main class="container section" id="main-content" role="main" tabindex="-1">
 
-    <!-- Хлебные крошки -->
-    <nav class="breadcrumbs" aria-label="Хлебные крошки">
-      <ol>
-        <li><a href="../index.php">Главная</a></li>
-        <li><span aria-current="page">Каталог</span></li>
-      </ol>
-    </nav>
+  <nav class="breadcrumbs" aria-label="Хлебные крошки">
+    <ol>
+      <li><a href="../index.php">Главная</a></li>
+      <li><span aria-current="page">Каталог</span></li>
+    </ol>
+  </nav>
 
-    <!-- Заголовок страницы -->
-    <header class="page-header">
-      <h1 class="h1">Каталог сувениров ручной работы</h1>
-      <p class="lead">Уникальные подарки и предметы интерьера для вашего уюта</p>
-    </header>
+  <header class="page-header">
+    <h1 class="h1">Каталог сувениров ручной работы</h1>
+    <p class="lead">Уникальные подарки и предметы интерьера для вашего уюта</p>
+  </header>
 
-    <section id="home" class="section section--sm" aria-labelledby="for-home-title">
-      <div class="grid3 mb-14" role="list">
-        <a class="tile reveal" href="#group-ceramics" role="listitem">
-          <div class="tile__img" role="img" aria-label="Керамические изделия ручной работы" data-bg="../img/ceramic.webp"></div>
-          <div class="tile__overlay">
-            <div class="tile__title">Керамика</div>
-            <div class="tile__sub">кружки • тарелки • фигурки</div>
-          </div>
-        </a>
+  <section id="home" class="section section--sm" aria-labelledby="for-home-title">
+    <div class="grid3 mb-14" role="list">
+      <a class="tile reveal" href="#group-ceramics" role="listitem">
+        <div class="tile__img" role="img" aria-label="Керамические изделия ручной работы" data-bg="../img/ceramic.webp"></div>
+        <div class="tile__overlay">
+          <div class="tile__title">Керамика</div>
+          <div class="tile__sub">кружки • тарелки • фигурки</div>
+        </div>
+      </a>
 
-        <a class="tile reveal" href="#group-postcards" role="listitem">
-          <div class="tile__img" role="img" aria-label="Открытки ручной работы с акварельными рисунками" data-bg="../img/letter.webp"></div>
-          <div class="tile__overlay">
-            <div class="tile__title">Открытки</div>
-            <div class="tile__sub">акварель • авторские</div>
-          </div>
-        </a>
+      <a class="tile reveal" href="#group-postcards" role="listitem">
+        <div class="tile__img" role="img" aria-label="Открытки ручной работы с акварельными рисунками" data-bg="../img/letter.webp"></div>
+        <div class="tile__overlay">
+          <div class="tile__title">Открытки</div>
+          <div class="tile__sub">акварель • авторские</div>
+        </div>
+      </a>
 
-        <a class="tile reveal" href="#group-candles" role="listitem">
-          <div class="tile__img" role="img" aria-label="Ароматические свечи из соевого воска" data-bg="../img/candle.webp"></div>
-          <div class="tile__overlay">
-            <div class="tile__title">Свечи</div>
-            <div class="tile__sub">соевые • ароматные</div>
-          </div>
-        </a>
+      <a class="tile reveal" href="#group-candles" role="listitem">
+        <div class="tile__img" role="img" aria-label="Ароматические свечи из соевого воска" data-bg="../img/candle.webp"></div>
+        <div class="tile__overlay">
+          <div class="tile__title">Свечи</div>
+          <div class="tile__sub">соевые • ароматные</div>
+        </div>
+      </a>
 
-        <a class="tile reveal" href="#group-textile" role="listitem">
-          <div class="tile__img" role="img" aria-label="Текстильные изделия и мягкие игрушки" data-bg="../img/textile.webp"></div>
-          <div class="tile__overlay">
-            <div class="tile__title">Текстиль</div>
-            <div class="tile__sub">игрушки • вышивка</div>
-          </div>
-        </a>
+      <a class="tile reveal" href="#group-textile" role="listitem">
+        <div class="tile__img" role="img" aria-label="Текстильные изделия и мягкие игрушки" data-bg="../img/textile.webp"></div>
+        <div class="tile__overlay">
+          <div class="tile__title">Текстиль</div>
+          <div class="tile__sub">игрушки • вышивка</div>
+        </div>
+      </a>
 
-        <a class="tile reveal" href="#group-decor" role="listitem">
-          <div class="tile__img" role="img" aria-label="Декор для интерьера и фигурки" data-bg="../img/decor.webp"></div>
-          <div class="tile__overlay">
-            <div class="tile__title">Декор</div>
-            <div class="tile__sub">фигурки • вазы</div>
-          </div>
-        </a>
+      <a class="tile reveal" href="#group-decor" role="listitem">
+        <div class="tile__img" role="img" aria-label="Декор для интерьера и фигурки" data-bg="../img/decor.webp"></div>
+        <div class="tile__overlay">
+          <div class="tile__title">Декор</div>
+          <div class="tile__sub">фигурки • вазы</div>
+        </div>
+      </a>
 
-        <a class="tile reveal" href="#group-sets" role="listitem">
-          <div class="tile__img" role="img" aria-label="Подарочные наборы в красивой упаковке" data-bg="../img/box.webp"></div>
-          <div class="tile__overlay">
-            <div class="tile__title">Подарочные наборы</div>
-            <div class="tile__sub">свечи • керамика • открытки</div>
-          </div>
-        </a>
+      <a class="tile reveal" href="#group-sets" role="listitem">
+        <div class="tile__img" role="img" aria-label="Подарочные наборы в красивой упаковке" data-bg="../img/box.webp"></div>
+        <div class="tile__overlay">
+          <div class="tile__title">Подарочные наборы</div>
+          <div class="tile__sub">свечи • керамика • открытки</div>
+        </div>
+      </a>
+    </div>
+
+    <section class="hits reveal" id="hits" aria-labelledby="hits-title" data-filter-exclude>
+      <div class="catalog-head">
+        <div>
+          <h2 id="hits-title" class="h2">Хиты продаж</h2>
+          <p class="lead">Самые популярные товары — чаще всего выбирают в подарок.</p>
+        </div>
       </div>
 
-      <!-- ХИТЫ ПРОДАЖ -->
-      <section class="hits reveal" id="hits" aria-labelledby="hits-title" data-filter-exclude>
-        <div class="catalog-head">
-          <div>
-            <h2 id="hits-title" class="h2">Хиты продаж</h2>
-            <p class="lead">Самые популярные товары — чаще всего выбирают в подарок.</p>
-          </div>
-        </div>
-
-        <!-- быстрый ряд товаров -->
-        <div class="grid4" role="list">
-          <div class="reveal" data-product data-category="candles" data-id="candle-1" data-name="Свеча Природа" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Свеча Природа с ароматом трав" data-bg="../img/candle2.webp">
-                <span class="pbadge pbadge--hit">Хит</span>
-              </div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Свеча «Природа»</h3>
-                    <div class="card__meta">аромат трав • спокойное настроение</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">1 199</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="candle-1"
-                          data-product-name="Свеча «Природа»" 
-                          data-product-price="1199"
-                          data-product-img="../img/candle2.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="candle-1" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="candle-1">−</button>
-                    <span class="qty__val" id="cardQty-candle-1">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="candle-1">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Свеча Природа в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="candle-1"
-                          data-product-name="Свеча «Природа»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="reveal" data-product data-category="ceramics" data-id="ceramic-1" data-name="Фигурка Дом" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Керамическая фигурка Дом" data-bg="../img/ceramic4.webp">
-                <span class="pbadge pbadge--hit">Хит</span>
-              </div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Фигурка «Домик»</h3>
-                    <div class="card__meta">керамика • декоративный акцент</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">1 999</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="ceramic-1"
-                          data-product-name="Фигурка «Домик»" 
-                          data-product-price="1999"
-                          data-product-img="../img/ceramic4.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="ceramic-1" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="ceramic-1">−</button>
-                    <span class="qty__val" id="cardQty-ceramic-1">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="ceramic-1">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Фигурка Дом в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="ceramic-1"
-                          data-product-name="Фигурка «Домик»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="reveal" data-product data-category="textile" data-id="textile-1" data-name="Игрушка Мишка" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Мягкая игрушка Мишка ручной работы" data-bg="../img/textile1.webp">
-                <span class="pbadge pbadge--hit">Хит</span>
-              </div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Игрушка «Мишка»</h3>
-                    <div class="card__meta">мягкая • ручная работа</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">1 699</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="textile-1"
-                          data-product-name="Игрушка «Мишка»" 
-                          data-product-price="1699"
-                          data-product-img="../img/textile1.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="textile-1" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="textile-1">−</button>
-                    <span class="qty__val" id="cardQty-textile-1">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="textile-1">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Игрушка Мишка в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="textile-1"
-                          data-product-name="Игрушка «Мишка»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="reveal" data-product data-category="decor" data-id="decor-1" data-name="Ваза Спокойствие" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Ваза Спокойствие пастельного оттенка" data-bg="../img/decor2.webp">
-                <span class="pbadge pbadge--hit">Хит</span>
-              </div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Ваза «Спокойствие»</h3>
-                    <div class="card__meta">пастельный оттенок • для сухоцветов</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">1 999</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="decor-1"
-                          data-product-name="Ваза «Спокойствие»" 
-                          data-product-price="1999"
-                          data-product-img="../img/decor2.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="decor-1" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="decor-1">−</button>
-                    <span class="qty__val" id="cardQty-decor-1">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="decor-1">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Ваза Спокойствие в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="decor-1"
-                          data-product-name="Ваза «Спокойствие»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <div class="grid4" role="list">
+        <?php if (!empty($hitProducts)): ?>
+          <?php foreach ($hitProducts as $product): ?>
+            <?php renderProductCard($product); ?>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <div class="muted" style="grid-column:1/-1;">Хиты пока не добавлены.</div>
+        <?php endif; ?>
+      </div>
     </section>
 
-    <!-- ПЕРСОНАЛЬНЫЕ ПОДАРКИ -->
     <section class="personal-gift reveal" id="personalGift" aria-labelledby="personal-gift-title">
       <div class="personal-gift__bg"
            role="img"
@@ -446,13 +515,12 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       <div class="personal-gift__veil" aria-hidden="true"></div>
 
       <div class="personal-gift__inner container">
-        <!-- текст -->
         <div class="personal-gift__content">
           <p class="personal-gift__top">ПЕРСОНАЛИЗАЦИЯ • ИМЯ • ДАТА</p>
 
           <h2 id="personal-gift-title" class="personal-gift__title">
             Персональный подарок:<br />
-            добавим имя или пожелание.
+            добавим имя или пожелание
           </h2>
 
           <p class="personal-gift__text">
@@ -467,7 +535,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
           </ul>
         </div>
 
-        <!-- форма -->
         <div class="personal-gift__formCard" role="region" aria-label="Заявка на персонализацию">
           <div class="pgForm__head">
             <div>
@@ -482,7 +549,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
               <label class="pgField">
                 <span class="pgField__label">Текст гравировки</span>
                 <input class="input" type="text" name="engraveText" maxlength="40"
-                       placeholder="Например: "Дорогой Ане"" />
+                       placeholder="Например: &quot;Дорогой Ане&quot;" />
                 <span class="pgField__hint">до 40 символов</span>
               </label>
 
@@ -520,7 +587,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
               <label class="pgField pgField--full">
                 <span class="pgField__label">Комментарий</span>
                 <textarea class="input pgTextarea" name="comment" rows="3"
-                          placeholder="Например: "Нужна надпись на донышке""></textarea>
+                          placeholder="Например: &quot;Нужна надпись на донышке&quot;"></textarea>
               </label>
             </div>
 
@@ -541,52 +608,51 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       <section class="filters-bar reveal" id="collectionsNav" aria-labelledby="filters-title">
         <div class="filters-left">
           <h2 id="filters-title" class="visually-hidden">Фильтры каталога</h2>
-          <!-- фильтр по категориям -->
           <div class="filters-row" id="categoryFilters" role="tablist" aria-label="Категории товаров">
-            <button class="chip chip--filter is-active" 
-                    type="button" 
+            <button class="chip chip--filter is-active"
+                    type="button"
                     role="tab"
                     aria-selected="true"
                     aria-controls="all-products"
                     data-filter="all"
                     id="filter-all">Показать все</button>
-            <button class="chip chip--filter" 
-                    type="button" 
+            <button class="chip chip--filter"
+                    type="button"
                     role="tab"
                     aria-selected="false"
                     aria-controls="candles-products"
                     data-filter="candles"
                     id="filter-candles">Свечи</button>
-            <button class="chip chip--filter" 
-                    type="button" 
+            <button class="chip chip--filter"
+                    type="button"
                     role="tab"
                     aria-selected="false"
                     aria-controls="ceramics-products"
                     data-filter="ceramics"
                     id="filter-ceramics">Керамика</button>
-            <button class="chip chip--filter" 
-                    type="button" 
+            <button class="chip chip--filter"
+                    type="button"
                     role="tab"
                     aria-selected="false"
                     aria-controls="decor-products"
                     data-filter="decor"
                     id="filter-decor">Декор</button>
-            <button class="chip chip--filter" 
-                    type="button" 
+            <button class="chip chip--filter"
+                    type="button"
                     role="tab"
                     aria-selected="false"
                     aria-controls="textile-products"
                     data-filter="textile"
                     id="filter-textile">Текстиль</button>
-            <button class="chip chip--filter" 
-                    type="button" 
+            <button class="chip chip--filter"
+                    type="button"
                     role="tab"
                     aria-selected="false"
                     aria-controls="postcards-products"
                     data-filter="postcards"
                     id="filter-postcards">Открытки</button>
-            <button class="chip chip--filter" 
-                    type="button" 
+            <button class="chip chip--filter"
+                    type="button"
                     role="tab"
                     aria-selected="false"
                     aria-controls="sets-products"
@@ -595,7 +661,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
           </div>
         </div>
 
-        <!-- поиск -->
         <div class="search-wrap">
           <label for="searchInput" class="visually-hidden">Поиск по каталогу</label>
           <svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true">
@@ -618,1219 +683,26 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
       <span id="filtersAnchor"></span>
 
-      <!-- Счётчики результатов -->
       <div class="results-info" aria-live="polite" aria-atomic="true" style="display: none;">
         <p id="results-count">Найдено <span id="results-number">0</span> товаров</p>
         <button class="btn btn--text btn--sm" id="clear-filters" style="display: none;">Сбросить фильтры</button>
       </div>
 
-      <!-- ===== Керамика ===== -->
-      <section class="group-block group-block--hero reveal" id="group-ceramics" data-group="ceramics" aria-labelledby="ceramics-title">
-        <div class="group-head">
-          <div>
-            <h3 id="ceramics-title" class="group-title">Керамика</h3>
-            <p class="group-desc">
-              Ручная лепка, приятные формы и спокойные оттенки — для ежедневных маленьких ритуалов.
-            </p>
-          </div>
-        </div>
-
-        <div class="grid4" role="list">
-          <div data-product data-category="ceramics" data-id="ceramic-2" data-name="Кружка Утро" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Кружка Утро ручной лепки с матовой глазурью" data-bg="../img/ceramic1.webp"></div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Кружка «Утро»</h3>
-                    <div class="card__meta">ручная лепка • матовая глазурь</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">1 499</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="ceramic-2"
-                          data-product-name="Кружка «Утро»" 
-                          data-product-price="1499"
-                          data-product-img="../img/ceramic1.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="ceramic-2" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="ceramic-2">−</button>
-                    <span class="qty__val" id="cardQty-ceramic-2">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="ceramic-2">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Кружка Утро в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="ceramic-2"
-                          data-product-name="Кружка «Утро»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="ceramics" data-id="ceramic-3" data-name="Тарелка Мини" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Тарелка Мини для украшений и мелочей" data-bg="../img/ceramic2.webp"></div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Тарелка «Мини»</h3>
-                    <div class="card__meta">для украшений, свечей и мелочей</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">999</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="ceramic-3"
-                          data-product-name="Тарелка «Мини»" 
-                          data-product-price="999"
-                          data-product-img="../img/ceramic2.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="ceramic-3" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="ceramic-3">−</button>
-                    <span class="qty__val" id="cardQty-ceramic-3">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="ceramic-3">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Тарелка Мини в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="ceramic-3"
-                          data-product-name="Тарелка «Мини»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="ceramics" data-id="ceramic-4" data-name="Миска Тепло" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Миска Тепло с натуральной текстурой" data-bg="../img/ceramic3.webp"></div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Миска «Тепло»</h3>
-                    <div class="card__meta">натуральная текстура • универсальная</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">1 299</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="ceramic-4"
-                          data-product-name="Миска «Тепло»" 
-                          data-product-price="1299"
-                          data-product-img="../img/ceramic3.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="ceramic-4" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="ceramic-4">−</button>
-                    <span class="qty__val" id="cardQty-ceramic-4">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="ceramic-4">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Миска Тепло в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="ceramic-4"
-                          data-product-name="Миска «Тепло»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="ceramics" data-id="ceramic-5" data-name="Фигурка Домик" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Фигурка Домик из керамики" data-bg="../img/ceramic4.webp">
-                <span class="pbadge pbadge--hit">Хит</span>
-              </div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Фигурка «Домик»</h3>
-                    <div class="card__meta">керамика • декоративный акцент</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">1 999</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="ceramic-1"
-                          data-product-name="Фигурка «Домик»" 
-                          data-product-price="1999"
-                          data-product-img="../img/ceramic4.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="ceramic-1" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="ceramic-1">−</button>
-                    <span class="qty__val" id="cardQty-ceramic-1">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="ceramic-1">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Фигурка Домик в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="ceramic-1"
-                          data-product-name="Фигурка «Домик»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ===== Открытки ===== -->
-      <section class="group-block group-block--hero reveal" id="group-postcards" data-group="postcards" aria-labelledby="postcards-title">
-        <div class="group-head">
-          <div>
-            <h3 id="postcards-title" class="group-title">Открытки</h3>
-            <p class="group-desc">
-              Тёплые слова в красивой форме — идеально как самостоятельный подарок или дополнение к набору.
-            </p>
-          </div>
-        </div>
-
-        <div class="grid4" role="list">
-          <div data-product data-category="postcards" data-id="postcard-1" data-name="Открытка Цветы" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Открытка Цветы с акварельным рисунком" data-bg="../img/letter1.webp"></div>
-              <span class="pbadge pbadge--new">Новинка</span>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Открытка «Цветы»</h3>
-                    <div class="card__meta">акварель • авторская</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">249</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="postcard-1"
-                          data-product-name="Открытка «Цветы»" 
-                          data-product-price="249"
-                          data-product-img="../img/letter1.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="postcard-1" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="postcard-1">−</button>
-                    <span class="qty__val" id="cardQty-postcard-1">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="postcard-1">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Открытка Цветы в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="postcard-1"
-                          data-product-name="Открытка «Цветы»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="postcards" data-id="postcard-2" data-name="Открытка Дом" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Открытка Дом в минималистичном стиле" data-bg="../img/letter2.webp"></div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Открытка «Дом»</h3>
-                    <div class="card__meta">минимализм • тёплые пожелания</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">249</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="postcard-2"
-                          data-product-name="Открытка «Дом»" 
-                          data-product-price="249"
-                          data-product-img="../img/letter2.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="postcard-2" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="postcard-2">−</button>
-                    <span class="qty__val" id="cardQty-postcard-2">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="postcard-2">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Открытка Дом в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="postcard-2"
-                          data-product-name="Открытка «Дом»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="postcards" data-id="postcard-3" data-name="Открытка С любовью" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Открытка С любовью для подарков" data-bg="../img/letter3.webp"></div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Открытка «С любовью»</h3>
-                    <div class="card__meta">для подарков • ручная работа</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">299</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="postcard-3"
-                          data-product-name="Открытка «С любовью»" 
-                          data-product-price="299"
-                          data-product-img="../img/letter3.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="postcard-3" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="postcard-3">−</button>
-                    <span class="qty__val" id="cardQty-postcard-3">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="postcard-3">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Открытка С любовью в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="postcard-3"
-                          data-product-name="Открытка «С любовью»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="postcards" data-id="postcard-4" data-name="Открытка С новым годом" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Открытка С новым годом с тёплыми пожеланиями" data-bg="../img/letter4.webp"></div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Открытка «С новым годом»</h3>
-                    <div class="card__meta">тёплые пожелания • ручная работа</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">299</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="postcard-4"
-                          data-product-name="Открытка «С новым годом»" 
-                          data-product-price="299"
-                          data-product-img="../img/letter4.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="postcard-4" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="postcard-4">−</button>
-                    <span class="qty__val" id="cardQty-postcard-4">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="postcard-4">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Открытка С новым годом в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="postcard-4"
-                          data-product-name="Открытка «С новым годом»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ===== Свечи ===== -->
-      <section class="group-block group-block--hero reveal" id="group-candles" data-group="candles" aria-labelledby="candles-title">
-        <div class="group-head">
-          <div>
-            <h3 id="candles-title" class="group-title">Свечи</h3>
-            <p class="group-desc">
-              Интерьерные и ароматные свечи — для настроения и уюта.
-            </p>
-          </div>
-        </div>
-
-        <div class="grid4" role="list">
-          <div data-product data-category="candles" data-id="candle-2" data-name="Свеча необычная" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Свеча необычная жёлтая с необычной формой" data-bg="../img/candle1.webp"></div>
-              <span class="pbadge pbadge--new">Новинка</span>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Свеча «Необычная»</h3>
-                    <div class="card__meta">жёлтая • необычная форма</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">999</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="candle-2"
-                          data-product-name="Свеча «Необычная»" 
-                          data-product-price="999"
-                          data-product-img="../img/candle1.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="candle-2" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="candle-2">−</button>
-                    <span class="qty__val" id="cardQty-candle-2">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="candle-2">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Свеча Необычная в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="candle-2"
-                          data-product-name="Свеча «Необычная»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="candles" data-id="candle-3" data-name="Свеча Природа зеленая" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Свеча Природа с ароматом ели" data-bg="../img/candle2.webp">
-                <span class="pbadge pbadge--hit">Хит</span>
-              </div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Свеча «Природа»</h3>
-                    <div class="card__meta">аромат ели • спокойствие</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">1 199</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="candle-1"
-                          data-product-name="Свеча «Природа»" 
-                          data-product-price="1199"
-                          data-product-img="../img/candle2.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="candle-1" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="candle-1">−</button>
-                    <span class="qty__val" id="cardQty-candle-1">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="candle-1">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Свеча Природа зеленая в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="candle-1"
-                          data-product-name="Свеча «Природа»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="candles" data-id="candle-4" data-name="Свеча Форма" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Свеча Форма декоративная для интерьера" data-bg="../img/candle3.webp"></div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Свеча «Форма»</h3>
-                    <div class="card__meta">декоративная • акцент в интерьере</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">899</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="candle-4"
-                          data-product-name="Свеча «Форма»" 
-                          data-product-price="899"
-                          data-product-img="../img/candle3.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="candle-4" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="candle-4">−</button>
-                    <span class="qty__val" id="cardQty-candle-4">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="candle-4">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Свеча Форма в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="candle-4"
-                          data-product-name="Свеча «Форма»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="candles" data-id="candle-5" data-name="Свеча Вечер" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Свеча Вечер компактная для уютных вечеров" data-bg="../img/candle4.webp"></div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Свеча «Вечер»</h3>
-                    <div class="card__meta">компактная • уютные вечера</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">999</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="candle-5"
-                          data-product-name="Свеча «Вечер»" 
-                          data-product-price="999"
-                          data-product-img="../img/candle4.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="candle-5" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="candle-5">−</button>
-                    <span class="qty__val" id="cardQty-candle-5">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="candle-5">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Свеча Вечер в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="candle-5"
-                          data-product-name="Свеча «Вечер»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ===== Текстиль ===== -->
-      <section class="group-block group-block--hero reveal" id="group-textile" data-group="textile" aria-labelledby="textile-title">
-        <div class="group-head">
-          <div>
-            <h3 id="textile-title" class="group-title">Текстиль</h3>
-            <p class="group-desc">
-              Мягкие и тёплые вещи ручной работы: игрушки, мешочки, панно и шарфы.
-            </p>
-          </div>
-        </div>
-
-        <div class="grid4" role="list">
-          <div data-product data-category="textile" data-id="textile-2" data-name="Игрушка Мишка большой" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Игрушка Мишка большая мягкая" data-bg="../img/textile1.webp">
-                <span class="pbadge pbadge--hit">Хит</span>
-              </div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Игрушка «Мишка»</h3>
-                    <div class="card__meta">мягкая • ручная работа</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">1 699</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="textile-1"
-                          data-product-name="Игрушка «Мишка»" 
-                          data-product-price="1699"
-                          data-product-img="../img/textile1.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="textile-1" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="textile-1">−</button>
-                    <span class="qty__val" id="cardQty-textile-1">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="textile-1">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Игрушка Мишка большой в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="textile-1"
-                          data-product-name="Игрушка «Мишка»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="textile" data-id="textile-3" data-name="Мешочек Лён" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Мешочек Лён для хранения и подарков" data-bg="../img/textile2.webp"></div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Мешочек «Лён»</h3>
-                    <div class="card__meta">для хранения и подарков • натурально</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">499</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="textile-3"
-                          data-product-name="Мешочек «Лён»" 
-                          data-product-price="499"
-                          data-product-img="../img/textile2.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="textile-3" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="textile-3">−</button>
-                    <span class="qty__val" id="cardQty-textile-3">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="textile-3">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Мешочек Лён в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="textile-3"
-                          data-product-name="Мешочек «Лён»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="textile" data-id="textile-4" data-name="Панно Цветок" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Панно Цветок с вышивкой" data-bg="../img/textile3.webp"></div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Панно «Цветок»</h3>
-                    <div class="card__meta">вышивка • декоративное панно</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">1 199</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="textile-4"
-                          data-product-name="Панно «Цветок»" 
-                          data-product-price="1199"
-                          data-product-img="../img/textile3.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="textile-4" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="textile-4">−</button>
-                    <span class="qty__val" id="cardQty-textile-4">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="textile-4">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Панно Цветок в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="textile-4"
-                          data-product-name="Панно «Цветок»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="textile" data-id="textile-5" data-name="Шарф Тепло" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Шарф Тепло из натуральных материалов" data-bg="../img/textile4.webp"></div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Шарф «Тепло»</h3>
-                    <div class="card__meta">лёгкий • натуральные материалы</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">2 999</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="textile-5"
-                          data-product-name="Шарф «Тепло»" 
-                          data-product-price="2999"
-                          data-product-img="../img/textile4.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="textile-5" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="textile-5">−</button>
-                    <span class="qty__val" id="cardQty-textile-5">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="textile-5">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Шарф Тепло в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="textile-5"
-                          data-product-name="Шарф «Тепло»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ===== Декор ===== -->
-      <section class="group-block group-block--hero reveal" id="group-decor" data-group="decor" aria-labelledby="decor-title">
-        <div class="group-head">
-          <div>
-            <h3 id="decor-title" class="group-title">Декор</h3>
-            <p class="group-desc">
-              Небольшие элементы для полок и столов: фигурки, вазы и подсвечники.
-            </p>
-          </div>
-        </div>
-
-        <div class="grid4" role="list">
-          <div data-product data-category="decor" data-id="decor-2" data-name="Фигурка Кот" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Фигурка Кот из дерева" data-bg="../img/decor1.webp">
-                <span class="pbadge pbadge--new">Новинка</span>
-              </div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Фигурка «Кот»</h3>
-                    <div class="card__meta">дерево • ручная работа</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">1 499</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="decor-2"
-                          data-product-name="Фигурка «Кот»" 
-                          data-product-price="1499"
-                          data-product-img="../img/decor1.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="decor-2" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="decor-2">−</button>
-                    <span class="qty__val" id="cardQty-decor-2">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="decor-2">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Фигурка Кот в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="decor-2"
-                          data-product-name="Фигурка «Кот»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="decor" data-id="decor-3" data-name="Ваза Спокойствие большая" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Ваза Спокойствие большая для сухоцветов" data-bg="../img/decor2.webp">
-                <span class="pbadge pbadge--hit">Хит</span>
-              </div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Ваза «Спокойствие»</h3>
-                    <div class="card__meta">пастельный оттенок • для сухоцветов</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">1 999</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="decor-1"
-                          data-product-name="Ваза «Спокойствие»" 
-                          data-product-price="1999"
-                          data-product-img="../img/decor2.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="decor-1" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="decor-1">−</button>
-                    <span class="qty__val" id="cardQty-decor-1">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="decor-1">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Ваза Спокойствие большая в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="decor-1"
-                          data-product-name="Ваза «Спокойствие»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="decor" data-id="decor-4" data-name="Подсвечник Домик" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Подсвечник Домик из керамики" data-bg="../img/decor3.webp"></div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Подсвечник «Домик»</h3>
-                    <div class="card__meta">керамика • для чайной свечи</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">1 499</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="decor-4"
-                          data-product-name="Подсвечник «Домик»" 
-                          data-product-price="1499"
-                          data-product-img="../img/decor3.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="decor-4" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="decor-4">−</button>
-                    <span class="qty__val" id="cardQty-decor-4">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="decor-4">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Подсвечник Домик в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="decor-4"
-                          data-product-name="Подсвечник «Домик»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="decor" data-id="decor-5" data-name="Мини-декор Сердце" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Мини-декор Сердце для полок" data-bg="../img/decor4.webp"></div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Мини-декор «Сердце»</h3>
-                    <div class="card__meta">небольшой акцент • для полок</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">799</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="decor-5"
-                          data-product-name="Мини-декор «Сердце»" 
-                          data-product-price="799"
-                          data-product-img="../img/decor4.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="decor-5" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="decor-5">−</button>
-                    <span class="qty__val" id="cardQty-decor-5">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="decor-5">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Мини-декор Сердце в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="decor-5"
-                          data-product-name="Мини-декор «Сердце»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ===== Наборы ===== -->
-      <section class="group-block group-block--hero reveal" id="group-sets" data-group="sets" aria-labelledby="sets-title">
-        <div class="group-head">
-          <div>
-            <h3 id="sets-title" class="group-title">Подарочные наборы</h3>
-            <p class="group-desc">
-              Красиво упакованные боксы — можно дарить сразу, без лишних забот.
-            </p>
-          </div>
-        </div>
-
-        <div class="grid4" role="list">
-          <div data-product data-category="sets" data-id="set-1" data-name="Набор Уют" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Набор Уют со свечой и тарелкой" data-bg="../img/box1.webp">
-                <span class="pbadge pbadge--new">Новинка</span>
-              </div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Набор «Уют»</h3>
-                    <div class="card__meta">свеча • тарелка</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">2 399</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="set-1"
-                          data-product-name="Набор «Уют»" 
-                          data-product-price="2399"
-                          data-product-img="../img/box1.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="set-1" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="set-1">−</button>
-                    <span class="qty__val" id="cardQty-set-1">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="set-1">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Набор Уют в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="set-1"
-                          data-product-name="Набор «Уют»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="sets" data-id="set-2" data-name="Набор Теплый дом" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Набор Тёплый дом со свечой, открыткой и фигуркой" data-bg="../img/box2.webp"></div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Набор «Тёплый дом»</h3>
-                    <div class="card__meta">свеча • открытка • фигурка</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">2 999</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="set-2"
-                          data-product-name="Набор «Тёплый дом»" 
-                          data-product-price="2999"
-                          data-product-img="../img/box2.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="set-2" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="set-2">−</button>
-                    <span class="qty__val" id="cardQty-set-2">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="set-2">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Набор Теплый дом в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="set-2"
-                          data-product-name="Набор «Тёплый дом»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="sets" data-id="set-3" data-name="Набор Нежность" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Набор Нежность с игрушкой и открыткой" data-bg="../img/box3.webp"></div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Набор «Нежность»</h3>
-                    <div class="card__meta">игрушка • открытка</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">2 199</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="set-3"
-                          data-product-name="Набор «Нежность»" 
-                          data-product-price="2199"
-                          data-product-img="../img/box3.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="set-3" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="set-3">−</button>
-                    <span class="qty__val" id="cardQty-set-3">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="set-3">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Набор Нежность в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="set-3"
-                          data-product-name="Набор «Нежность»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-product data-category="sets" data-id="set-4" data-name="Набор Малый" class="reveal" role="listitem">
-            <div class="card">
-              <div class="card__img" role="img" aria-label="Набор Малый с фигуркой и открыткой" data-bg="../img/box4.webp"></div>
-              <div class="card__body">
-                <div class="card__top">
-                  <div>
-                    <h3 class="card__title">Набор «Малый»</h3>
-                    <div class="card__meta">фигурка • открытка</div>
-                  </div>
-                  <div class="card__price">
-                    <span class="price-amount">1 899</span> ₽
-                  </div>
-                </div>
-                <div class="card__actions">
-                  <button class="btn btn--dark btn--full" 
-                          data-add-to-cart 
-                          data-product-id="set-4"
-                          data-product-name="Набор «Малый»" 
-                          data-product-price="1899"
-                          data-product-img="../img/box4.webp">
-                    В корзину
-                  </button>
-                  <!-- ДОБАВЛЕН БЛОК СЧЕТЧИКА -->
-                  <div class="qty qty--card" data-qty-wrap="set-4" style="display:none;">
-                    <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="set-4">−</button>
-                    <span class="qty__val" id="cardQty-set-4">1</span>
-                    <button class="qty__btn" type="button" aria-label="Увеличить количество" data-qty-plus="set-4">+</button>
-                  </div>
-                  <button class="iconBtn" 
-                          aria-label="Добавить Набор Малый в избранное"
-                          aria-pressed="false"
-                          data-fav-btn
-                          data-product-id="set-4"
-                          data-product-name="Набор «Малый»">
-                    <svg class="favorites-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="1.6"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <div id="all-products">
+        <?php
+        $renderOrder = ['ceramics', 'postcards', 'candles', 'textile', 'decor', 'sets'];
+        foreach ($renderOrder as $categoryCode) {
+            $title = $categoryTitles[$categoryCode]['title'] ?? $categoryCode;
+            $desc = $categoryTitles[$categoryCode]['desc'] ?? '';
+            renderCategorySection($categoryCode, $title, $desc, $groupedProducts[$categoryCode] ?? []);
+        }
+        ?>
+      </div>
     </section>
-  </main>
+  </section>
+</main>
 
-<!-- FOOTER -->
 <footer class="footer" role="contentinfo">
-  <!-- Кнопка "Наверх" -->
   <button class="to-top" id="toTopBtn" aria-label="Вернуться наверх" style="display: none;">
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="18 15 12 9 6 15"></polyline>
@@ -1839,7 +711,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
   <div class="container">
     <div class="footer__grid">
-      <!-- Блок с логотипом -->
       <div>
         <a href="../index.php" class="footer__brand-link">
           <div class="footer__brand">
@@ -1850,8 +721,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
           </div>
         </a>
         <p class="muted">Сувениры ручной работы и забота о деталях.</p>
-        
-        <!-- Соцсети с иконками -->
+
         <div class="footer__social-icons">
           <div class="social-icons">
             <a href="#" class="social-icon" aria-label="ВКонтакте" title="ВКонтакте">
@@ -1873,7 +743,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         </div>
       </div>
 
-      <!-- Навигация -->
       <div>
         <h3 class="footer__title">Навигация</h3>
         <ul class="footer__list">
@@ -1884,7 +753,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         </ul>
       </div>
 
-      <!-- Информация -->
       <div>
         <h3 class="footer__title">Информация</h3>
         <ul class="footer__list">
@@ -1895,7 +763,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         </ul>
       </div>
 
-      <!-- Рассылка -->
       <div>
         <h3 class="footer__title">Рассылка</h3>
         <p class="muted small">Новости и новые коллекции без спама. Первым узнавайте о скидках!</p>
@@ -1914,32 +781,33 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 </footer>
 
 <script>
-  // Скрипт для кнопки "Наверх"
   document.addEventListener('DOMContentLoaded', function() {
     const toTopBtn = document.getElementById('toTopBtn');
-  
-    window.addEventListener('scroll', function() {
-      if (window.pageYOffset > 300) {
-        toTopBtn.style.display = 'flex';
-      } else {
-        toTopBtn.style.display = 'none';
-      }
-    });
-    
-    toTopBtn.addEventListener('click', function() {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
+
+    if (toTopBtn) {
+      window.addEventListener('scroll', function() {
+        if (window.pageYOffset > 300) {
+          toTopBtn.style.display = 'flex';
+        } else {
+          toTopBtn.style.display = 'none';
+        }
       });
-    });
-    
+
+      toTopBtn.addEventListener('click', function() {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      });
+    }
+
     const newsletterForm = document.querySelector('[data-newsletter-form]');
     if (newsletterForm) {
       newsletterForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const emailInput = this.querySelector('#newsletter-email');
         const email = emailInput.value.trim();
-        
+
         if (email && email.includes('@')) {
           console.log('Подписка на рассылку:', email);
           alert('Спасибо за подписку! На ' + email + ' отправлено письмо с подтверждением.');
@@ -1991,7 +859,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   </div>
 </div>
 
-<!-- FAVORITES SHEET -->
 <aside class="sheet" id="favoritesSheet" aria-hidden="true">
   <div class="sheet__backdrop" data-close></div>
 
@@ -2012,6 +879,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 
 <script src="../js/script.js" defer></script>
 <script src="../js/cart.js" defer></script>
+<script src="../js/product.js" defer></script>
 
 </body>
 </html>

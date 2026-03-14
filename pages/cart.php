@@ -113,7 +113,7 @@ $isAuth = isset($_SESSION['user_id']);
         <!-- 🔑 ИКОНКА АККАУНТА -->
         <?php if ($isAuth): ?>
           <a class="iconBtn iconBtn--auth"
-             href="../php/account.php"
+             href="account.php"
              aria-label="Личный кабинет">
             <svg viewBox="0 0 24 24" aria-hidden="true" class="iconUser">
               <circle cx="12" cy="8" r="3.2" />
@@ -225,10 +225,6 @@ $isAuth = isset($_SESSION['user_id']);
 <a class="btn btn--dark btn--full" href="checkout.php" style="margin-top:12px;">
   Оформить заказ
 </a>
-
-          <div class="muted small" style="margin-top:10px;">
-            Оформление можно подключить позже — сейчас это рабочая корзина.
-          </div>
         </div>
       </aside>
     </div>

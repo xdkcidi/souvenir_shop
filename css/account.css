@@ -69,6 +69,47 @@
     display: block;
 }
 
+/* === FIX: картинка в избранном не должна "резаться" === */
+
+/* 1) на всякий случай убираем любые обрезания у родителей */
+#favoritesGrid.cartList .card,
+#favoritesGrid.cartList .cartRow,
+#favoritesGrid.cartList .cartItemImg,
+#favoritesGrid.cartList .cartItemImg a{
+  overflow: visible !important;
+}
+
+/* 2) фиксируем размер превью как в корзине */
+#favoritesGrid.cartList .cartItemImg{
+  width: 88px !important;
+  height: 88px !important;
+  border-radius: 14px;
+  background: #f3f3f3;
+  overflow: hidden !important; /* обрезаем только внутри рамки */
+  flex: 0 0 auto;
+}
+
+/* 3) картинка строго в рамку */
+#favoritesGrid.cartList .cartItemImg img{
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  display: block !important;
+}
+
+/* 4) ключевое: строка должна быть не меньше высоты превью */
+#favoritesGrid.cartList .cartRow{
+  display: flex;
+  gap: 14px;
+  align-items: center !important;
+  min-height: 88px !important;
+}
+
+/* 5) и добавим чуть воздуха снизу внутри card */
+#favoritesGrid.cartList .card{
+  padding: 16px !important;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -225,6 +266,318 @@
     padding: 12px 0 10px 0;
     border-top: 1px solid #f0f0f0;
 }
+
+/* ==========================
+   PROFILE (clean + accents)
+   red + dark green
+   ========================== */
+:root{
+  --accent-red: #d7262d;
+  --accent-green: #1f7a4a;
+  --border-soft: #ececec;
+  --bg-soft: #fbfbfb;
+  --shadow-soft: 0 10px 30px rgba(0,0,0,.05);
+}
+
+/* на всякий случай: без градиента */
+#profile-tab{
+  background: transparent;
+}
+
+/* ===== Header ===== */
+#profile-tab .profile-header{
+  position: relative;
+  border: 1px solid var(--border-soft);
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+  border-radius: 22px;
+
+  /* важное: отступ под линию */
+  padding: 18px 18px 16px 38px;
+}
+
+/* зелёная вертикальная линия */
+#profile-tab .profile-header::before{
+  content:"";
+  position:absolute;
+  left: 18px;
+  top: 18px;
+  bottom: 18px;
+  width: 4px;
+  border-radius: 999px;
+  background: var(--accent-green);
+  opacity: .55;
+}
+
+/* ===== Avatar ===== */
+#profile-tab .avatar-section{
+  align-items: center;
+  gap: 12px;
+}
+
+#profile-tab .avatar{
+  width: 112px;
+  height: 112px;
+  border-radius: 999px;
+  border: 2px solid rgba(31,122,74,.12);
+  box-shadow: 0 10px 26px rgba(0,0,0,.08);
+}
+
+#profile-tab .avatar-change{
+  border-radius: 14px;
+  border: 1px solid rgba(31,122,74,.22);
+  background: rgba(31,122,74,.08);
+  color: #0f3f2a;
+  transition: transform .12s ease, filter .15s ease;
+}
+#profile-tab .avatar-change:hover{
+  filter: brightness(.98);
+  transform: translateY(-1px);
+}
+
+/* ===== Name row: name left, status right ===== */
+#profile-tab .profile-nameRow{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+#profile-tab .profile-name{
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+#profile-tab .status-badge{
+  margin-left: auto;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  border: 1px solid rgba(31,122,74,.22);
+  background: rgba(31,122,74,.10);
+  color: var(--accent-green);
+  white-space: nowrap;
+}
+#profile-tab .status-badge--loyal{
+  border-color: rgba(215,38,45,.22);
+  background: rgba(215,38,45,.10);
+  color: var(--accent-red);
+}
+#profile-tab .status-badge--vip{
+  border-color: rgba(0,0,0,.16);
+  background: rgba(0,0,0,.06);
+  color: #111;
+}
+
+/* ===== Stats cards ===== */
+#profile-tab .profile-stats{
+  margin-top: 14px;
+  gap: 12px;
+}
+
+#profile-tab .stat--card{
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(0,0,0,.04);
+  padding: 14px 14px;
+  min-width: 132px;
+  position: relative;
+  overflow: hidden;
+}
+
+#profile-tab .stat--card::after{
+  content:"";
+  position:absolute;
+  right:-18px;
+  top:-18px;
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  background: rgba(31,122,74,.10);
+}
+
+#profile-tab .stat-value{
+  font-size: 26px;
+  font-weight: 900;
+}
+#profile-tab .stat-label{
+  color:#777;
+}
+
+/* ===== Status progress ===== */
+#profile-tab .status-progress{
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-soft);
+  box-shadow: 0 8px 20px rgba(0,0,0,.04);
+  max-width: 600px;
+}
+
+#profile-tab .status-progress__top{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+#profile-tab .status-progress__bar{
+  height: 10px;
+  background: #efefef;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+#profile-tab .status-progress__fill{
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-green), rgba(31,122,74,.65));
+}
+
+/* ===== Latest order / empty ===== */
+#profile-tab .profile-latest{
+  margin-top: 16px;
+}
+
+#profile-tab .profile-latest .card{
+  border: 1px solid var(--border-soft);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+  position: relative;
+}
+
+#profile-tab .profile-latest .card::before{
+  content:"";
+  position:absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: rgba(215,38,45,.85);
+}
+
+/* ===== Red CTA hover: white bg + red border ===== */
+#profile-tab a.btn.btn--dark,
+#profile-tab button.btn.btn--dark{
+  background: var(--accent-red);
+  border-color: var(--accent-red);
+  color: #fff;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+
+#profile-tab a.btn.btn--dark:hover,
+#profile-tab button.btn.btn--dark:hover{
+  background: #fff !important;
+  color: var(--accent-red) !important;
+  border-color: var(--accent-red) !important;
+}
+
+/* ===== Personal data block: отступ слева + зелёная линия ===== */
+#profile-tab .profile-card{
+  margin-top: 18px;
+  border-radius: 22px;
+  border: 1px solid var(--border-soft);
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+
+  position: relative;
+  padding-left: 38px;
+}
+
+#profile-tab .profile-card::before{
+  content:"";
+  position:absolute;
+  left: 18px;
+  top: 20px;
+  bottom: 20px;
+  width: 4px;
+  border-radius: 999px;
+  background: rgba(31,122,74,.45);
+}
+
+#profile-tab .profile-input{
+  border-radius: 16px;
+}
+
+/* если ты уже сделала кнопки в один ряд, этот стиль поможет */
+#profile-tab .profile-form__actions--row{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+/* Кнопки профиля в один ряд + меньше отступ + без полоски */
+#profile-tab .profile-form__actions.profile-form__actions--row{
+  display:flex !important;
+  gap:12px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-top: 12px !important;   
+  padding-top: 0 !important;     
+  border-top: 0 !important;  
+}
+
+#profile-tab .profile-form__actions.profile-form__actions--row .btn{
+  margin: 0 !important;
+}
+
+/* Hover для красных кнопок: белый фон + красная обводка + ЧЁРНЫЙ текст */
+#profile-tab a.btn.btn--dark:hover,
+#profile-tab button.btn.btn--dark:hover{
+  background: #fff !important;
+  color: #111 !important;
+  border-color: #d7262d !important;
+}
+
+/* Фон для блока последнего заказа (и выглядит живее) */
+#profile-tab .profile-latest{
+  position: relative;
+}
+
+#profile-tab .profile-latest::before{
+  content:"";
+  position:absolute;
+  inset: -8px; /* чуть шире, чем карточка */
+  background: url("../img/about-hero.webp") center/cover no-repeat;
+  opacity: .18;           
+  border-radius: 26px;
+  pointer-events: none;
+}
+
+#profile-tab .profile-latest > *{
+  position: relative;
+  z-index: 1;
+}
+
+
+
+/* ===== Mobile ===== */
+@media (max-width: 720px){
+  #profile-tab .profile-header{
+    padding: 16px;
+  }
+  #profile-tab .profile-header::before{
+    display:none;
+  }
+  #profile-tab .profile-card{
+    padding-left: 16px;
+  }
+  #profile-tab .profile-card::before{
+    display:none;
+  }
+  #profile-tab .stat--card{
+    min-width: 0;
+    flex: 1;
+  }
+}
+
 
 /* ===== ЗАКАЗЫ ===== */
 .section-header {

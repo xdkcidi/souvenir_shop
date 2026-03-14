@@ -10,9 +10,10 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>О нас — Лавка</title>
   <meta name="description" content="О компании Лавка: мастерская, материалы, доставка, возвраты и гарантия. Контакты." />
-  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/cart.css"/>
   <link rel="stylesheet" href="../css/main.css"/>
-  <link rel="stylesheet" href="../css/about.css" />
+  <link rel="stylesheet" href="../css/about.css"/>
+  <link rel="stylesheet" href="../css/style.css"/>
 </head>
 <body>
 
@@ -113,10 +114,9 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       <a class="nav__link" href="about.php">О компании</a>
 
       <div class="nav__actions">
-        <!-- 🔑 ИКОНКА АККАУНТА -->
         <?php if ($isAuth): ?>
           <a class="iconBtn iconBtn--auth"
-             href="../php/account.php"
+             href="account.php"
              aria-label="Личный кабинет">
             <svg viewBox="0 0 24 24" aria-hidden="true" class="iconUser">
               <circle cx="12" cy="8" r="3.2" />
@@ -178,7 +178,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
     <div class="container aboutHero__inner">
       <div class="aboutHero__card reveal">
         <p class="kicker">Лавка • о нас</p>
-        <h1 id="about-hero-title" class="h1">Сувениры, которые хочется дарить.</h1>
+        <h1 id="about-hero-title" class="h1">Сувениры, которые хочется дарить</h1>
         <p class="about-intro__text">
           Мы — мастерская авторских подарков, где каждая вещь создаётся вручную,
           небольшими партиями с вниманием к деталям и любовью.
@@ -637,7 +637,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
       });
     });
     
-    // Обработка формы подписки (опционально)
     const newsletterForm = document.querySelector('[data-newsletter-form]');
     if (newsletterForm) {
       newsletterForm.addEventListener('submit', function(e) {
@@ -646,7 +645,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
         const email = emailInput.value.trim();
         
         if (email && email.includes('@')) {
-          // Здесь можно добавить AJAX-запрос для отправки данных
           console.log('Подписка на рассылку:', email);
           alert('Спасибо за подписку! На ' + email + ' отправлено письмо с подтверждением.');
           emailInput.value = '';
@@ -697,7 +695,6 @@ $hasAuthError = !empty($_SESSION['auth_error']);
   </div>
 </div>
 
-<!-- FAVORITES SHEET -->
 <aside class="sheet" id="favoritesSheet" aria-hidden="true">
   <div class="sheet__backdrop" data-close></div>
 
@@ -717,6 +714,7 @@ $hasAuthError = !empty($_SESSION['auth_error']);
 </aside>
 
 <script src="../js/script.js" defer></script>
+<script src="../js/cart.js" defer></script>
 
 </body>
 </html>
