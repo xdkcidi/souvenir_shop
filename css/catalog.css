@@ -336,6 +336,19 @@ select.input{
   font-size: 12px;
 }
 
+#engraveForm .input:focus {
+  outline: none;
+}
+
+#engraveFormMsg {
+  min-height: 20px;
+}
+
+.gift-error,
+#engraveForm .input[style*="176, 0, 32"] {
+  box-shadow: 0 0 0 1px rgba(176, 0, 32, 0.12);
+}
+
 
 @media (max-width: 1024px){
   .grid3{

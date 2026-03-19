@@ -506,103 +506,122 @@ $hitProducts = array_slice($hitProducts, 0, 4);
       </div>
     </section>
 
-    <section class="personal-gift reveal" id="personalGift" aria-labelledby="personal-gift-title">
-      <div class="personal-gift__bg"
-           role="img"
-           aria-label="Персонализированный подарок с гравировкой имени"
-           data-bg="../img/personal-gift.webp"></div>
+<section class="personal-gift reveal" id="personalGift" aria-labelledby="personal-gift-title">
+  <div class="personal-gift__bg"
+       role="img"
+       aria-label="Персонализированный подарок с гравировкой имени"
+       data-bg="../img/personal-gift.webp"></div>
 
-      <div class="personal-gift__veil" aria-hidden="true"></div>
+  <div class="personal-gift__veil" aria-hidden="true"></div>
 
-      <div class="personal-gift__inner container">
-        <div class="personal-gift__content">
-          <p class="personal-gift__top">ПЕРСОНАЛИЗАЦИЯ • ИМЯ • ДАТА</p>
+  <div class="personal-gift__inner container">
+    <div class="personal-gift__content">
+      <p class="personal-gift__top">ПЕРСОНАЛИЗАЦИЯ • ИМЯ • ДАТА</p>
 
-          <h2 id="personal-gift-title" class="personal-gift__title">
-            Персональный подарок:<br />
-            добавим имя или пожелание
-          </h2>
+      <h2 id="personal-gift-title" class="personal-gift__title">
+        Персональный подарок:<br />
+        добавим имя или пожелание
+      </h2>
 
-          <p class="personal-gift__text">
-            Для некоторых изделий доступна гравировка или надпись.
-            Срок изготовления — <strong>от 1 до 5 дней</strong>.
-          </p>
+      <p class="personal-gift__text">
+        Для некоторых изделий доступна гравировка или надпись.
+        Срок изготовления — <strong>от 1 до 5 дней</strong>.
+      </p>
 
-          <ul class="personal-gift__bullets" aria-label="Что можно сделать">
-            <li>Имя или короткая фраза</li>
-            <li>Дата & инициалы</li>
-            <li>Пожелание на открытке</li>
-          </ul>
+      <ul class="personal-gift__bullets" aria-label="Что можно сделать">
+        <li>Имя или короткая фраза</li>
+        <li>Дата и инициалы</li>
+        <li>Пожелание на открытке</li>
+      </ul>
+    </div>
+
+    <div class="personal-gift__formCard" role="region" aria-label="Заявка на персонализацию">
+      <div class="pgForm__head">
+        <div>
+          <div class="pgForm__kicker">Заявка за 1 минуту</div>
+          <h3 class="pgForm__title">Хочу гравировку</h3>
         </div>
-
-        <div class="personal-gift__formCard" role="region" aria-label="Заявка на персонализацию">
-          <div class="pgForm__head">
-            <div>
-              <div class="pgForm__kicker">Заявка за 1 минуту</div>
-              <h3 class="pgForm__title">Хочу гравировку</h3>
-            </div>
-            <div class="pgForm__badge" aria-hidden="true">1–5 дней</div>
-          </div>
-
-          <form class="pgForm" id="engraveForm" action="#" method="post" novalidate>
-            <div class="pgForm__grid">
-              <label class="pgField">
-                <span class="pgField__label">Текст гравировки</span>
-                <input class="input" type="text" name="engraveText" maxlength="40"
-                       placeholder="Например: &quot;Дорогой Ане&quot;" />
-                <span class="pgField__hint">до 40 символов</span>
-              </label>
-
-              <label class="pgField">
-                <span class="pgField__label">На каком изделии?</span>
-                <div class="select-wrap">
-                  <select class="input" name="engraveOn" required>
-                    <option value="">Выберите изделие</option>
-                    <option value="postcard">Открытка</option>
-                    <option value="mug">Кружка</option>
-                    <option value="plate">Тарелка</option>
-                    <option value="cat">Фигурка «Кот»</option>
-                    <option value="bear">Игрушка «Мишка»</option>
-                  </select>
-                </div>
-              </label>
-
-              <label class="pgField">
-                <span class="pgField__label">Срок</span>
-                <div class="select-wrap">
-                  <select class="input" name="deadline">
-                    <option>Не срочно (1–5 дней)</option>
-                    <option>Как можно быстрее</option>
-                    <option>К конкретной дате</option>
-                  </select>
-                </div>
-              </label>
-
-              <label class="pgField">
-                <span class="pgField__label">Связаться со мной</span>
-                <input class="input" type="tel" name="contact"
-                       placeholder="+7 (999) 000-00-00" />
-              </label>
-
-              <label class="pgField pgField--full">
-                <span class="pgField__label">Комментарий</span>
-                <textarea class="input pgTextarea" name="comment" rows="3"
-                          placeholder="Например: &quot;Нужна надпись на донышке&quot;"></textarea>
-              </label>
-            </div>
-
-            <div class="pgForm__actions">
-              <button type="button" class="btn btn--dark btn--full">
-                Отправить заявку
-              </button>
-              <p class="muted small pgForm__note">
-                Нажимая кнопку, вы соглашаетесь на обработку данных.
-              </p>
-            </div>
-          </form>
-        </div>
+        <div class="pgForm__badge" aria-hidden="true">1–5 дней</div>
       </div>
-    </section>
+
+      <form class="pgForm" id="engraveForm" action="#" method="post" novalidate>
+        <div class="pgForm__grid">
+          <label class="pgField" for="engraveText">
+            <span class="pgField__label">Текст гравировки</span>
+            <input class="input"
+                   id="engraveText"
+                   type="text"
+                   name="engraveText"
+                   maxlength="40"
+                   placeholder="Например: &quot;Дорогой Ане&quot;" />
+            <span class="pgField__hint">от 2 до 40 символов</span>
+          </label>
+
+          <label class="pgField" for="engraveOn">
+            <span class="pgField__label">На каком изделии?</span>
+            <div class="select-wrap">
+              <select class="input" id="engraveOn" name="engraveOn" required>
+                <option value="">Выберите изделие</option>
+                <option value="postcard">Открытка</option>
+                <option value="mug">Кружка</option>
+                <option value="plate">Тарелка</option>
+                <option value="cat">Фигурка «Кот»</option>
+                <option value="bear">Игрушка «Мишка»</option>
+              </select>
+            </div>
+          </label>
+
+          <label class="pgField" for="engraveDeadline">
+            <span class="pgField__label">Срок</span>
+            <div class="select-wrap">
+              <select class="input" id="engraveDeadline" name="deadline">
+                <option value="normal">Не срочно (1–5 дней)</option>
+                <option value="fast">Как можно быстрее</option>
+                <option value="date">К конкретной дате</option>
+              </select>
+            </div>
+          </label>
+
+          <label class="pgField" for="engraveContact">
+            <span class="pgField__label">Связаться со мной</span>
+            <input class="input"
+                   id="engraveContact"
+                   type="tel"
+                   name="contact"
+                   placeholder="+7 (999) 000-00-00" />
+          </label>
+
+          <label class="pgField pgField--full" for="engraveDate" id="engraveDateWrap" style="display:none;">
+            <span class="pgField__label">Нужная дата</span>
+            <input class="input" id="engraveDate" type="date" name="engraveDate" />
+            <span class="pgField__hint">Заполните, если нужен подарок к определённому дню</span>
+          </label>
+
+          <label class="pgField pgField--full" for="engraveComment">
+            <span class="pgField__label">Комментарий</span>
+            <textarea class="input pgTextarea"
+                      id="engraveComment"
+                      name="comment"
+                      rows="3"
+                      maxlength="300"
+                      placeholder="Например: &quot;Нужна надпись на донышке&quot;"></textarea>
+          </label>
+        </div>
+
+        <div id="engraveFormMsg" class="muted small" style="margin-top:10px;"></div>
+
+        <div class="pgForm__actions">
+          <button type="submit" class="btn btn--dark btn--full" id="engraveSubmitBtn">
+            Отправить заявку
+          </button>
+          <p class="muted small pgForm__note">
+            Нажимая кнопку, вы соглашаетесь на обработку данных.
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
 
     <section class="section section--sm" id="productGroups" aria-label="Группы товаров">
       <section class="filters-bar reveal" id="collectionsNav" aria-labelledby="filters-title">
@@ -880,6 +899,145 @@ $hitProducts = array_slice($hitProducts, 0, 4);
 <script src="../js/script.js" defer></script>
 <script src="../js/cart.js" defer></script>
 <script src="../js/product.js" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('engraveForm');
+  if (!form) return;
 
+  const textInput = document.getElementById('engraveText');
+  const productSelect = document.getElementById('engraveOn');
+  const deadlineSelect = document.getElementById('engraveDeadline');
+  const contactInput = document.getElementById('engraveContact');
+  const dateWrap = document.getElementById('engraveDateWrap');
+  const dateInput = document.getElementById('engraveDate');
+  const commentInput = document.getElementById('engraveComment');
+  const msg = document.getElementById('engraveFormMsg');
+
+  function setError(el) {
+    el.style.borderColor = '#b00020';
+  }
+
+  function clearError(el) {
+    el.style.borderColor = '';
+  }
+
+  function toggleDateField() {
+    const isDateMode = deadlineSelect.value === 'date';
+    dateWrap.style.display = isDateMode ? '' : 'none';
+    dateInput.required = isDateMode;
+
+    if (!isDateMode) {
+      dateInput.value = '';
+      clearError(dateInput);
+    }
+  }
+
+  function validateText() {
+    const value = textInput.value.trim();
+    const ok = value.length >= 2 && value.length <= 40;
+
+    if (!ok) setError(textInput);
+    else clearError(textInput);
+
+    return ok;
+  }
+
+  function validateProduct() {
+    const ok = productSelect.value.trim() !== '';
+
+    if (!ok) setError(productSelect);
+    else clearError(productSelect);
+
+    return ok;
+  }
+
+  function validatePhone() {
+    const digits = contactInput.value.replace(/\D/g, '');
+    const ok = digits.length === 11 && digits.startsWith('7');
+
+    if (!ok) setError(contactInput);
+    else clearError(contactInput);
+
+    return ok;
+  }
+
+  function validateDate() {
+    if (deadlineSelect.value !== 'date') {
+      clearError(dateInput);
+      return true;
+    }
+
+    if (!dateInput.value) {
+      setError(dateInput);
+      return false;
+    }
+
+    const selected = new Date(dateInput.value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const ok = selected >= today;
+
+    if (!ok) setError(dateInput);
+    else clearError(dateInput);
+
+    return ok;
+  }
+
+  textInput.addEventListener('blur', validateText);
+  productSelect.addEventListener('change', validateProduct);
+  contactInput.addEventListener('blur', validatePhone);
+  dateInput.addEventListener('change', validateDate);
+
+  deadlineSelect.addEventListener('change', function () {
+    toggleDateField();
+    validateDate();
+  });
+
+  contactInput.addEventListener('input', function () {
+    let value = this.value.replace(/\D/g, '');
+
+    if (value.startsWith('8')) value = '7' + value.slice(1);
+    if (value.length > 0 && !value.startsWith('7')) value = '7' + value;
+
+    value = value.slice(0, 11);
+
+    let formatted = '+7';
+
+    if (value.length > 1) formatted += ' (' + value.slice(1, 4);
+    if (value.length >= 4) formatted += ') ' + value.slice(4, 7);
+    if (value.length >= 7) formatted += '-' + value.slice(7, 9);
+    if (value.length >= 9) formatted += '-' + value.slice(9, 11);
+
+    this.value = formatted;
+  });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    msg.textContent = '';
+    msg.style.color = '';
+
+    const textOk = validateText();
+    const productOk = validateProduct();
+    const phoneOk = validatePhone();
+    const dateOk = validateDate();
+
+    if (!textOk || !productOk || !phoneOk || !dateOk) {
+      msg.textContent = 'Пожалуйста, заполните форму корректно.';
+      msg.style.color = '#b00020';
+      return;
+    }
+
+    msg.textContent = 'Заявка отправлена. Мы скоро свяжемся с вами.';
+    msg.style.color = '#1f8a4c';
+
+    form.reset();
+    toggleDateField();
+  });
+
+  toggleDateField();
+});
+</script>
 </body>
 </html>

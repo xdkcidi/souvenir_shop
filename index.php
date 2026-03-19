@@ -33,6 +33,33 @@ function productImageUrl(?string $path): string
 
     return '/souvenir_shop/' . $path;
 }
+
+$giftCategoryMeta = [
+    'ceramics' => ['title' => 'Керамика', 'icon' => '🏺'],
+    'postcards' => ['title' => 'Открытки', 'icon' => '💌'],
+    'candles' => ['title' => 'Свечи', 'icon' => '🕯️'],
+    'textile' => ['title' => 'Текстиль', 'icon' => '🧵'],
+    'decor' => ['title' => 'Декор', 'icon' => '🪵'],
+];
+
+$giftCategories = array_keys($giftCategoryMeta);
+$giftPlaceholders = implode(',', array_fill(0, count($giftCategories), '?'));
+
+$sqlGift = "
+    SELECT product_code, category, name, price, meta, in_stock
+    FROM products
+    WHERE category IN ($giftPlaceholders)
+      AND in_stock > 0
+    ORDER BY category, name
+";
+$stmtGift = $pdo->prepare($sqlGift);
+$stmtGift->execute($giftCategories);
+$giftProductsRaw = $stmtGift->fetchAll(PDO::FETCH_ASSOC);
+
+$giftProducts = [];
+foreach ($giftProductsRaw as $item) {
+    $giftProducts[$item['category']][] = $item;
+}
 ?>
 <!doctype html>
 <html lang="ru" data-auth="<?php echo $isAuth ? '1' : '0'; ?>" data-base="../">
@@ -591,227 +618,55 @@ $hits = $stmtHits->fetchAll(PDO::FETCH_ASSOC);
       <form id="giftForm" class="giftForm" action="#" method="post" novalidate>
         <div class="giftForm__head">
           <div class="giftForm__title">Что можно добавить в набор:</div>
-
           <div class="giftForm__counter">
             Выбрано: <strong><span id="giftPicked">0</span>/4</strong>
           </div>
         </div>
 
         <div class="giftLists" role="group" aria-label="Выбор позиций для подарка">
-          <!-- CERAMICS -->
-          <details class="giftList" open>
-            <summary class="giftList__summary">
-              <span class="giftList__icon" aria-hidden="true">🏺</span>
-              <span class="giftList__name">Керамика</span>
-              <span class="giftList__hint">4 позиции</span>
-            </summary>
+          <?php
+            $hasGiftItems = false;
+            foreach ($giftCategoryMeta as $catKey => $catMeta):
+              $items = $giftProducts[$catKey] ?? [];
+              if (empty($items)) continue;
+              $hasGiftItems = true;
+          ?>
+            <details class="giftList" <?php echo $catKey === 'ceramics' ? 'open' : ''; ?>>
+              <summary class="giftList__summary">
+                <span class="giftList__icon" aria-hidden="true"><?php echo h($catMeta['icon']); ?></span>
+                <span class="giftList__name"><?php echo h($catMeta['title']); ?></span>
+                <span class="giftList__hint"><?php echo count($items); ?> позиций</span>
+              </summary>
 
-            <div class="giftList__body">
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Кружка «Утро»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Кружка «Утро»</span>
-                  <span class="giftOption__meta">уютный формат • ручная глазурь</span>
-                </span>
-              </label>
+              <div class="giftList__body">
+                <?php foreach ($items as $item): ?>
+                  <label class="giftOption">
+                    <input
+                      type="checkbox"
+                      name="giftItems[]"
+                      value="<?php echo h($item['product_code']); ?>"
+                      data-code="<?php echo h($item['product_code']); ?>"
+                      data-name="<?php echo h($item['name']); ?>"
+                      data-price="<?php echo (int)$item['price']; ?>"
+                    />
+                    <span class="giftOption__ui">
+                      <span class="giftOption__title">
+                        <?php echo h($item['name']); ?>
+                        <span class="giftOption__price">
+                          <?php echo number_format((float)$item['price'], 0, ',', ' '); ?> ₽
+                        </span>
+                      </span>
+                      <span class="giftOption__meta"><?php echo h($item['meta'] ?? ''); ?></span>
+                    </span>
+                  </label>
+                <?php endforeach; ?>
+              </div>
+            </details>
+          <?php endforeach; ?>
 
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Тарелка «Мини»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Тарелка «Мини»</span>
-                  <span class="giftOption__meta">для десертов • аккуратная форма</span>
-                </span>
-              </label>
-
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Миска «Тепло»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Миска «Тепло»</span>
-                  <span class="giftOption__meta">глубокая • приятная фактура</span>
-                </span>
-              </label>
-
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Фигурка «Домик»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Фигурка «Домик»</span>
-                  <span class="giftOption__meta">маленький акцент • символ уюта</span>
-                </span>
-              </label>
-            </div>
-          </details>
-
-          <!-- POSTCARDS -->
-          <details class="giftList">
-            <summary class="giftList__summary">
-              <span class="giftList__icon" aria-hidden="true">💌</span>
-              <span class="giftList__name">Открытки</span>
-              <span class="giftList__hint">4 позиции</span>
-            </summary>
-
-            <div class="giftList__body">
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Открытка «Цветы»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Открытка «Цветы»</span>
-                  <span class="giftOption__meta">нежная иллюстрация • тёплые слова</span>
-                </span>
-              </label>
-
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Открытка «Дом»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Открытка «Дом»</span>
-                  <span class="giftOption__meta">уютный сюжет • для близких</span>
-                </span>
-              </label>
-
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Открытка «С любовью»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Открытка «С любовью»</span>
-                  <span class="giftOption__meta">универсально • можно подписать</span>
-                </span>
-              </label>
-
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Открытка «С новым годом»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Открытка «С новым годом»</span>
-                  <span class="giftOption__meta">праздничная • зимнее настроение</span>
-                </span>
-              </label>
-            </div>
-          </details>
-
-          <!-- CANDLES -->
-          <details class="giftList">
-            <summary class="giftList__summary">
-              <span class="giftList__icon" aria-hidden="true">🕯️</span>
-              <span class="giftList__name">Свечи</span>
-              <span class="giftList__hint">4 позиции</span>
-            </summary>
-
-            <div class="giftList__body">
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Свеча «Необычная»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Свеча «Необычная»</span>
-                  <span class="giftOption__meta">акцентный аромат • необычная форма</span>
-                </span>
-              </label>
-
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Свеча «Природа»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Свеча «Природа»</span>
-                  <span class="giftOption__meta">аромат трав • спокойствие</span>
-                </span>
-              </label>
-
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Свеча «Форма»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Свеча «Форма»</span>
-                  <span class="giftOption__meta">минимализм • стильный декор</span>
-                </span>
-              </label>
-
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Свеча «Вечер»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Свеча «Вечер»</span>
-                  <span class="giftOption__meta">тёплый аромат • для расслабления</span>
-                </span>
-              </label>
-            </div>
-          </details>
-
-          <!-- TEXTILE -->
-          <details class="giftList">
-            <summary class="giftList__summary">
-              <span class="giftList__icon" aria-hidden="true">🧵</span>
-              <span class="giftList__name">Текстиль</span>
-              <span class="giftList__hint">4 позиции</span>
-            </summary>
-
-            <div class="giftList__body">
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Игрушка «Мишка»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Игрушка «Мишка»</span>
-                  <span class="giftOption__meta">мягкая • ручной пошив</span>
-                </span>
-              </label>
-
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Мешочек «Лён»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Мешочек «Лён»</span>
-                  <span class="giftOption__meta">для упаковки • натуральная ткань</span>
-                </span>
-              </label>
-
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Панно «Цветок»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Панно «Цветок»</span>
-                  <span class="giftOption__meta">декор • лёгкий акцент</span>
-                </span>
-              </label>
-
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Шарф «Тепло»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Шарф «Тепло»</span>
-                  <span class="giftOption__meta">мягкий • уютная фактура</span>
-                </span>
-              </label>
-            </div>
-          </details>
-
-          <!-- DECOR -->
-          <details class="giftList">
-            <summary class="giftList__summary">
-              <span class="giftList__icon" aria-hidden="true">🪵</span>
-              <span class="giftList__name">Декор</span>
-              <span class="giftList__hint">4 позиции</span>
-            </summary>
-
-            <div class="giftList__body">
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Фигурка «Кот»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Фигурка «Кот»</span>
-                  <span class="giftOption__meta">милый акцент • для полки</span>
-                </span>
-              </label>
-
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Ваза «Спокойствие»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Ваза «Спокойствие»</span>
-                  <span class="giftOption__meta">пастель • для сухоцветов</span>
-                </span>
-              </label>
-
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Подсвечник «Домик»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Подсвечник «Домик»</span>
-                  <span class="giftOption__meta">уютный свет • домашний стиль</span>
-                </span>
-              </label>
-
-              <label class="giftOption">
-                <input type="checkbox" name="giftItems" value="Мини-декор «Сердце»" />
-                <span class="giftOption__ui">
-                  <span class="giftOption__title">Мини-декор «Сердце»</span>
-                  <span class="giftOption__meta">маленький жест • тёплый подарок</span>
-                </span>
-              </label>
-            </div>
-          </details>
+          <?php if (!$hasGiftItems): ?>
+            <div class="muted small">Сейчас нет доступных товаров для подарочного набора.</div>
+          <?php endif; ?>
         </div>
 
         <div class="giftPicked">
@@ -825,17 +680,25 @@ $hits = $stmtHits->fetchAll(PDO::FETCH_ASSOC);
           </div>
 
           <div class="giftPicked__footer">
-            <div id="giftNote" class="giftPicked__note">Выберите минимум 2 позиции</div>
-            <button id="giftSubmit" type="button" class="btn btn--dark" disabled>Оформить заказ</button>
+            <div class="giftPicked__summary">
+              <div id="giftNote" class="giftPicked__note">Выберите минимум 2 позиции</div>
+
+              <div id="giftTotals" class="giftPicked__totals" style="display:none;">
+                <span id="giftFullSum" class="giftPicked__full"></span>
+                <strong id="giftDiscountSum" class="giftPicked__discount"></strong>
+              </div>
+            </div>
+
+            <button id="giftSubmit" type="button" class="btn btn--dark" disabled>
+              Оформить заказ
+            </button>
           </div>
         </div>
       </form>
     </div>
   </div>
 </section>
-
 </main>
-
 <!-- FOOTER -->
 <footer class="footer" role="contentinfo">
   <button class="to-top" id="toTopBtn" aria-label="Вернуться наверх" style="display: none;">
@@ -1013,5 +876,175 @@ $hits = $stmtHits->fetchAll(PDO::FETCH_ASSOC);
 <script src="js/script.js" defer></script>
 <script src="js/cart.js" defer></script>
 <script src="js/product.js" defer></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('giftForm');
+  if (!form) return;
+
+  const checkboxes = Array.from(form.querySelectorAll('input[name="giftItems[]"]'));
+  const pickedCount = document.getElementById('giftPicked');
+  const pickedTags = document.getElementById('giftPickedTags');
+  const giftNote = document.getElementById('giftNote');
+  const giftTotals = document.getElementById('giftTotals');
+  const giftFullSum = document.getElementById('giftFullSum');
+  const giftDiscountSum = document.getElementById('giftDiscountSum');
+  const clearBtn = document.getElementById('giftClearAll');
+  const submitBtn = document.getElementById('giftSubmit');
+
+  const CREATE_GIFT_CHECKOUT_URL = '/souvenir_shop/php/create_gift_checkout.php';
+
+  function formatPrice(value) {
+    return new Intl.NumberFormat('ru-RU').format(value) + ' ₽';
+  }
+
+  function getSelected() {
+    return checkboxes
+      .filter(cb => cb.checked)
+      .map(cb => ({
+        code: cb.dataset.code,
+        name: cb.dataset.name,
+        price: parseInt(cb.dataset.price || '0', 10)
+      }));
+  }
+
+  function syncLimitState(selectedCount) {
+    const limitReached = selectedCount >= 4;
+
+    checkboxes.forEach(cb => {
+      if (!cb.checked) {
+        cb.disabled = limitReached;
+      }
+    });
+  }
+
+  function renderTags(selected) {
+    if (!selected.length) {
+      pickedTags.innerHTML = '<span class="muted small">Пока ничего не выбрано.</span>';
+      return;
+    }
+
+    pickedTags.innerHTML = selected.map(item => `
+      <span class="giftPicked__tag">
+        <span>${item.name}</span>
+        <span class="giftPicked__tagPrice">${formatPrice(item.price)}</span>
+        <button type="button" class="giftPicked__tagRemove" data-remove-gift="${item.code}" aria-label="Удалить ${item.name}">×</button>
+      </span>
+    `).join('');
+  }
+
+  function updateGiftBlock() {
+    const selected = getSelected();
+    const count = selected.length;
+
+    pickedCount.textContent = count;
+    renderTags(selected);
+    syncLimitState(count);
+
+    if (count < 2) {
+      giftNote.textContent = 'Выберите минимум 2 позиции';
+      giftTotals.style.display = 'none';
+      submitBtn.disabled = true;
+      return;
+    }
+
+    const fullSum = selected.reduce((sum, item) => sum + item.price, 0);
+    const discountSum = Math.round(fullSum * 0.95);
+
+    giftNote.textContent = 'Скидка на набор 5% и подарочная коробка включена';
+    giftFullSum.textContent = formatPrice(fullSum);
+    giftDiscountSum.textContent = formatPrice(discountSum);
+    giftTotals.style.display = 'flex';
+    submitBtn.disabled = false;
+  }
+
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', function () {
+      const selected = getSelected();
+
+      if (selected.length > 4) {
+        this.checked = false;
+        return;
+      }
+
+      updateGiftBlock();
+    });
+  });
+
+  clearBtn.addEventListener('click', function () {
+    checkboxes.forEach(cb => {
+      cb.checked = false;
+      cb.disabled = false;
+    });
+    updateGiftBlock();
+  });
+
+  pickedTags.addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-remove-gift]');
+    if (!btn) return;
+
+    const code = btn.getAttribute('data-remove-gift');
+    const checkbox = checkboxes.find(cb => cb.dataset.code === code);
+    if (checkbox) {
+      checkbox.checked = false;
+      checkbox.disabled = false;
+      updateGiftBlock();
+    }
+  });
+
+  submitBtn.addEventListener('click', async function () {
+    const selected = getSelected();
+
+    if (selected.length < 2 || selected.length > 4) {
+      updateGiftBlock();
+      return;
+    }
+
+    if (document.documentElement.dataset.auth !== '1') {
+      if (typeof window.openAuthModalWithMessage === 'function') {
+        window.openAuthModalWithMessage('Чтобы оформить подарочный набор, сначала войдите в аккаунт.');
+      } else {
+        const authBtn = document.querySelector('[data-open-modal="authModal"]');
+        if (authBtn) authBtn.click();
+      }
+      return;
+    }
+
+    submitBtn.disabled = true;
+    const oldText = submitBtn.textContent;
+    submitBtn.textContent = 'Формируем заказ...';
+
+    try {
+      const res = await fetch(CREATE_GIFT_CHECKOUT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          items: selected.map(item => item.code)
+        })
+      });
+
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'CREATE_GIFT_CHECKOUT_FAILED');
+      }
+
+      window.location.href = json.redirect || '/souvenir_shop/pages/checkout.php?mode=gift';
+    } catch (error) {
+      console.error(error);
+      alert('Не удалось оформить подарочный набор. Попробуйте ещё раз.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = oldText;
+    }
+  });
+
+  updateGiftBlock();
+});
+</script>
+
 </body>
 </html>

@@ -1219,18 +1219,6 @@ const isFavorite = (id) => {
   };
 
   // ==================== PAGE-SPECIFIC EXTRAS ====================
-  const initEngraveForm = () => {
-    const form = document.getElementById("engraveForm");
-    if (!form) return;
-    const btn = form.querySelector("button");
-    if (!btn) return;
-
-    btn.addEventListener("click", () => {
-      btn.textContent = "Заявка отправлена ✓";
-      btn.disabled = true;
-    });
-  };
-
   const initAboutStatsCounter = () => {
     const companyEl = document.getElementById("company");
     if (!companyEl) return;

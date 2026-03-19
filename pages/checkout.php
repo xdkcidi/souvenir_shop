@@ -4,6 +4,36 @@ session_start();
 require_once __DIR__ . '/../php/db.php';
 $userId = (int)$_SESSION['user_id'];
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$checkoutMode = $_GET['mode'] ?? '';
+$giftCheckout = ($checkoutMode === 'gift') ? ($_SESSION['gift_checkout'] ?? null) : null;
+$isGiftCheckout = is_array($giftCheckout) && !empty($giftCheckout['items']);
+
+$checkoutItems = [];
+$checkoutTotalQty = 0;
+$checkoutOriginalSum = 0;
+$checkoutFinalSum = 0;
+
+if ($isGiftCheckout) {
+    $checkoutItems = $giftCheckout['items'];
+    $checkoutTotalQty = count($checkoutItems);
+    $checkoutOriginalSum = (int)($giftCheckout['original_sum'] ?? 0);
+    $checkoutFinalSum = (int)($giftCheckout['final_sum'] ?? 0);
+}
+
+$checkoutModeValue = $isGiftCheckout ? 'gift' : 'cart';
+
+$giftFrontendData = [
+    'items' => $checkoutItems,
+    'totalQty' => $checkoutTotalQty,
+    'originalSum' => $checkoutOriginalSum,
+    'finalSum' => $checkoutFinalSum,
+    'discountSum' => max(0, $checkoutOriginalSum - $checkoutFinalSum),
+];
+
 // статистика заказов
 $stmt = $pdo->prepare("
   SELECT COUNT(*) AS orders_count,
@@ -273,6 +303,9 @@ if (!isset($_SESSION['user_id'])) {
 document.addEventListener('DOMContentLoaded', async () => {
   const DELIVERY_FEE = 200;
 
+  const checkoutMode = <?php echo json_encode($checkoutModeValue, JSON_UNESCAPED_UNICODE); ?>;
+  const giftData = <?php echo json_encode($giftFrontendData, JSON_UNESCAPED_UNICODE); ?>;
+
   const form = document.getElementById('checkoutForm');
   const btn  = document.getElementById('submitBtn');
   const msg  = document.getElementById('msg');
@@ -309,19 +342,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   const applyPromoBtn = document.getElementById('applyPromoBtn');
   const promoHint = document.getElementById('promoHint');
 
-  let cartItems = [];
+  let checkoutItems = [];
   let baseItemsSum = 0;
   let baseQty = 0;
 
   const PROMOS = <?php echo json_encode($availablePromos, JSON_UNESCAPED_UNICODE); ?>;
-  let appliedPromo = null; // {code, percent}
+  let appliedPromo = null;
   let discountSum = 0;
 
-  function rub(n){ return Number(n || 0).toLocaleString('ru-RU'); }
+  function rub(n) {
+    return Number(n || 0).toLocaleString('ru-RU');
+  }
 
   function setFieldState(input, hintEl, ok, text) {
     if (hintEl) hintEl.textContent = text || '';
-    input.style.borderColor = ok ? '' : '#b00020';
+    if (input) input.style.borderColor = ok ? '' : '#b00020';
   }
 
   function getDeliveryType() {
@@ -333,6 +368,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function computeDiscount(itemsSum) {
+    if (checkoutMode === 'gift') {
+      return Number(giftData.discountSum || 0);
+    }
     if (!appliedPromo) return 0;
     return Math.round(itemsSum * (appliedPromo.percent / 100));
   }
@@ -343,7 +381,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     itemsSumEl.textContent = rub(baseItemsSum);
     discountSumEl.textContent = rub(discountSum);
-
     deliveryFeeEl.textContent = rub(fee);
     totalSumEl.textContent = rub(Math.max(0, baseItemsSum - discountSum) + fee);
     totalQtyEl.textContent = baseQty;
@@ -355,8 +392,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (type === 'pickup') {
       if (deliveryTimeBlock) deliveryTimeBlock.style.display = 'none';
       if (pickupHint) pickupHint.style.display = 'block';
-      if (deliveryDate) { deliveryDate.required = false; deliveryDate.style.borderColor = ''; }
-      if (deliverySlot) { deliverySlot.required = false; deliverySlot.style.borderColor = ''; }
+      if (deliveryDate) {
+        deliveryDate.required = false;
+        deliveryDate.style.borderColor = '';
+      }
+      if (deliverySlot) {
+        deliverySlot.required = false;
+        deliverySlot.style.borderColor = '';
+      }
       if (deliveryTimeHint) deliveryTimeHint.textContent = '';
     } else {
       if (deliveryTimeBlock) deliveryTimeBlock.style.display = '';
@@ -368,6 +411,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function toggleAddressUI() {
     const type = getDeliveryType();
+
     if (type === 'pickup') {
       deliveryBlock.style.display = 'none';
       cityInput.required = false;
@@ -389,55 +433,70 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTotals();
   }
 
-  // min date = tomorrow
   if (deliveryDate) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    deliveryDate.min = tomorrow.toISOString().slice(0,10);
+    deliveryDate.min = tomorrow.toISOString().slice(0, 10);
   }
 
-  // грузим корзину
   try {
-    const data = await cartApi('list');
-    cartItems = data.items || [];
+    if (checkoutMode === 'gift') {
+      checkoutItems = Array.isArray(giftData.items) ? giftData.items : [];
 
-    if (!cartItems.length) {
-      location.href = 'cart.php';
-      return;
+      if (!checkoutItems.length) {
+        location.href = 'cart.php';
+        return;
+      }
+
+      baseQty = Number(giftData.totalQty || checkoutItems.length || 0);
+      baseItemsSum = Number(giftData.originalSum || 0);
+
+      promoInput.value = '';
+      promoInput.disabled = true;
+      applyPromoBtn.disabled = true;
+      promoHint.textContent = 'Для подарочного набора уже применена скидка 5%.';
+    } else {
+      const data = await cartApi('list');
+      checkoutItems = data.items || [];
+
+      if (!checkoutItems.length) {
+        location.href = 'cart.php';
+        return;
+      }
+
+      baseItemsSum = Number(data.totalSum || 0);
+      baseQty = Number(data.totalQty || 0);
     }
-
-    baseItemsSum = Number(data.totalSum || 0);
-    baseQty = Number(data.totalQty || 0);
 
     toggleAddressUI();
     renderTotals();
   } catch (e) {
-    msg.textContent = 'Не удалось загрузить корзину.';
+    msg.textContent = 'Не удалось загрузить данные заказа.';
     btn.disabled = true;
     return;
   }
 
-  // маска телефона (твоя)
-  phoneInput.addEventListener("input", function () {
-    let value = this.value.replace(/\D/g, "");
+  phoneInput.addEventListener('input', function () {
+    let value = this.value.replace(/\D/g, '');
 
-    if (value.startsWith("8")) value = "7" + value.slice(1);
-    if (value.length > 0 && !value.startsWith("7")) value = "7" + value;
+    if (value.startsWith('8')) value = '7' + value.slice(1);
+    if (value.length > 0 && !value.startsWith('7')) value = '7' + value;
 
     value = value.slice(0, 11);
 
-    let formattedValue = "+7 ";
+    let formattedValue = '+7 ';
 
-    if (value.length > 1) formattedValue += "(" + value.substring(1, 4);
-    if (value.length >= 4) formattedValue += ") " + value.substring(4, 7);
-    if (value.length >= 7) formattedValue += "-" + value.substring(7, 9);
-    if (value.length >= 9) formattedValue += "-" + value.substring(9, 11);
+    if (value.length > 1) formattedValue += '(' + value.substring(1, 4);
+    if (value.length >= 4) formattedValue += ') ' + value.substring(4, 7);
+    if (value.length >= 7) formattedValue += '-' + value.substring(7, 9);
+    if (value.length >= 9) formattedValue += '-' + value.substring(9, 11);
 
     this.value = formattedValue;
   });
 
-  // промокод
   applyPromoBtn?.addEventListener('click', () => {
+    if (checkoutMode === 'gift') return;
+
     const code = (promoInput.value || '').trim().toUpperCase();
 
     if (!code) {
@@ -460,11 +519,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTotals();
   });
 
-  // validation
   function validateName() {
     const v = (nameInput.value || '').trim();
     const ok = /^[А-Яа-яЁё][А-Яа-яЁё\s\-]{1,79}$/u.test(v);
-    setFieldState(nameInput, nameHint, ok,
+    setFieldState(
+      nameInput,
+      nameHint,
+      ok,
       ok ? '' : 'Только кириллица. Можно пробел и дефис. Пример: Мария Иванова'
     );
     return ok;
@@ -473,7 +534,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   function validatePhone() {
     const digits = (phoneInput.value || '').replace(/\D/g, '');
     const ok = digits.length === 11 && digits.startsWith('7');
-    setFieldState(phoneInput, phoneHint, ok,
+    setFieldState(
+      phoneInput,
+      phoneHint,
+      ok,
       ok ? '' : 'Введите телефон полностью: +7 (999) 123-45-67'
     );
     return ok;
@@ -482,7 +546,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   function validateEmail() {
     const v = (emailInput.value || '').trim();
     const ok = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(v);
-    setFieldState(emailInput, emailHint, ok,
+    setFieldState(
+      emailInput,
+      emailHint,
+      ok,
       ok ? '' : 'Введите корректный email (например: name@mail.com)'
     );
     return ok;
@@ -507,7 +574,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       ? ''
       : 'Заполните город, улицу и дом корректно (дом: 10, 10А, 10/2).';
 
-    return (cityOk && streetOk && houseOk);
+    return cityOk && streetOk && houseOk;
   }
 
   function validateDeliveryTimeIfNeeded() {
@@ -522,7 +589,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!vSlot) ok = false;
 
     if (deliveryDate) deliveryDate.style.borderColor = (!vDate || (min && vDate < min)) ? '#b00020' : '';
-    if (deliverySlot) deliverySlot.style.borderColor = (!vSlot) ? '#b00020' : '';
+    if (deliverySlot) deliverySlot.style.borderColor = !vSlot ? '#b00020' : '';
 
     if (deliveryTimeHint) {
       deliveryTimeHint.textContent = ok ? '' : 'Выберите дату (не раньше завтра) и интервал времени.';
@@ -543,28 +610,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   deliverySlot?.addEventListener('change', validateDeliveryTimeIfNeeded);
 
   form.addEventListener('change', (e) => {
-    if (e.target.name === 'delivery_type') toggleAddressUI();
+    if (e.target.name === 'delivery_type') {
+      toggleAddressUI();
+    }
   });
 
-  // modal
   function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
     modal.setAttribute('aria-hidden', 'false');
     modal.classList.add('is-open');
   }
+
   function closeModal(el) {
     const modal = el.closest('.modal');
     if (!modal) return;
     modal.setAttribute('aria-hidden', 'true');
     modal.classList.remove('is-open');
   }
+
   document.addEventListener('click', (e) => {
     const c = e.target.closest('[data-close]');
     if (c) closeModal(c);
   });
 
-  // submit
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     msg.textContent = '';
@@ -585,14 +654,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const deliveryType = getDeliveryType();
 
-    const minimalItems = cartItems.map(it => ({
+    const minimalItems = checkoutItems.map((it) => ({
       product_code: it.product_code,
       qty: parseInt(it.qty, 10) || 1
     }));
 
-    const promoCode = appliedPromo?.code || ((promoInput.value || '').trim().toUpperCase());
+    const promoCode = checkoutMode === 'gift'
+      ? ''
+      : (appliedPromo?.code || ((promoInput.value || '').trim().toUpperCase()));
 
     const payload = {
+      checkout_mode: checkoutMode,
+
       customer_name: nameInput.value.trim(),
       phone: phoneInput.value.trim(),
       email: emailInput.value.trim(),
@@ -610,14 +683,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       delivery_slot: (deliveryType === 'delivery') ? (deliverySlot.value || '') : '',
 
       promo_code: promoCode || '',
-
       items: minimalItems
     };
 
     try {
       const res = await fetch('../php/order_create.php', {
         method: 'POST',
-        headers: {'Content-Type':'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
@@ -629,14 +701,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      try { await cartApi('clear'); } catch(e) {}
+      if (checkoutMode === 'cart') {
+        try {
+          await cartApi('clear');
+        } catch (e) {}
+      }
 
-      // визуально очистим итог
       baseItemsSum = 0;
       baseQty = 0;
       appliedPromo = null;
-      promoInput.value = '';
-      promoHint.textContent = '';
+
+      if (promoInput) promoInput.value = '';
+      if (promoHint) promoHint.textContent = '';
+
       renderTotals();
 
       const idEl = document.getElementById('successOrderId');
@@ -647,7 +724,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       openModal('orderSuccessModal');
 
-      setTimeout(() => { location.href = 'account.php?tab=orders'; }, 8000);
+      setTimeout(() => {
+        location.href = 'account.php?tab=orders';
+      }, 8000);
 
     } catch (err) {
       msg.textContent = 'Ошибка сети.';

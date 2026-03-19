@@ -1,6 +1,8 @@
 <?php
 session_start();
+
 $isAuth = isset($_SESSION['user_id']);
+$hasAuthError = !empty($_SESSION['auth_error']);
 ?>
 <!doctype html>
 <html lang="ru" data-auth="<?php echo $isAuth ? '1' : '0'; ?>">
@@ -8,19 +10,24 @@ $isAuth = isset($_SESSION['user_id']);
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Корзина — Лавка</title>
-  <link rel="stylesheet" href="../css/main.css"/>
-  <link rel="stylesheet" href="../css/style.css"/>
-  <link rel="stylesheet" href="../css/cart.css"/> 
+
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/cart.css" />
 </head>
 <body>
+
 <header class="nav" role="banner">
   <div class="container nav__inner">
     <a class="brand" href="../index.php" aria-label="Лавка - вернуться на главную страницу">
-      <div class="brand__mark" aria-hidden="true"><img src="../img/placeholder.webp" alt="Логотип"></div>
+      <div class="brand__mark" aria-hidden="true">
+        <img src="../img/placeholder.webp" alt="Логотип">
+      </div>
       <div class="brand__name">Лавка</div>
     </a>
 
-    <button class="nav__burger" type="button"
+    <button class="nav__burger"
+            type="button"
             aria-label="Открыть меню навигации"
             aria-expanded="false"
             aria-controls="main-menu"
@@ -47,39 +54,38 @@ $isAuth = isset($_SESSION['user_id']);
           </svg>
         </button>
 
-        <!-- MEGA MENU -->
         <div class="mega" id="mega-menu" data-dropdown-menu role="menu" aria-label="Категории товаров">
           <div class="mega__grid">
             <div>
               <h2 class="mega__title" id="mega-title">Основные категории</h2>
 
               <div class="mega__cards" role="group" aria-labelledby="mega-title">
-                <a class="mega__card" href="#group-candles" role="menuitem" data-close-mega>
+                <a class="mega__card" href="catalog.php#group-candles" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Свечи</div>
                   <div class="mega__cardText">Интерьерные, ароматные, необычные</div>
                 </a>
 
-                <a class="mega__card" href="#group-ceramics" role="menuitem" data-close-mega>
+                <a class="mega__card" href="catalog.php#group-ceramics" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Керамика</div>
                   <div class="mega__cardText">Кружки, тарелки, миски, фигурки</div>
                 </a>
 
-                <a class="mega__card" href="#group-decor" role="menuitem" data-close-mega>
+                <a class="mega__card" href="catalog.php#group-decor" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Декор</div>
                   <div class="mega__cardText">Фигурки, вазы, подсвечники</div>
                 </a>
 
-                <a class="mega__card" href="#group-textile" role="menuitem" data-close-mega>
+                <a class="mega__card" href="catalog.php#group-textile" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Текстиль</div>
                   <div class="mega__cardText">Игрушки, мешочки, панно, шарфы</div>
                 </a>
 
-                <a class="mega__card" href="#group-postcards" role="menuitem" data-close-mega>
+                <a class="mega__card" href="catalog.php#group-postcards" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Открытки</div>
                   <div class="mega__cardText">Авторские, минимал, наборы</div>
                 </a>
 
-                <a class="mega__card" href="#group-sets" role="menuitem" data-close-mega>
+                <a class="mega__card" href="catalog.php#group-sets" role="menuitem" data-close-mega>
                   <div class="mega__cardTitle">Подарочные наборы</div>
                   <div class="mega__cardText">Готовые боксы для подарка</div>
                 </a>
@@ -92,7 +98,7 @@ $isAuth = isset($_SESSION['user_id']);
                   <div class="mega__featureTitle">Подбор по случаю</div>
                   <div class="mega__featureText">Для дома, "просто так", знак внимания</div>
                 </div>
-                <a class="btn btn--dark btn--sm" href="#collectionsNav">Открыть</a>
+                <a class="btn btn--dark btn--sm" href="catalog.php#collectionsNav">Открыть</a>
               </div>
 
               <div class="mega__preview"
@@ -110,14 +116,13 @@ $isAuth = isset($_SESSION['user_id']);
       <a class="nav__link" href="about.php">О компании</a>
 
       <div class="nav__actions">
-        <!-- 🔑 ИКОНКА АККАУНТА -->
         <?php if ($isAuth): ?>
           <a class="iconBtn iconBtn--auth"
              href="account.php"
              aria-label="Личный кабинет">
             <svg viewBox="0 0 24 24" aria-hidden="true" class="iconUser">
-              <circle cx="12" cy="8" r="3.2" />
-              <path d="M5 19c1.4-3 3.6-4.5 7-4.5s5.6 1.5 7 4.5" />
+              <circle cx="12" cy="8" r="3.2"></circle>
+              <path d="M5 19c1.4-3 3.6-4.5 7-4.5s5.6 1.5 7 4.5"></path>
             </svg>
           </a>
         <?php else: ?>
@@ -126,12 +131,12 @@ $isAuth = isset($_SESSION['user_id']);
                   aria-label="Войти"
                   data-open-modal="authModal">
             <svg viewBox="0 0 24 24" aria-hidden="true" class="iconUser">
-              <circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+              <circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"></circle>
               <path d="M5 19c1.4-3 3.6-4.5 7-4.5s5.6 1.5 7 4.5"
                     fill="none"
                     stroke="currentColor"
                     stroke-width="1.7"
-                    stroke-linecap="round"/>
+                    stroke-linecap="round"></path>
             </svg>
           </button>
         <?php endif; ?>
@@ -147,7 +152,7 @@ $isAuth = isset($_SESSION['user_id']);
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
                   fill="none"
                   stroke="currentColor"
-                  stroke-width="1.6"/>
+                  stroke-width="1.6"></path>
           </svg>
         </button>
 
@@ -158,29 +163,27 @@ $isAuth = isset($_SESSION['user_id']);
 </header>
 
 <main class="container section" id="main-content" role="main" tabindex="-1">
+  <nav class="breadcrumbs" aria-label="Хлебные крошки">
+    <ol>
+      <li><a href="../index.php">Главная</a></li>
+      <li><span aria-current="page">Корзина</span></li>
+    </ol>
+  </nav>
 
-    <!-- Хлебные крошки -->
-    <nav class="breadcrumbs" aria-label="Хлебные крошки">
-      <ol>
-        <li><a href="../index.php">Главная</a></li>
-        <li><span aria-current="page">Корзина</span></li>
-      </ol>
-    </nav>
+  <div class="headRow">
+    <div>
+      <h1 class="h2">Корзина</h1>
+      <p class="muted">Проверьте товары и количество перед оформлением.</p>
+    </div>
 
-<div class="headRow">
-  <div>
-    <h1 class="h2">Корзина</h1>
-    <p class="muted">Проверьте товары и количество перед оформлением.</p>
+    <div class="headBtn">
+      <a class="btn" href="catalog.php">В каталог</a>
+      <?php if ($isAuth): ?>
+        <button class="btn" id="cartClearBtn" type="button">Очистить</button>
+      <?php endif; ?>
+    </div>
   </div>
-  <div class="headBtn">
-    <a class="btn" href="catalog.php">В каталог</a>
-    <?php if ($isAuth): ?>
-      <button class="btn" id="cartClearBtn" type="button">Очистить</button>
-    <?php endif; ?>
-  </div>
-</div>
 
-  <!-- ЕСЛИ НЕ АВТОРИЗОВАН -->
   <?php if (!$isAuth): ?>
     <div class="banner">
       <div class="banner__body">
@@ -197,7 +200,6 @@ $isAuth = isset($_SESSION['user_id']);
     </div>
   <?php else: ?>
 
-    <!-- пустая корзина -->
     <div id="cartEmpty" class="banner" style="display:none;">
       <div class="banner__body">
         <p class="kicker">Лавка / корзина</p>
@@ -210,7 +212,6 @@ $isAuth = isset($_SESSION['user_id']);
       </div>
     </div>
 
-    <!-- корзина -->
     <div class="cartLayout" id="cartLayout" style="display:none;">
       <div class="cartList" id="cartList"></div>
 
@@ -222,19 +223,17 @@ $isAuth = isset($_SESSION['user_id']);
           </div>
           <div class="muted small">Товаров: <span id="cartTotalQty">0</span></div>
 
-<a class="btn btn--dark btn--full" href="checkout.php" style="margin-top:12px;">
-  Оформить заказ
-</a>
+          <a class="btn btn--dark btn--full" href="checkout.php?mode=cart" style="margin-top:12px;">
+            Оформить заказ
+          </a>
         </div>
       </aside>
     </div>
 
   <?php endif; ?>
-  </div>
 </main>
-<!-- FOOTER -->
+
 <footer class="footer" role="contentinfo">
-  <!-- Кнопка "Наверх" -->
   <button class="to-top" id="toTopBtn" aria-label="Вернуться наверх" style="display: none;">
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="18 15 12 9 6 15"></polyline>
@@ -243,7 +242,6 @@ $isAuth = isset($_SESSION['user_id']);
 
   <div class="container">
     <div class="footer__grid">
-      <!-- Блок с логотипом -->
       <div>
         <a href="../index.php" class="footer__brand-link">
           <div class="footer__brand">
@@ -254,8 +252,7 @@ $isAuth = isset($_SESSION['user_id']);
           </div>
         </a>
         <p class="muted">Сувениры ручной работы и забота о деталях.</p>
-        
-        <!-- Соцсети с иконками -->
+
         <div class="footer__social-icons">
           <div class="social-icons">
             <a href="#" class="social-icon" aria-label="ВКонтакте" title="ВКонтакте">
@@ -277,7 +274,6 @@ $isAuth = isset($_SESSION['user_id']);
         </div>
       </div>
 
-      <!-- Навигация -->
       <div>
         <h3 class="footer__title">Навигация</h3>
         <ul class="footer__list">
@@ -288,7 +284,6 @@ $isAuth = isset($_SESSION['user_id']);
         </ul>
       </div>
 
-      <!-- Информация -->
       <div>
         <h3 class="footer__title">Информация</h3>
         <ul class="footer__list">
@@ -299,7 +294,6 @@ $isAuth = isset($_SESSION['user_id']);
         </ul>
       </div>
 
-      <!-- Рассылка -->
       <div>
         <h3 class="footer__title">Рассылка</h3>
         <p class="muted small">Новости и новые коллекции без спама. Первым узнавайте о скидках!</p>
@@ -318,34 +312,30 @@ $isAuth = isset($_SESSION['user_id']);
 </footer>
 
 <script>
-  // Скрипт для кнопки "Наверх"
   document.addEventListener('DOMContentLoaded', function() {
     const toTopBtn = document.getElementById('toTopBtn');
-  
-    window.addEventListener('scroll', function() {
-      if (window.pageYOffset > 300) {
-        toTopBtn.style.display = 'flex';
-      } else {
-        toTopBtn.style.display = 'none';
-      }
-    });
-    
-    toTopBtn.addEventListener('click', function() {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
+
+    if (toTopBtn) {
+      window.addEventListener('scroll', function() {
+        toTopBtn.style.display = window.pageYOffset > 300 ? 'flex' : 'none';
       });
-    });
-    
+
+      toTopBtn.addEventListener('click', function() {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      });
+    }
+
     const newsletterForm = document.querySelector('[data-newsletter-form]');
     if (newsletterForm) {
       newsletterForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const emailInput = this.querySelector('#newsletter-email');
         const email = emailInput.value.trim();
-        
+
         if (email && email.includes('@')) {
-          console.log('Подписка на рассылку:', email);
           alert('Спасибо за подписку! На ' + email + ' отправлено письмо с подтверждением.');
           emailInput.value = '';
         }
@@ -355,7 +345,7 @@ $isAuth = isset($_SESSION['user_id']);
 </script>
 
 <div class="modal" id="authModal" aria-hidden="true"
-     <?php if (!empty($_SESSION['auth_error'])) echo 'data-autoshow="1"'; ?>>
+     <?php if ($hasAuthError) echo 'data-autoshow="1"'; ?>>
   <div class="modal__backdrop" data-close></div>
 
   <div class="modal__dialog" role="dialog" aria-modal="true" aria-label="Авторизация">
@@ -365,8 +355,7 @@ $isAuth = isset($_SESSION['user_id']);
     </div>
 
     <div class="modal__body">
-
-      <?php if (!empty($_SESSION['auth_error'])): ?>
+      <?php if ($hasAuthError): ?>
         <div class="alert alert--error" style="color:#b00020; margin-bottom:10px;">
           <?= htmlspecialchars($_SESSION['auth_error']) ?>
         </div>
@@ -395,7 +384,6 @@ $isAuth = isset($_SESSION['user_id']);
   </div>
 </div>
 
-<!-- FAVORITES SHEET -->
 <aside class="sheet" id="favoritesSheet" aria-hidden="true">
   <div class="sheet__backdrop" data-close></div>
 
