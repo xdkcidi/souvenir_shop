@@ -877,6 +877,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </svg>
     Выйти из аккаунта
   </a>
+  <?php if (!empty($_SESSION['user_role']) && (int)$_SESSION['user_role'] === 1): ?>
+  <div style="margin: 0 0 20px;">
+    <a class="btn btn--dark" href="/souvenir_shop/pages/admin.php">Перейти в админ-панель</a>
+  </div>
+<?php endif; ?>
 </div>
     </form>
   </div>

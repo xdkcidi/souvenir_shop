@@ -15,7 +15,7 @@ if ($loginOrEmail === '' || $password === '') {
 
 try {
     $stmt = $pdo->prepare("
-        SELECT id, login, email, password_hash
+        SELECT id, login, email, password_hash, role
         FROM users
         WHERE login = :v
            OR email = :v
@@ -32,8 +32,10 @@ try {
 
     $_SESSION['user_id']    = (int)$user['id'];
     $_SESSION['user_login'] = $user['login'];
+    $_SESSION['user_role']  = (int)$user['role'];
 
     setcookie('id', (string)$user['id'], time() + 3600, '/souvenir_shop/');
+    setcookie('role', (string)$user['role'], time() + 3600, '/souvenir_shop/');
 
     header('Location: /souvenir_shop/pages/account.php');
     exit;
