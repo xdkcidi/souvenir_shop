@@ -25,7 +25,7 @@ if (!is_array($data)) {
   fail(400, 'Некорректные данные.');
 }
 
-/* ===== входные поля ===== */
+/* входные поля */
 $customerName = trim((string)($data['customer_name'] ?? ''));
 $phoneRaw     = trim((string)($data['phone'] ?? ''));
 $email        = trim((string)($data['email'] ?? ''));

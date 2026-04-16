@@ -68,14 +68,14 @@ try {
     ok(['items' => $items, 'totalQty' => $totalQty, 'totalSum' => $totalSum]);
   }
 
-  // ---------- COUNT ----------
+  // количество
   if ($action === 'count') {
     $stmt = $pdo->prepare("SELECT COALESCE(SUM(qty),0) FROM cart_items WHERE user_id=?");
     $stmt->execute([$uid]);
     ok(['count' => (int)$stmt->fetchColumn()]);
   }
 
-  // ---------- ADD ----------
+  // добавляем
   if ($action === 'add') {
     $code = trim((string)($payload['product_code'] ?? ''));
     $qtyAdd = (int)($payload['qty'] ?? 1);

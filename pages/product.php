@@ -113,12 +113,40 @@ $stmt = $pdo->prepare("
 $stmt->execute([$product_code]);
 $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* ===== ПРОВЕРКА, УЖЕ ОСТАВЛЯЛ ЛИ ПОЛЬЗОВАТЕЛЬ ОТЗЫВ ===== */
-$userHasReview = false;
+/* ===== ОТЗЫВ ТЕКУЩЕГО ПОЛЬЗОВАТЕЛЯ + ПРАВО НА ОТЗЫВ ===== */
+$userReview = null;
+$userCanReview = false;
+
+function userBoughtProduct(PDO $pdo, int $userId, string $productCode): bool
+{
+    $sql = "
+        SELECT 1
+        FROM orders o
+        INNER JOIN order_items oi ON oi.order_id = o.id
+        WHERE o.user_id = ?
+          AND oi.product_code = ?
+          AND o.status = 'completed'
+        LIMIT 1
+    ";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$userId, $productCode]);
+    return (bool)$stmt->fetchColumn();
+}
+
 if ($isAuth) {
-    $chk = $pdo->prepare("SELECT 1 FROM product_reviews WHERE product_code = ? AND user_id = ? LIMIT 1");
-    $chk->execute([$product_code, (int)$_SESSION['user_id']]);
-    $userHasReview = (bool)$chk->fetchColumn();
+    $uid = (int)$_SESSION['user_id'];
+
+    $stmt = $pdo->prepare("
+        SELECT id, rating, body, created_at, updated_at, moderated_at, is_approved
+        FROM product_reviews
+        WHERE product_code = ? AND user_id = ?
+        LIMIT 1
+    ");
+    $stmt->execute([$product_code, $uid]);
+    $userReview = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+    $userCanReview = userBoughtProduct($pdo, $uid, $product_code);
 }
 
 /* ===== FLASH-СООБЩЕНИЯ ===== */
@@ -580,16 +608,38 @@ $related = array_slice($related, 0, 4);
 
     <section class="pSection" id="reviews" aria-label="Отзывы покупателей">
       <div class="pSection__head">
-        <h2 class="pH2">Отзывы покупателей</h2>
+  <h2 class="pH2">Отзывы покупателей</h2>
 
-        <?php if (!$isAuth): ?>
-          <button class="btn btn--outline" type="button" data-open-modal="authModal">Войти, чтобы оставить отзыв</button>
-        <?php elseif ($userHasReview): ?>
-          <button class="btn btn--outline" type="button" disabled>Отзыв уже оставлен</button>
-        <?php else: ?>
-          <button class="btn btn--outline" type="button" data-open-modal="reviewModal">Написать отзыв</button>
-        <?php endif; ?>
-      </div>
+  <?php if (!$isAuth): ?>
+    <button class="btn btn--outline" type="button" data-open-modal="authModal">
+      Войти, чтобы оставить отзыв
+    </button>
+
+  <?php elseif (!$userCanReview): ?>
+    <button class="btn btn--outline" type="button" disabled>
+      Отзыв доступен после покупки
+    </button>
+
+  <?php elseif ($userReview): ?>
+    <button class="btn btn--outline" type="button" data-open-modal="reviewModal">
+      Редактировать отзыв
+    </button>
+
+  <?php else: ?>
+    <button class="btn btn--outline" type="button" data-open-modal="reviewModal">
+      Написать отзыв
+    </button>
+  <?php endif; ?>
+</div>
+<?php if ($isAuth && $userReview): ?>
+  <div class="alert" style="margin: 10px 0;">
+    <?php if ((int)$userReview['is_approved'] === 1): ?>
+      Ваш отзыв опубликован.
+    <?php else: ?>
+      Ваш отзыв находится на модерации.
+    <?php endif; ?>
+  </div>
+<?php endif; ?>
 
       <?php if ($reviewError): ?>
         <div class="alert alert--error" style="color:#b00020; margin: 10px 0;">
@@ -766,7 +816,9 @@ $related = array_slice($related, 0, 4);
 
   <div class="modal__dialog" role="dialog" aria-modal="true" aria-label="Отзыв">
     <div class="modal__head">
-      <div class="modal__title">Оставить отзыв</div>
+      <div class="modal__title">
+        <?php echo $userReview ? 'Редактировать отзыв' : 'Оставить отзыв'; ?>
+      </div>
       <button class="iconBtn" type="button" data-close aria-label="Закрыть">✕</button>
     </div>
 
@@ -775,8 +827,8 @@ $related = array_slice($related, 0, 4);
         <p class="muted">Чтобы оставить отзыв, нужно войти в аккаунт.</p>
         <button class="btn btn--dark btn--full" type="button" data-open-modal="authModal">Войти</button>
 
-      <?php elseif (!empty($userHasReview)): ?>
-        <p class="muted">Вы уже оставили отзыв на этот товар.</p>
+      <?php elseif (!$userCanReview): ?>
+        <p class="muted">Оставить отзыв можно только после завершённой покупки товара.</p>
 
       <?php else: ?>
         <form action="../php/add_review.php" method="post">
@@ -786,35 +838,21 @@ $related = array_slice($related, 0, 4);
             <label class="small revLabel">Оценка</label>
 
             <div class="rate rate--nums" aria-label="Выбор оценки">
-              <input class="rate__inp" type="radio" name="rating" id="rate-1" value="1">
-              <label class="rate__opt" for="rate-1" title="1">
-                <span class="rate__star">★</span>
-                <span class="rate__num">1</span>
-              </label>
+              <?php $currentRating = (int)($userReview['rating'] ?? 5); ?>
 
-              <input class="rate__inp" type="radio" name="rating" id="rate-2" value="2">
-              <label class="rate__opt" for="rate-2" title="2">
-                <span class="rate__star">★</span>
-                <span class="rate__num">2</span>
-              </label>
+              <?php for ($i = 1; $i <= 5; $i++): ?>
+                <input class="rate__inp"
+                       type="radio"
+                       name="rating"
+                       id="rate-<?php echo $i; ?>"
+                       value="<?php echo $i; ?>"
+                       <?php echo $currentRating === $i ? 'checked' : ''; ?>>
 
-              <input class="rate__inp" type="radio" name="rating" id="rate-3" value="3">
-              <label class="rate__opt" for="rate-3" title="3">
-                <span class="rate__star">★</span>
-                <span class="rate__num">3</span>
-              </label>
-
-              <input class="rate__inp" type="radio" name="rating" id="rate-4" value="4">
-              <label class="rate__opt" for="rate-4" title="4">
-                <span class="rate__star">★</span>
-                <span class="rate__num">4</span>
-              </label>
-
-              <input class="rate__inp" type="radio" name="rating" id="rate-5" value="5" checked>
-              <label class="rate__opt" for="rate-5" title="5">
-                <span class="rate__star">★</span>
-                <span class="rate__num">5</span>
-              </label>
+                <label class="rate__opt" for="rate-<?php echo $i; ?>" title="<?php echo $i; ?>">
+                  <span class="rate__star">★</span>
+                  <span class="rate__num"><?php echo $i; ?></span>
+                </label>
+              <?php endfor; ?>
             </div>
           </div>
 
@@ -825,10 +863,18 @@ $related = array_slice($related, 0, 4);
                       name="body"
                       rows="5"
                       maxlength="2000"
-                      placeholder="Можно оставить пустым"></textarea>
+                      placeholder="Можно оставить пустым"><?php echo h($userReview['body'] ?? ''); ?></textarea>
           </div>
 
-          <button class="btn btn--dark btn--full" type="submit">Отправить</button>
+          <?php if ($userReview): ?>
+            <p class="muted small" style="margin-bottom:12px;">
+              После редактирования отзыв снова отправится на модерацию.
+            </p>
+          <?php endif; ?>
+
+          <button class="btn btn--dark btn--full" type="submit">
+            <?php echo $userReview ? 'Сохранить изменения' : 'Отправить'; ?>
+          </button>
         </form>
       <?php endif; ?>
     </div>
