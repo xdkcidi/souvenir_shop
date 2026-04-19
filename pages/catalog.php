@@ -524,7 +524,8 @@ $hitProducts = array_slice($hitProducts, 0, 4);
       </h2>
 
       <p class="personal-gift__text">
-        Для некоторых изделий доступна гравировка или надпись.
+        Можно оставить заявку на индивидуальное оформление,
+        а мы свяжемся с вами и подскажем, что лучше подойдёт.
         Срок изготовления — <strong>от 1 до 5 дней</strong>.
       </p>
 
@@ -544,29 +545,90 @@ $hitProducts = array_slice($hitProducts, 0, 4);
         <div class="pgForm__badge" aria-hidden="true">1–5 дней</div>
       </div>
 
-      <form class="pgForm" id="engraveForm" action="#" method="post" novalidate>
+      <?php if (!empty($_SESSION['personalization_success'])): ?>
+        <div class="alert" style="margin: 0 0 14px; color: var(--green, #1f8a4c);">
+          <?= htmlspecialchars($_SESSION['personalization_success'], ENT_QUOTES, 'UTF-8') ?>
+        </div>
+        <?php unset($_SESSION['personalization_success']); ?>
+      <?php endif; ?>
+
+      <?php if (!empty($_SESSION['personalization_error'])): ?>
+        <div class="alert alert--error" style="margin: 0 0 14px; color:#b00020;">
+          <?= htmlspecialchars($_SESSION['personalization_error'], ENT_QUOTES, 'UTF-8') ?>
+        </div>
+        <?php unset($_SESSION['personalization_error']); ?>
+      <?php endif; ?>
+
+      <form class="pgForm" id="engraveForm" action="/souvenir_shop/php/create_personalization_request.php" method="post">
         <div class="pgForm__grid">
-          <label class="pgField" for="engraveText">
+          <label class="pgField" for="engraveName">
+            <span class="pgField__label">Ваше имя</span>
+            <input class="input"
+                   id="engraveName"
+                   type="text"
+                   name="customer_name"
+                   maxlength="100"
+                   placeholder="Например: Анна"
+                   required />
+          </label>
+
+          <label class="pgField" for="engraveContact">
+            <span class="pgField__label">Телефон</span>
+            <input class="input"
+                   id="engraveContact"
+                   type="tel"
+                   name="phone"
+                   maxlength="30"
+                   placeholder="+7 (999) 000-00-00"
+                   required />
+          </label>
+
+          <label class="pgField" for="engraveEmail">
+            <span class="pgField__label">Email</span>
+            <input class="input"
+                   id="engraveEmail"
+                   type="email"
+                   name="email"
+                   maxlength="120"
+                   placeholder="example@mail.ru" />
+          </label>
+
+          <label class="pgField" for="preferredContact">
+            <span class="pgField__label">Как с вами связаться?</span>
+            <div class="select-wrap">
+              <select class="input" id="preferredContact" name="preferred_contact">
+                <option value="">Выберите способ связи</option>
+                <option value="phone">По телефону</option>
+                <option value="telegram">В Telegram</option>
+                <option value="whatsapp">В WhatsApp</option>
+                <option value="email">По email</option>
+              </select>
+            </div>
+          </label>
+
+          <label class="pgField pgField--full" for="engraveText">
             <span class="pgField__label">Текст гравировки</span>
             <input class="input"
                    id="engraveText"
                    type="text"
-                   name="engraveText"
-                   maxlength="40"
-                   placeholder="Например: &quot;Дорогой Ане&quot;" />
-            <span class="pgField__hint">от 2 до 40 символов</span>
+                   name="engraving_text"
+                   maxlength="100"
+                   placeholder="Например: &quot;Дорогой Ане&quot;"
+                   required />
+            <span class="pgField__hint">от 2 до 100 символов</span>
           </label>
 
           <label class="pgField" for="engraveOn">
             <span class="pgField__label">На каком изделии?</span>
             <div class="select-wrap">
-              <select class="input" id="engraveOn" name="engraveOn" required>
+              <select class="input" id="engraveOn" name="item_type" required>
                 <option value="">Выберите изделие</option>
-                <option value="postcard">Открытка</option>
-                <option value="mug">Кружка</option>
-                <option value="plate">Тарелка</option>
-                <option value="cat">Фигурка «Кот»</option>
-                <option value="bear">Игрушка «Мишка»</option>
+                <option value="Открытка">Открытка</option>
+                <option value="Кружка">Кружка</option>
+                <option value="Тарелка">Тарелка</option>
+                <option value="Фигурка «Кот»">Фигурка «Кот»</option>
+                <option value="Игрушка «Мишка»">Игрушка «Мишка»</option>
+                <option value="Другое">Другое</option>
               </select>
             </div>
           </label>
@@ -574,26 +636,17 @@ $hitProducts = array_slice($hitProducts, 0, 4);
           <label class="pgField" for="engraveDeadline">
             <span class="pgField__label">Срок</span>
             <div class="select-wrap">
-              <select class="input" id="engraveDeadline" name="deadline">
-                <option value="normal">Не срочно (1–5 дней)</option>
-                <option value="fast">Как можно быстрее</option>
-                <option value="date">К конкретной дате</option>
+              <select class="input" id="engraveDeadline" name="urgency">
+                <option value="Не срочно">Не срочно (1–5 дней)</option>
+                <option value="Срочно">Как можно быстрее</option>
+                <option value="К определённой дате">К конкретной дате</option>
               </select>
             </div>
           </label>
 
-          <label class="pgField" for="engraveContact">
-            <span class="pgField__label">Связаться со мной</span>
-            <input class="input"
-                   id="engraveContact"
-                   type="tel"
-                   name="contact"
-                   placeholder="+7 (999) 000-00-00" />
-          </label>
-
           <label class="pgField pgField--full" for="engraveDate" id="engraveDateWrap" style="display:none;">
             <span class="pgField__label">Нужная дата</span>
-            <input class="input" id="engraveDate" type="date" name="engraveDate" />
+            <input class="input" id="engraveDate" type="date" name="target_date" />
             <span class="pgField__hint">Заполните, если нужен подарок к определённому дню</span>
           </label>
 
@@ -603,19 +656,36 @@ $hitProducts = array_slice($hitProducts, 0, 4);
                       id="engraveComment"
                       name="comment"
                       rows="3"
-                      maxlength="300"
+                      maxlength="1000"
                       placeholder="Например: &quot;Нужна надпись на донышке&quot;"></textarea>
           </label>
         </div>
 
-        <div id="engraveFormMsg" class="muted small" style="margin-top:10px;"></div>
-
         <div class="pgForm__actions">
+          <div class="pgForm__consent" style="margin-bottom:12px;">
+            <label style="display:flex; align-items:flex-start; gap:10px; line-height:1.5;">
+              <input
+                type="checkbox"
+                name="privacy_consent"
+                value="1"
+                required
+                style="margin-top:4px;"
+              >
+              <span>
+                Я соглашаюсь на
+                <a href="/souvenir_shop/pages/privacy.php" target="_blank" rel="noopener noreferrer">
+                  обработку персональных данных
+                </a>
+              </span>
+            </label>
+          </div>
+
           <button type="submit" class="btn btn--dark btn--full" id="engraveSubmitBtn">
             Отправить заявку
           </button>
+
           <p class="muted small pgForm__note">
-            Нажимая кнопку, вы соглашаетесь на обработку данных.
+            Мы используем указанные данные только для связи по вашей заявке.
           </p>
         </div>
       </form>
@@ -904,25 +974,45 @@ document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('engraveForm');
   if (!form) return;
 
+  const nameInput = document.getElementById('engraveName');
   const textInput = document.getElementById('engraveText');
   const productSelect = document.getElementById('engraveOn');
   const deadlineSelect = document.getElementById('engraveDeadline');
   const contactInput = document.getElementById('engraveContact');
   const dateWrap = document.getElementById('engraveDateWrap');
   const dateInput = document.getElementById('engraveDate');
-  const commentInput = document.getElementById('engraveComment');
   const msg = document.getElementById('engraveFormMsg');
+  const privacyCheckbox = form.querySelector('input[name="privacy_consent"]');
 
   function setError(el) {
-    el.style.borderColor = '#b00020';
+    if (!el) return;
+
+    if (el.type === 'checkbox') {
+      el.style.outline = '2px solid #b00020';
+      el.style.outlineOffset = '2px';
+    } else {
+      el.style.borderColor = '#b00020';
+    }
   }
 
   function clearError(el) {
-    el.style.borderColor = '';
+    if (!el) return;
+
+    if (el.type === 'checkbox') {
+      el.style.outline = '';
+      el.style.outlineOffset = '';
+    } else {
+      el.style.borderColor = '';
+    }
   }
 
   function toggleDateField() {
-    const isDateMode = deadlineSelect.value === 'date';
+    if (!deadlineSelect || !dateWrap || !dateInput) return;
+
+    const isDateMode =
+      deadlineSelect.value === 'К определённой дате' ||
+      deadlineSelect.value === 'date';
+
     dateWrap.style.display = isDateMode ? '' : 'none';
     dateInput.required = isDateMode;
 
@@ -932,9 +1022,21 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  function validateName() {
+    if (!nameInput) return true;
+    const value = nameInput.value.trim();
+    const ok = value.length >= 2;
+
+    if (!ok) setError(nameInput);
+    else clearError(nameInput);
+
+    return ok;
+  }
+
   function validateText() {
+    if (!textInput) return true;
     const value = textInput.value.trim();
-    const ok = value.length >= 2 && value.length <= 40;
+    const ok = value.length >= 2 && value.length <= 100;
 
     if (!ok) setError(textInput);
     else clearError(textInput);
@@ -943,6 +1045,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function validateProduct() {
+    if (!productSelect) return true;
     const ok = productSelect.value.trim() !== '';
 
     if (!ok) setError(productSelect);
@@ -952,8 +1055,12 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function validatePhone() {
+    if (!contactInput) return true;
+
     const digits = contactInput.value.replace(/\D/g, '');
-    const ok = digits.length === 11 && digits.startsWith('7');
+    const ok =
+      digits.length === 11 &&
+      (digits.startsWith('7') || digits.startsWith('8'));
 
     if (!ok) setError(contactInput);
     else clearError(contactInput);
@@ -962,7 +1069,13 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function validateDate() {
-    if (deadlineSelect.value !== 'date') {
+    if (!deadlineSelect || !dateInput) return true;
+
+    const isDateMode =
+      deadlineSelect.value === 'К определённой дате' ||
+      deadlineSelect.value === 'date';
+
+    if (!isDateMode) {
       clearError(dateInput);
       return true;
     }
@@ -984,56 +1097,72 @@ document.addEventListener('DOMContentLoaded', function () {
     return ok;
   }
 
-  textInput.addEventListener('blur', validateText);
-  productSelect.addEventListener('change', validateProduct);
-  contactInput.addEventListener('blur', validatePhone);
-  dateInput.addEventListener('change', validateDate);
+  function validatePrivacy() {
+    if (!privacyCheckbox) return true;
 
-  deadlineSelect.addEventListener('change', function () {
-    toggleDateField();
-    validateDate();
-  });
+    const ok = privacyCheckbox.checked;
 
-  contactInput.addEventListener('input', function () {
-    let value = this.value.replace(/\D/g, '');
+    if (!ok) setError(privacyCheckbox);
+    else clearError(privacyCheckbox);
 
-    if (value.startsWith('8')) value = '7' + value.slice(1);
-    if (value.length > 0 && !value.startsWith('7')) value = '7' + value;
+    return ok;
+  }
 
-    value = value.slice(0, 11);
+  if (nameInput) nameInput.addEventListener('blur', validateName);
+  if (textInput) textInput.addEventListener('blur', validateText);
+  if (productSelect) productSelect.addEventListener('change', validateProduct);
+  if (contactInput) contactInput.addEventListener('blur', validatePhone);
+  if (dateInput) dateInput.addEventListener('change', validateDate);
+  if (privacyCheckbox) privacyCheckbox.addEventListener('change', validatePrivacy);
 
-    let formatted = '+7';
+  if (deadlineSelect) {
+    deadlineSelect.addEventListener('change', function () {
+      toggleDateField();
+      validateDate();
+    });
+  }
 
-    if (value.length > 1) formatted += ' (' + value.slice(1, 4);
-    if (value.length >= 4) formatted += ') ' + value.slice(4, 7);
-    if (value.length >= 7) formatted += '-' + value.slice(7, 9);
-    if (value.length >= 9) formatted += '-' + value.slice(9, 11);
+  if (contactInput) {
+    contactInput.addEventListener('input', function () {
+      let value = this.value.replace(/\D/g, '');
 
-    this.value = formatted;
-  });
+      if (value.startsWith('8')) value = '7' + value.slice(1);
+      if (value.length > 0 && !value.startsWith('7')) value = '7' + value;
+
+      value = value.slice(0, 11);
+
+      let formatted = '+7';
+
+      if (value.length > 1) formatted += ' (' + value.slice(1, 4);
+      if (value.length >= 4) formatted += ') ' + value.slice(4, 7);
+      if (value.length >= 7) formatted += '-' + value.slice(7, 9);
+      if (value.length >= 9) formatted += '-' + value.slice(9, 11);
+
+      this.value = formatted;
+    });
+  }
 
   form.addEventListener('submit', function (e) {
-    e.preventDefault();
+    if (msg) {
+      msg.textContent = '';
+      msg.style.color = '';
+    }
 
-    msg.textContent = '';
-    msg.style.color = '';
-
+    const nameOk = validateName();
     const textOk = validateText();
     const productOk = validateProduct();
     const phoneOk = validatePhone();
     const dateOk = validateDate();
+    const privacyOk = validatePrivacy();
 
-    if (!textOk || !productOk || !phoneOk || !dateOk) {
-      msg.textContent = 'Пожалуйста, заполните форму корректно.';
-      msg.style.color = '#b00020';
-      return;
+    if (!nameOk || !textOk || !productOk || !phoneOk || !dateOk || !privacyOk) {
+      e.preventDefault();
+
+      if (msg) {
+        msg.textContent = 'Пожалуйста, заполните форму корректно и подтвердите согласие.';
+        msg.style.color = '#b00020';
+      }
     }
-
-    msg.textContent = 'Заявка отправлена. Мы скоро свяжемся с вами.';
-    msg.style.color = '#1f8a4c';
-
-    form.reset();
-    toggleDateField();
   });
 
   toggleDateField();

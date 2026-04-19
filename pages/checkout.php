@@ -1,13 +1,18 @@
 <?php
-session_start();
-
-require_once __DIR__ . '/../php/db.php';
-$userId = (int)$_SESSION['user_id'];
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+if (!isset($_SESSION['user_id'])) {
+    header('Location: cart.php');
+    exit;
+}
+
+$userId = (int)$_SESSION['user_id'];
+
+require_once __DIR__ . '/../php/db.php';
+
+// дальше остальной код без изменений
 $checkoutMode = $_GET['mode'] ?? '';
 $giftCheckout = ($checkoutMode === 'gift') ? ($_SESSION['gift_checkout'] ?? null) : null;
 $isGiftCheckout = is_array($giftCheckout) && !empty($giftCheckout['items']);
@@ -67,11 +72,6 @@ if ($notUsed('SPRING15')) $availablePromos['SPRING15'] = 15;
 if ($statusName === 'Постоянный' && $notUsed('LOYAL20')) $availablePromos['LOYAL20'] = 20;
 if ($statusName === 'VIP' && $notUsed('VIP25')) $availablePromos['VIP25'] = 25;
 
-
-if (!isset($_SESSION['user_id'])) {
-  header('Location: cart.php');
-  exit;
-}
 ?>
 <!doctype html>
 <html lang="ru" data-auth="1">
@@ -264,6 +264,25 @@ if (!isset($_SESSION['user_id'])) {
       <textarea class="input" name="comment" rows="3" placeholder="Например: позвонить за 10 минут"></textarea>
     </div>
 
+<div class="checkout-consent" style="margin:14px 0;">
+  <label style="display:flex; align-items:flex-start; gap:10px; line-height:1.5;">
+    <input
+      type="checkbox"
+      id="checkoutPrivacyConsent"
+      name="privacy_consent"
+      value="1"
+      required
+      style="margin-top:4px;"
+    >
+    <span>
+      Я соглашаюсь на
+      <a href="/souvenir_shop/pages/privacy.php" target="_blank" rel="noopener noreferrer">
+        обработку персональных данных
+      </a>
+    </span>
+  </label>
+</div>
+
     <button class="btn btn--dark btn--full" id="submitBtn" type="submit">
       Подтвердить заказ
     </button>
@@ -309,6 +328,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const form = document.getElementById('checkoutForm');
   const btn  = document.getElementById('submitBtn');
   const msg  = document.getElementById('msg');
+  const privacyCheckbox = document.getElementById('checkoutPrivacyConsent');
 
   const itemsSumEl = document.getElementById('itemsSum');
   const discountSumEl = document.getElementById('discountSum');
@@ -598,6 +618,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     return ok;
   }
 
+  function validatePrivacy() {
+  if (!privacyCheckbox) return true;
+
+  const ok = privacyCheckbox.checked;
+
+  if (!ok) {
+    privacyCheckbox.style.outline = '2px solid #b00020';
+    privacyCheckbox.style.outlineOffset = '2px';
+  } else {
+    privacyCheckbox.style.outline = '';
+    privacyCheckbox.style.outlineOffset = '';
+  }
+
+  return ok;
+}
+
   nameInput.addEventListener('blur', validateName);
   phoneInput.addEventListener('blur', validatePhone);
   emailInput.addEventListener('blur', validateEmail);
@@ -614,6 +650,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       toggleAddressUI();
     }
   });
+
+  privacyCheckbox?.addEventListener('change', validatePrivacy);
 
   function openModal(modalId) {
     const modal = document.getElementById(modalId);
@@ -640,14 +678,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     btn.disabled = true;
 
     const ok =
-      validateName() &
-      validatePhone() &
-      validateEmail() &
-      validateAddressIfNeeded() &
-      validateDeliveryTimeIfNeeded();
+      validateName() &&
+      validatePhone() &&
+      validateEmail() &&
+      validateAddressIfNeeded() &&
+      validateDeliveryTimeIfNeeded() &&
+      validatePrivacy();
 
     if (!ok) {
-      msg.textContent = 'Проверьте поля формы — есть ошибки.';
+      msg.textContent = 'Проверьте поля формы и подтвердите согласие на обработку персональных данных.';
       btn.disabled = false;
       return;
     }
@@ -663,28 +702,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       ? ''
       : (appliedPromo?.code || ((promoInput.value || '').trim().toUpperCase()));
 
-    const payload = {
-      checkout_mode: checkoutMode,
+const payload = {
+  checkout_mode: checkoutMode,
 
-      customer_name: nameInput.value.trim(),
-      phone: phoneInput.value.trim(),
-      email: emailInput.value.trim(),
-      comment: (form.querySelector('textarea[name="comment"]')?.value || '').trim(),
-      payment_method: form.querySelector('input[name="payment_method"]:checked')?.value || 'card',
+  customer_name: nameInput.value.trim(),
+  phone: phoneInput.value.trim(),
+  email: emailInput.value.trim(),
+  comment: (form.querySelector('textarea[name="comment"]')?.value || '').trim(),
+  payment_method: form.querySelector('input[name="payment_method"]:checked')?.value || 'card',
 
-      delivery_type: deliveryType,
-      city: (deliveryType === 'delivery') ? cityInput.value.trim() : '',
-      street: (deliveryType === 'delivery') ? streetInput.value.trim() : '',
-      house: (deliveryType === 'delivery') ? houseInput.value.trim() : '',
-      apartment: (deliveryType === 'delivery') ? aptInput.value.trim() : '',
-      entrance_info: (deliveryType === 'delivery') ? entranceInput.value.trim() : '',
+  delivery_type: deliveryType,
+  city: (deliveryType === 'delivery') ? cityInput.value.trim() : '',
+  street: (deliveryType === 'delivery') ? streetInput.value.trim() : '',
+  house: (deliveryType === 'delivery') ? houseInput.value.trim() : '',
+  apartment: (deliveryType === 'delivery') ? aptInput.value.trim() : '',
+  entrance_info: (deliveryType === 'delivery') ? entranceInput.value.trim() : '',
 
-      delivery_date: (deliveryType === 'delivery') ? (deliveryDate.value || '') : '',
-      delivery_slot: (deliveryType === 'delivery') ? (deliverySlot.value || '') : '',
+  delivery_date: (deliveryType === 'delivery') ? (deliveryDate.value || '') : '',
+  delivery_slot: (deliveryType === 'delivery') ? (deliverySlot.value || '') : '',
 
-      promo_code: promoCode || '',
-      items: minimalItems
-    };
+  promo_code: promoCode || '',
+  privacy_consent: privacyCheckbox && privacyCheckbox.checked ? 1 : 0,
+  items: minimalItems
+};
 
     try {
       const res = await fetch('../php/order_create.php', {

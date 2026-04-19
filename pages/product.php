@@ -458,16 +458,15 @@ $related = array_slice($related, 0, 4);
               <div class="pPerk__t">По городу 1–2 дня, по РФ 3–7 дней</div>
             </div>
           </div>
-
-          <?php if (!empty($product['is_personalizable'])): ?>
-            <div class="pPerk pPerk--accent">
-              <span class="pPerk__i">✨</span>
-              <div>
-                <strong>Персонализация</strong>
-                <div class="pPerk__t">Можно добавить надпись/бирку</div>
-              </div>
-            </div>
-          <?php endif; ?>
+<?php if (!empty($product['is_personalizable'])): ?>
+  <div class="pPerk pPerk--accent">
+    <span class="pPerk__i">✨</span>
+    <div>
+      <strong>Персонализация</strong>
+      <div class="pPerk__t">Можно оставить заявку на индивидуальное оформление</div>
+    </div>
+  </div>
+<?php endif; ?>
         </div>
       </div>
     </section>

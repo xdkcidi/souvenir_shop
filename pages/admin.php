@@ -8,7 +8,9 @@ $stmt = $pdo->query("
         (SELECT COUNT(*) FROM products) AS products_count,
         (SELECT COUNT(*) FROM orders) AS orders_count,
         (SELECT COUNT(*) FROM product_reviews) AS reviews_count,
-        (SELECT COUNT(*) FROM orders WHERE status = 'new') AS new_orders_count
+        (SELECT COUNT(*) FROM orders WHERE status = 'new') AS new_orders_count,
+        (SELECT COUNT(*) FROM personalization_requests) AS personalization_count,
+        (SELECT COUNT(*) FROM personalization_requests WHERE status = 'new') AS new_personalization_count
 ");
 $stats = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
@@ -26,10 +28,10 @@ $stats = $stmt->fetch(PDO::FETCH_ASSOC);
 <main class="admin-wrap admin-wrap--md">
   <div class="admin-head">
     <div>
-<h1 class="admin-head__title">Админ-панель</h1>
-<p class="admin-head__text">
-  Вы вошли как администратор: <?= htmlspecialchars($_SESSION['user_login']) ?>
-</p>
+      <h1 class="admin-head__title">Админ-панель</h1>
+      <p class="admin-head__text">
+        Вы вошли как администратор: <?= htmlspecialchars($_SESSION['user_login']) ?>
+      </p>
     </div>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -58,6 +60,16 @@ $stats = $stmt->fetch(PDO::FETCH_ASSOC);
       <div class="admin-card__label">Новых заказов</div>
       <div class="admin-card__value"><?= (int)$stats['new_orders_count'] ?></div>
     </div>
+
+    <div class="admin-card">
+      <div class="admin-card__label">Заявок на персонализацию</div>
+      <div class="admin-card__value"><?= (int)$stats['personalization_count'] ?></div>
+    </div>
+
+    <div class="admin-card">
+      <div class="admin-card__label">Новых заявок</div>
+      <div class="admin-card__value"><?= (int)$stats['new_personalization_count'] ?></div>
+    </div>
   </section>
 
   <section class="admin-links">
@@ -73,7 +85,12 @@ $stats = $stmt->fetch(PDO::FETCH_ASSOC);
 
     <a class="admin-link" href="/souvenir_shop/pages/admin_reviews.php">
       <h3>Отзывы</h3>
-      <p>Просмотр и удаление комментариев пользователей.</p>
+      <p>Просмотр, публикация, скрытие и удаление отзывов.</p>
+    </a>
+
+    <a class="admin-link" href="/souvenir_shop/pages/admin_personalization_requests.php">
+      <h3>Заявки на персонализацию</h3>
+      <p>Просмотр заявок на гравировку и изменение их статуса.</p>
     </a>
   </section>
 </main>

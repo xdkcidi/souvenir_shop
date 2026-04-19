@@ -284,26 +284,22 @@ unset($f);
 
 // ===== 7) Заказы (топ-5 + все) =====
 $stmt = $pdo->prepare("
-  SELECT id, total_sum, status, created_at,
-         delivery_type, delivery_fee, delivery_address, pickup_address,
-         delivery_date, delivery_slot,
-         promo_code, discount_percent, discount_sum, items_sum
-  FROM orders
-  WHERE user_id = :uid
-  ORDER BY id DESC
-  LIMIT 5
+SELECT id, total_sum, status, created_at, delivery_type, delivery_fee,
+delivery_address, pickup_address, delivery_date, delivery_slot, promo_code, is_gift, discount_percent, discount_sum, items_sum
+FROM orders
+WHERE user_id = :uid
+ORDER BY id DESC
+LIMIT 5
 ");
 $stmt->execute([':uid' => $userId]);
 $ordersTop = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $stmt = $pdo->prepare("
-  SELECT id, total_sum, status, created_at,
-         delivery_type, delivery_fee, delivery_address, pickup_address,
-         delivery_date, delivery_slot,
-         promo_code, discount_percent, discount_sum, items_sum
-  FROM orders
-  WHERE user_id = :uid
-  ORDER BY id DESC
+SELECT id, total_sum, status, created_at, delivery_type, delivery_fee, delivery_address,
+pickup_address, delivery_date, delivery_slot, promo_code, is_gift, discount_percent, discount_sum, items_sum
+FROM orders
+WHERE user_id = :uid
+ORDER BY id DESC
 ");
 $stmt->execute([':uid' => $userId]);
 $ordersAll = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -932,13 +928,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ob_start();
     ?>
       <div class="order-card">
-        <div class="order-header">
-          <div>
-            <h3 class="order-number">Заказ №<?= $oid ?></h3>
-            <span class="order-date"><?= $date ?></span>
-          </div>
-          <span class="order-status <?= $cls ?>"><?= htmlspecialchars($label) ?></span>
-        </div>
+<div class="order-header">
+  <div>
+    <h3 class="order-number">
+      Заказ №<?= $oid ?>
+      <?php if (!empty($o['is_gift'])): ?>
+        <span class="order-badge order-badge--gift">Подарочный набор</span>
+      <?php endif; ?>
+    </h3>
+    <span class="order-date"><?= $date ?></span>
+  </div>
+  <span class="order-status <?= $cls ?>"><?= htmlspecialchars($label) ?></span>
+</div>
 
         <div class="order-body">
           <!-- товары (фото + кол-во) -->

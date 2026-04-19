@@ -137,6 +137,18 @@ body{
   margin-top: auto;
 }
 
+.auth-form__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.5;
+}
+
+.auth-form__check input[type="checkbox"] {
+  margin-top: 4px;
+  flex: 0 0 auto;
+}
+
 
 
 @media (max-width: 768px) {

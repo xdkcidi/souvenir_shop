@@ -1344,3 +1344,21 @@
         align-items: flex-end;
     }
 }
+
+.order-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.order-badge--gift {
+  background: #fff3e6;
+  color: #b96a00;
+  border: 1px solid #ffd29a;
+}

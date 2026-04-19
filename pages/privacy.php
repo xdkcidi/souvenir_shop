@@ -1,117 +1,18 @@
 <?php
-// pages/registration.php
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// если уже авторизован — сразу в личный кабинет
-if (isset($_SESSION['user_id'])) {
-    header('Location: account.php');
-    exit;
-}
-
-require_once __DIR__ . '/../php/db.php';
-
-$errors = [];
-
-$login            = trim($_POST['login'] ?? '');
-$email            = trim($_POST['email'] ?? '');
-$phone            = trim($_POST['phone'] ?? '');
-$address          = trim($_POST['delivery_address'] ?? '');
-$password         = $_POST['password'] ?? '';
-$password_confirm = $_POST['password_confirm'] ?? '';
-$privacyConsent   = !empty($_POST['privacy_consent']);
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-    // ВАЛИДАЦИЯ
-    if ($login === '') {
-        $errors[] = 'Введите логин.';
-    } elseif (mb_strlen($login) < 3) {
-        $errors[] = 'Логин должен содержать минимум 3 символа.';
-    }
-
-    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = 'Введите корректный email.';
-    }
-
-    if (mb_strlen($password) < 6) {
-        $errors[] = 'Пароль должен быть не короче 6 символов.';
-    }
-
-    if ($password !== $password_confirm) {
-        $errors[] = 'Пароли не совпадают.';
-    }
-
-    if (!$privacyConsent) {
-        $errors[] = 'Необходимо согласиться на обработку персональных данных.';
-    }
-
-    // ПРОВЕРКА ЛОГИНА / EMAIL
-    if (empty($errors)) {
-        $stmt = $pdo->prepare("
-            SELECT id, login, email
-            FROM users
-            WHERE login = :login OR email = :email
-            LIMIT 1
-        ");
-        $stmt->execute([
-            ':login' => $login,
-            ':email' => $email,
-        ]);
-
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($row) {
-            if (mb_strtolower((string)$row['login']) === mb_strtolower($login)) {
-                $errors[] = 'Пользователь с таким логином уже существует.';
-            }
-            if (mb_strtolower((string)$row['email']) === mb_strtolower($email)) {
-                $errors[] = 'Пользователь с таким email уже существует.';
-            }
-        }
-    }
-
-    // СОХРАНЕНИЕ ПОЛЬЗОВАТЕЛЯ
-    if (empty($errors)) {
-        $hash = password_hash($password, PASSWORD_DEFAULT);
-
-        $stmt = $pdo->prepare("
-            INSERT INTO users (login, email, password_hash, phone, delivery_address)
-            VALUES (:login, :email, :password_hash, :phone, :address)
-        ");
-
-        $ok = $stmt->execute([
-            ':login'         => $login,
-            ':email'         => $email,
-            ':password_hash' => $hash,
-            ':phone'         => ($phone !== '' ? $phone : null),
-            ':address'       => ($address !== '' ? $address : null),
-        ]);
-
-        if ($ok) {
-            $newUserId = (int)$pdo->lastInsertId();
-
-            $_SESSION['user_id'] = $newUserId;
-            $_SESSION['user_login'] = $login;
-
-            header('Location: account.php');
-            exit;
-        } else {
-            $errors[] = 'Не удалось сохранить данные. Попробуйте ещё раз.';
-        }
-    }
-}
-
 $isAuth = isset($_SESSION['user_id']);
+$hasAuthError = !empty($_SESSION['auth_error']);
 ?>
 <!doctype html>
 <html lang="ru" data-auth="<?php echo $isAuth ? '1' : '0'; ?>">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Регистрация — Лавка</title>
-  <meta name="description" content="Регистрация в магазине Лавка: создайте аккаунт, чтобы сохранять избранное и быстрее оформлять заказы." />
+  <title>Политика обработки персональных данных — Лавка</title>
+  <meta name="description" content="Политика обработки персональных данных интернет-магазина Лавка." />
   <link rel="stylesheet" href="../css/style.css" />
   <link rel="stylesheet" href="../css/main.css" />
   <link rel="stylesheet" href="../css/reg.css" />
@@ -265,124 +166,138 @@ $isAuth = isset($_SESSION['user_id']);
     <nav class="breadcrumbs" aria-label="Хлебные крошки">
       <ol>
         <li><a href="../index.php">Главная</a></li>
-        <li><span aria-current="page">Регистрация</span></li>
+        <li><span aria-current="page">Политика обработки персональных данных</span></li>
       </ol>
     </nav>
 
-    <h1 class="auth-title">Регистрация</h1>
+    <h1 class="auth-title">Политика обработки персональных данных</h1>
     <p class="auth-lead">
-      Создайте аккаунт, чтобы сохранять избранное и быстрее оформлять заказы.
+      На этой странице описано, какие персональные данные собирает сайт «Лавка»,
+      для каких целей они используются и какие права есть у пользователя.
     </p>
 
-    <section class="auth-card" aria-label="Форма регистрации">
-      <?php if (!empty($errors)): ?>
-        <div class="auth-errors" aria-live="polite">
-          <ul>
-            <?php foreach ($errors as $e): ?>
-              <li><?php echo htmlspecialchars($e, ENT_QUOTES, 'UTF-8'); ?></li>
-            <?php endforeach; ?>
+    <section class="auth-card" aria-label="Политика обработки персональных данных">
+      <div style="display:grid; gap:18px; line-height:1.75; color:var(--text,#222);">
+        <div>
+          <h2 class="footer__title" style="margin-bottom:8px;">1. Общие положения</h2>
+          <p>
+            Настоящая Политика определяет порядок обработки и защиты персональных данных,
+            которые пользователь предоставляет при использовании сайта «Лавка».
+          </p>
+          <p>
+            Оператором персональных данных в рамках данного сайта является администрация сайта «Лавка».
+            Для связи по вопросам обработки персональных данных пользователь может использовать
+            контакты, указанные на странице <a href="about.php#contacts">«Контакты»</a>.
+          </p>
+        </div>
+
+        <div>
+          <h2 class="footer__title" style="margin-bottom:8px;">2. Какие данные могут обрабатываться</h2>
+          <p>Сайт может обрабатывать следующие данные пользователя:</p>
+          <ul style="padding-left:18px;">
+            <li>логин;</li>
+            <li>адрес электронной почты;</li>
+            <li>номер телефона;</li>
+            <li>адрес доставки;</li>
+            <li>имя и иные сведения, которые пользователь сам указывает в формах сайта;</li>
+            <li>данные, содержащиеся в заказах, заявках на персонализацию, отзывах и сообщениях через формы сайта.</li>
           </ul>
         </div>
-      <?php endif; ?>
 
-      <form method="post" class="auth-form">
-        <div class="auth-form__group">
-          <label class="auth-form__label" for="login">Логин</label>
-          <input
-            class="input auth-input"
-            type="text"
-            id="login"
-            name="login"
-            value="<?php echo htmlspecialchars($login, ENT_QUOTES, 'UTF-8'); ?>"
-            required
-          />
+        <div>
+          <h2 class="footer__title" style="margin-bottom:8px;">3. Цели обработки персональных данных</h2>
+          <p>Персональные данные обрабатываются в следующих целях:</p>
+          <ul style="padding-left:18px;">
+            <li>регистрация и авторизация пользователя на сайте;</li>
+            <li>оформление, оплата и сопровождение заказов;</li>
+            <li>доставка товаров и связь с пользователем по вопросам заказа;</li>
+            <li>обработка заявок на персонализацию и обратной связи;</li>
+            <li>публикация и модерация отзывов;</li>
+            <li>улучшение качества работы сайта и сервиса.</li>
+          </ul>
         </div>
 
-        <div class="auth-form__group">
-          <label class="auth-form__label" for="email">Email</label>
-          <input
-            class="input auth-input"
-            type="email"
-            id="email"
-            name="email"
-            value="<?php echo htmlspecialchars($email, ENT_QUOTES, 'UTF-8'); ?>"
-            required
-          />
+        <div>
+          <h2 class="footer__title" style="margin-bottom:8px;">4. Правовые основания обработки</h2>
+          <p>
+            Обработка персональных данных осуществляется на основании согласия пользователя,
+            а также в случаях, когда обработка необходима для исполнения действий,
+            связанных с регистрацией, оформлением и исполнением заказа, обработкой заявки
+            или иного обращения пользователя.
+          </p>
         </div>
 
-        <div class="auth-form__group">
-          <label class="auth-form__label" for="password">Пароль</label>
-          <input
-            class="input auth-input"
-            type="password"
-            id="password"
-            name="password"
-            minlength="6"
-            required
-          />
-          <p class="auth-hint">Минимум 6 символов.</p>
+        <div>
+          <h2 class="footer__title" style="margin-bottom:8px;">5. Способы обработки персональных данных</h2>
+          <p>
+            Обработка персональных данных осуществляется с использованием средств автоматизации,
+            а также без их использования, если это необходимо для достижения целей обработки.
+          </p>
+          <p>
+            При обработке персональных данных могут совершаться следующие действия:
+            сбор, запись, систематизация, накопление, хранение, уточнение, использование,
+            передача в случаях, предусмотренных законодательством и необходимых для выполнения заказа,
+            обезличивание, блокирование, удаление и уничтожение.
+          </p>
         </div>
 
-        <div class="auth-form__group">
-          <label class="auth-form__label" for="password_confirm">Повторите пароль</label>
-          <input
-            class="input auth-input"
-            type="password"
-            id="password_confirm"
-            name="password_confirm"
-            required
-          />
+        <div>
+          <h2 class="footer__title" style="margin-bottom:8px;">6. Сроки хранения персональных данных</h2>
+          <p>
+            Персональные данные хранятся не дольше, чем этого требуют цели обработки,
+            если более длительный срок хранения не предусмотрен законодательством Российской Федерации.
+          </p>
+          <p>
+            После достижения целей обработки или отзыва согласия персональные данные подлежат
+            удалению либо обезличиванию, если иное не требуется по закону.
+          </p>
         </div>
 
-        <div class="auth-form__group">
-          <label class="auth-form__label" for="phone">Телефон (необязательно)</label>
-          <input
-            class="input auth-input"
-            type="tel"
-            id="phone"
-            name="phone"
-            placeholder="+7 (999) 000-00-00"
-            value="<?php echo htmlspecialchars($phone, ENT_QUOTES, 'UTF-8'); ?>"
-          />
+        <div>
+          <h2 class="footer__title" style="margin-bottom:8px;">7. Права пользователя</h2>
+          <p>Пользователь имеет право:</p>
+          <ul style="padding-left:18px;">
+            <li>получать сведения о своих персональных данных и порядке их обработки;</li>
+            <li>требовать уточнения, блокирования или удаления своих данных;</li>
+            <li>отозвать согласие на обработку персональных данных;</li>
+            <li>обратиться к оператору по вопросам, связанным с обработкой персональных данных.</li>
+          </ul>
         </div>
 
-        <div class="auth-form__group">
-          <label class="auth-form__label" for="delivery_address">Адрес доставки (необязательно)</label>
-          <textarea
-            class="input auth-input auth-input--area"
-            id="delivery_address"
-            name="delivery_address"
-            rows="3"
-            placeholder="Город, улица, дом, квартира"
-          ><?php echo htmlspecialchars($address, ENT_QUOTES, 'UTF-8'); ?></textarea>
+        <div>
+          <h2 class="footer__title" style="margin-bottom:8px;">8. Меры по защите персональных данных</h2>
+          <p>
+            Оператор принимает необходимые правовые, организационные и технические меры
+            для защиты персональных данных от неправомерного доступа, изменения, распространения,
+            уничтожения и иных неправомерных действий.
+          </p>
+          <p>
+            Доступ к персональным данным предоставляется только тем лицам, которым он необходим
+            для выполнения соответствующих задач в рамках работы сайта.
+          </p>
         </div>
 
-        <div class="auth-form__group">
-          <label class="auth-form__check" style="display:flex; align-items:flex-start; gap:10px; line-height:1.5;">
-            <input
-              type="checkbox"
-              name="privacy_consent"
-              value="1"
-              <?php echo $privacyConsent ? 'checked' : ''; ?>
-              style="margin-top:4px;"
-              required
-            />
-            <span>
-              Я соглашаюсь на
-              <a href="privacy.php" target="_blank" rel="noopener noreferrer">
-                обработку персональных данных
-              </a>
-            </span>
-          </label>
+        <div>
+          <h2 class="footer__title" style="margin-bottom:8px;">9. Использование файлов cookie и технических данных</h2>
+          <p>
+            Сайт может использовать cookie и иные технические данные, необходимые для корректной
+            работы пользовательских сценариев, авторизации, хранения предпочтений и повышения
+            удобства использования сайта.
+          </p>
         </div>
 
-        <button type="submit" class="btn btn--dark auth-btn">Зарегистрироваться</button>
-
-        <div class="auth-bottom">
-          <span class="auth-bottom__text">Уже есть аккаунт?</span>
-          <a href="#" class="auth-bottom__link" data-open-modal="authModal">Войти</a>
+        <div>
+          <h2 class="footer__title" style="margin-bottom:8px;">10. Заключительные положения</h2>
+          <p>
+            Настоящая Политика действует бессрочно до замены новой редакцией.
+            Актуальная версия Политики всегда доступна на данной странице сайта.
+          </p>
+          <p>
+            Пользователь, предоставляя свои персональные данные через формы сайта,
+            подтверждает, что ознакомлен с настоящей Политикой.
+          </p>
         </div>
-      </form>
+      </div>
     </section>
   </div>
 </main>
