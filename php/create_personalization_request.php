@@ -1,4 +1,5 @@
 <?php
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -7,7 +8,7 @@ require_once __DIR__ . '/db.php';
 
 function redirectBack(): void
 {
-    header('Location: /souvenir_shop/pages/catalog.php#personalGift');
+    header('Location: ../pages/catalog.php#personalGift');
     exit;
 }
 

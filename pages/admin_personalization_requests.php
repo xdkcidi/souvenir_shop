@@ -28,14 +28,14 @@ function statusBadgeStyle(string $status): string
     };
 }
 
-/* ===== ОБРАБОТКА СТАТУСОВ ===== */
+/* Обработка статусов */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = (int)($_POST['id'] ?? 0);
     $action = trim((string)($_POST['action'] ?? ''));
 
     if ($id <= 0) {
         $_SESSION['admin_error'] = 'Некорректный ID заявки.';
-        header('Location: /souvenir_shop/pages/admin_personalization_requests.php');
+        header('Location: ../pages/admin_personalization_requests.php');
         exit;
     }
 
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($newStatus === '') {
         $_SESSION['admin_error'] = 'Неизвестное действие.';
-        header('Location: /souvenir_shop/pages/admin_personalization_requests.php');
+        header('Location: ../pages/admin_personalization_requests.php');
         exit;
     }
 
@@ -66,11 +66,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['admin_error'] = 'Не удалось обновить статус заявки.';
     }
 
-    header('Location: /souvenir_shop/pages/admin_personalization_requests.php');
+    header('Location: ../pages/admin_personalization_requests.php');
     exit;
 }
 
-/* ===== СПИСОК ЗАЯВОК ===== */
+/* Список заявок */
 $stmt = $pdo->query("
     SELECT
         pr.id,
@@ -93,16 +93,21 @@ $stmt = $pdo->query("
 ");
 $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
-<!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Заявки на персонализацию — Админка</title>
-  <link rel="stylesheet" href="../css/style.css">
-  <link rel="stylesheet" href="../css/admin.css">
-</head>
-<body>
+<?php
+$basePath = '..';
+require_once __DIR__ . '/../includes/layout.php';
+
+renderHead(
+    'Заявки на персонализацию — Админка',
+    'Административная страница заявок на персонализацию товаров Лавки.',
+    [
+        'css/style.css',
+        'css/admin.css'
+    ]
+);
+
+renderHeader();
+?>
 
 <main class="admin-wrap admin-wrap--md">
   <div class="admin-head">
@@ -110,7 +115,7 @@ $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
       <h1 class="admin-head__title">Заявки на персонализацию</h1>
       <p class="admin-head__text">Просмотр заявок на гравировку и изменение их статуса.</p>
     </div>
-    <a class="btn btn--outline" href="/souvenir_shop/pages/admin.php">Назад</a>
+    <a class="btn btn--outline" href="../pages/admin.php">Назад</a>
   </div>
 
   <?php if (!empty($_SESSION['admin_success'])): ?>
@@ -159,7 +164,7 @@ $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
               </span>
 
               <?php if ($status !== 'new'): ?>
-                <form class="inline" action="/souvenir_shop/pages/admin_personalization_requests.php" method="post">
+                <form class="inline" action="../pages/admin_personalization_requests.php" method="post">
                   <input type="hidden" name="id" value="<?= (int)$req['id'] ?>">
                   <input type="hidden" name="action" value="mark_new">
                   <button class="btn btn--sm" type="submit">В новые</button>
@@ -167,7 +172,7 @@ $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
               <?php endif; ?>
 
               <?php if ($status !== 'in_progress'): ?>
-                <form class="inline" action="/souvenir_shop/pages/admin_personalization_requests.php" method="post">
+                <form class="inline" action="../pages/admin_personalization_requests.php" method="post">
                   <input type="hidden" name="id" value="<?= (int)$req['id'] ?>">
                   <input type="hidden" name="action" value="mark_in_progress">
                   <button class="btn btn--sm" type="submit">В работу</button>
@@ -175,7 +180,7 @@ $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
               <?php endif; ?>
 
               <?php if ($status !== 'done'): ?>
-                <form class="inline" action="/souvenir_shop/pages/admin_personalization_requests.php" method="post">
+                <form class="inline" action="../pages/admin_personalization_requests.php" method="post">
                   <input type="hidden" name="id" value="<?= (int)$req['id'] ?>">
                   <input type="hidden" name="action" value="mark_done">
                   <button class="btn btn--sm" type="submit">Завершить</button>
@@ -196,6 +201,14 @@ $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </section>
   <?php endif; ?>
 </main>
+<?php
+renderFooter();
+renderAuthModal();
+renderFavoritesSheet();
 
-</body>
-</html>
+renderScripts([
+    'js/script.js',
+    'js/cart.js',
+    'js/favorites.js'
+]);
+?>

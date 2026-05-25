@@ -1,4 +1,5 @@
 <?php
+
 session_start();
 require_once __DIR__ . '/admin_guard.php';
 require_once __DIR__ . '/db.php';
@@ -10,7 +11,7 @@ if ($action === 'delete') {
 
     if ($id <= 0) {
         $_SESSION['admin_error'] = 'Некорректный ID товара.';
-        header('Location: /souvenir_shop/pages/admin_products.php');
+        header('Location: ../pages/admin_products.php');
         exit;
     }
 
@@ -19,11 +20,11 @@ if ($action === 'delete') {
         $stmt->execute([$id]);
 
         $_SESSION['admin_success'] = 'Товар удалён.';
-        header('Location: /souvenir_shop/pages/admin_products.php');
+        header('Location: ../pages/admin_products.php');
         exit;
     } catch (PDOException $e) {
         $_SESSION['admin_error'] = 'Не удалось удалить товар.';
-        header('Location: /souvenir_shop/pages/admin_products.php');
+        header('Location: ../pages/admin_products.php');
         exit;
     }
 }
@@ -57,19 +58,19 @@ if ($action === 'save') {
         $in_stock < 0
     ) {
         $_SESSION['admin_error'] = 'Заполни обязательные поля.';
-        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/souvenir_shop/pages/admin_products.php'));
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '../pages/admin_products.php'));
         exit;
     }
 
     if (!in_array($category, $allowedCategories, true)) {
         $_SESSION['admin_error'] = 'Некорректная категория.';
-        header('Location: /souvenir_shop/pages/admin_products.php');
+        header('Location: ../pages/admin_products.php');
         exit;
     }
 
     if (!in_array($badge, $allowedBadges, true)) {
         $_SESSION['admin_error'] = 'Некорректный бейдж.';
-        header('Location: /souvenir_shop/pages/admin_products.php');
+        header('Location: ../pages/admin_products.php');
         exit;
     }
 
@@ -79,7 +80,7 @@ if ($action === 'save') {
 
         if ($check->fetch()) {
             $_SESSION['admin_error'] = 'Товар с таким кодом уже существует.';
-            header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/souvenir_shop/pages/admin_products.php'));
+            header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '../pages/admin_products.php'));
             exit;
         }
 
@@ -179,16 +180,16 @@ if ($action === 'save') {
             $_SESSION['admin_success'] = 'Товар успешно добавлен.';
         }
 
-        header('Location: /souvenir_shop/pages/admin_products.php');
+        header('Location: ../pages/admin_products.php');
         exit;
 
     } catch (PDOException $e) {
         $_SESSION['admin_error'] = 'Ошибка при сохранении товара.';
-        header('Location: /souvenir_shop/pages/admin_products.php');
+        header('Location: ../pages/admin_products.php');
         exit;
     }
 }
 
 $_SESSION['admin_error'] = 'Неизвестное действие.';
-header('Location: /souvenir_shop/pages/admin_products.php');
+header('Location: ../pages/admin_products.php');
 exit;

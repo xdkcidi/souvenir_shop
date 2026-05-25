@@ -48,16 +48,22 @@ function adminCategoryText(?string $category): string
     };
 }
 ?>
-<!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Товары — Админка</title>
-  <link rel="stylesheet" href="../css/style.css">
-  <link rel="stylesheet" href="../css/admin.css">
-</head>
-<body>
+<?php
+$basePath = '..';
+require_once __DIR__ . '/../includes/layout.php';
+
+renderHead(
+    'Товары — Админка',
+    'Административная страница управления товарами Лавки.',
+    [
+        'css/style.css',
+        'css/admin.css'
+    ]
+);
+
+renderHeader();
+?>
+
 <main class="admin-wrap">
   <div class="admin-head">
     <div>
@@ -66,8 +72,8 @@ function adminCategoryText(?string $category): string
     </div>
 
     <div class="admin-top-actions">
-      <a class="btn btn--dark" href="/souvenir_shop/pages/admin_product_form.php">Добавить товар</a>
-      <a class="btn btn--outline" href="/souvenir_shop/pages/admin.php">Назад</a>
+      <a class="btn btn--dark" href="../pages/admin_product_form.php">Добавить товар</a>
+      <a class="btn btn--outline" href="../pages/admin.php">Назад</a>
     </div>
   </div>
 
@@ -134,15 +140,14 @@ function adminCategoryText(?string $category): string
               <td><?= h(adminBadgeText($product['badge'] ?? null)) ?></td>
               <td>
                 <div class="admin-actions">
-                  <a class="btn btn--outline btn--sm" href="/souvenir_shop/pages/admin_product_form.php?id=<?= (int)$product['id'] ?>">
+                  <a class="btn btn--outline btn--sm" href="../pages/admin_product_form.php?id=<?= (int)$product['id'] ?>">
                     Изменить
                   </a>
-
-<form class="inline" action="/souvenir_shop/php/admin_product_action.php" method="post" onsubmit="return confirm('Удалить товар?');">
-  <input type="hidden" name="action" value="delete">
-  <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
-  <button class="btn btn--sm" type="submit">Удалить</button>
-</form>
+                  <form class="inline" action="../php/admin_product_action.php" method="post" onsubmit="return confirm('Удалить товар?');">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
+                    <button class="btn btn--sm" type="submit">Удалить</button>
+                  </form>
                 </div>
               </td>
             </tr>
@@ -153,5 +158,14 @@ function adminCategoryText(?string $category): string
     </div>
   </section>
 </main>
-</body>
-</html>
+<?php
+renderFooter();
+renderAuthModal();
+renderFavoritesSheet();
+
+renderScripts([
+    'js/script.js',
+    'js/cart.js',
+    'js/favorites.js'
+]);
+?>

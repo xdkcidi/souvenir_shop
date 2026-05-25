@@ -1,4 +1,5 @@
 <?php
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -33,7 +34,6 @@ if (!is_array($data)) {
     fail(400, 'Некорректные данные.');
 }
 
-/* ===== ВХОДНЫЕ ПОЛЯ ===== */
 $customerName   = trim((string)($data['customer_name'] ?? ''));
 $phoneRaw       = trim((string)($data['phone'] ?? ''));
 $email          = trim((string)($data['email'] ?? ''));
@@ -60,7 +60,7 @@ if (!in_array($checkoutMode, ['cart', 'gift'], true)) {
 $isGiftCheckout = ($checkoutMode === 'gift');
 $giftSession = $isGiftCheckout ? ($_SESSION['gift_checkout'] ?? null) : null;
 
-/* ===== ВАЛИДАЦИЯ ===== */
+/* Валидация */
 $allowedPayments = ['card', 'cash', 'transfer'];
 if (!in_array($paymentMethod, $allowedPayments, true)) {
     $paymentMethod = 'card';
@@ -106,7 +106,6 @@ if (!is_array($items) || count($items) === 0) {
     fail(422, 'Корзина пустая.');
 }
 
-// нормализация корзины: product_code => qty
 $cart = [];
 foreach ($items as $it) {
     $code = trim((string)($it['product_code'] ?? ''));
@@ -123,7 +122,7 @@ if (!$cart) {
     fail(422, 'Корзина пустая или некорректная.');
 }
 
-/* ===== ПРОВЕРКА GIFT-ЗАКАЗА ===== */
+/* Проверка заказа подарка */
 if ($isGiftCheckout) {
     if (!is_array($giftSession) || empty($giftSession['items']) || !is_array($giftSession['items'])) {
         fail(422, 'Подарочный набор не найден или истёк. Соберите его заново.');
@@ -218,12 +217,12 @@ if ($deliveryType === 'pickup') {
     }
 }
 
-/* ===== ПРОМОКОДЫ ===== */
+/* Промокоды */
 $PROMOS = [
-    'WELCOME10' => 10, // только первый заказ
-    'SPRING15'  => 15, // одноразовый
-    'LOYAL20'   => 20, // одноразовый, уровень "Постоянный" и выше
-    'VIP25'     => 25, // одноразовый, уровень VIP
+    'WELCOME10' => 10,
+    'SPRING15'  => 15,
+    'LOYAL20'   => 20,
+    'VIP25'     => 25,
 ];
 
 $discountPercent = 0;
@@ -344,7 +343,7 @@ try {
         throw new RuntimeException('Корзина пустая.');
     }
 
-    /* ---- gift-скидка ---- */
+    /* ---- скидка ---- */
     if ($isGiftCheckout) {
         $discountPercent = $giftDiscountPercent;
     }
@@ -359,7 +358,6 @@ try {
 
     $totalSum = ($itemsSum - $discountSum) + $deliveryFee;
 
-    /* ---- комментарий для gift-заказа ---- */
     if ($isGiftCheckout) {
         $giftNote = trim((string)($giftSession['note'] ?? ''));
         if ($giftNote !== '') {

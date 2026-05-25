@@ -8,14 +8,14 @@ function h($value): string
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
-/* ===== ОБРАБОТКА ДЕЙСТВИЙ ===== */
+/* Обработка действий */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = (int)($_POST['id'] ?? 0);
     $action = trim((string)($_POST['action'] ?? ''));
 
     if ($id <= 0) {
         $_SESSION['admin_error'] = 'Некорректный ID отзыва.';
-        header('Location: /souvenir_shop/pages/admin_reviews.php');
+        header('Location: ../pages/admin_reviews.php');
         exit;
     }
 
@@ -58,11 +58,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['admin_error'] = 'Не удалось выполнить действие с отзывом.';
     }
 
-    header('Location: /souvenir_shop/pages/admin_reviews.php');
+    header('Location: ../pages/admin_reviews.php');
     exit;
 }
 
-/* ===== СПИСОК ОТЗЫВОВ ===== */
+/* Списокк отзывов */
 $stmt = $pdo->query("
     SELECT
         pr.id,
@@ -82,116 +82,146 @@ $stmt = $pdo->query("
 ");
 $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
-<!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Отзывы — Админка</title>
-  <link rel="stylesheet" href="../css/style.css">
-  <link rel="stylesheet" href="../css/admin.css">
-</head>
-<body>
+<?php
+$basePath = '..';
+require_once __DIR__ . '/../includes/layout.php';
+
+renderHead(
+    'Отзывы — Админка',
+    'Административная страница модерации отзывов покупателей Лавки.',
+    [
+        'css/style.css',
+        'css/admin.css'
+    ]
+);
+
+renderHeader();
+?>
+
 <main class="admin-wrap admin-wrap--md">
   <div class="admin-head">
     <div>
       <h1 class="admin-head__title">Отзывы</h1>
       <p class="admin-head__text">Просмотр, публикация, скрытие и удаление отзывов пользователей.</p>
     </div>
-    <a class="btn btn--outline" href="/souvenir_shop/pages/admin.php">Назад</a>
+    <a class="btn btn--outline" href="../pages/admin.php">Назад</a>
   </div>
 
   <?php if (!empty($_SESSION['admin_success'])): ?>
-    <div style="margin-bottom:16px; padding:12px 14px; border-radius:14px; background:#eef8f0; color:#1f7a43;">
-      <?= h($_SESSION['admin_success']) ?>
-    </div>
-    <?php unset($_SESSION['admin_success']); ?>
+  <div style="margin-bottom:16px; padding:12px 14px; border-radius:14px; background:#eef8f0; color:#1f7a43;">
+    <?= h($_SESSION['admin_success']) ?>
+  </div>
+  <?php unset($_SESSION['admin_success']); ?>
   <?php endif; ?>
 
   <?php if (!empty($_SESSION['admin_error'])): ?>
-    <div style="margin-bottom:16px; padding:12px 14px; border-radius:14px; background:#fff0f0; color:#b00020;">
-      <?= h($_SESSION['admin_error']) ?>
-    </div>
-    <?php unset($_SESSION['admin_error']); ?>
+  <div style="margin-bottom:16px; padding:12px 14px; border-radius:14px; background:#fff0f0; color:#b00020;">
+    <?= h($_SESSION['admin_error']) ?>
+  </div>
+  <?php unset($_SESSION['admin_error']); ?>
   <?php endif; ?>
 
   <?php if (!$reviews): ?>
-    <div class="empty">Отзывов пока нет.</div>
+  <div class="empty">Отзывов пока нет.</div>
   <?php else: ?>
-    <section class="reviews-list">
-      <?php foreach ($reviews as $review): ?>
-        <?php
+  <section class="reviews-list">
+    <?php foreach ($reviews as $review): ?>
+    <?php
           $rating = max(1, min(5, (int)$review['rating']));
-          $stars = str_repeat('★', $rating) . str_repeat('☆', 5 - $rating);
-          $isApproved = ((int)$review['is_approved'] === 1);
+        $stars = str_repeat('★', $rating) . str_repeat('☆', 5 - $rating);
+        $isApproved = ((int)$review['is_approved'] === 1);
         ?>
-        <article class="review-card">
-          <div class="review-top">
-            <div>
-              <h2 class="review-title">
-                <?= h($review['product_name'] ?: 'Товар не найден') ?>
-              </h2>
+    <article class="review-card">
+      <div class="review-top">
+        <div>
+          <h2 class="review-title">
+            <?= h($review['product_name'] ?: 'Товар не найден') ?>
+          </h2>
 
-              <p class="review-meta">Код товара: <?= h($review['product_code']) ?: '—' ?></p>
-              <p class="review-meta">Автор: <?= h($review['author_name']) ?: '—' ?></p>
-              <p class="review-meta">ID пользователя: <?= !empty($review['user_id']) ? (int)$review['user_id'] : '—' ?></p>
-              <p class="review-meta">Дата создания: <?= h($review['created_at']) ?: '—' ?></p>
+          <p class="review-meta">Код товара:
+            <?= h($review['product_code']) ?: '—' ?>
+          </p>
+          <p class="review-meta">Автор:
+            <?= h($review['author_name']) ?: '—' ?>
+          </p>
+          <p class="review-meta">ID пользователя:
+            <?= !empty($review['user_id']) ? (int)$review['user_id'] : '—' ?>
+          </p>
+          <p class="review-meta">Дата создания:
+            <?= h($review['created_at']) ?: '—' ?>
+          </p>
 
-              <?php if (!empty($review['updated_at'])): ?>
-                <p class="review-meta">Изменён: <?= h($review['updated_at']) ?></p>
-              <?php endif; ?>
+          <?php if (!empty($review['updated_at'])): ?>
+          <p class="review-meta">Изменён:
+            <?= h($review['updated_at']) ?></p>
+          <?php endif; ?>
 
-              <?php if (!empty($review['moderated_at'])): ?>
-                <p class="review-meta">Модерация: <?= h($review['moderated_at']) ?></p>
-              <?php endif; ?>
+          <?php if (!empty($review['moderated_at'])): ?>
+          <p class="review-meta">Модерация:
+            <?= h($review['moderated_at']) ?></p>
+          <?php endif; ?>
 
-              <p class="review-meta">
-                Оценка:
-                <span class="stars"><?= $stars ?></span>
-                (<?= $rating ?>/5)
-              </p>
-            </div>
+          <p class="review-meta">
+            Оценка:
+            <span class="stars"><?= $stars ?></span>
+            (<?= $rating ?>/5)
+          </p>
+        </div>
 
-            <div class="review-side">
-              <span class="pill <?= $isApproved ? 'pill--ok' : 'pill--off' ?>">
-                <?= $isApproved ? 'Опубликован' : 'На модерации / скрыт' ?>
-              </span>
+        <div class="review-side">
+          <span
+            class="pill <?= $isApproved ? 'pill--ok' : 'pill--off' ?>">
+            <?= $isApproved ? 'Опубликован' : 'На модерации / скрыт' ?>
+          </span>
 
-              <?php if (!$isApproved): ?>
-                <form class="inline" action="/souvenir_shop/pages/admin_reviews.php" method="post">
-                  <input type="hidden" name="id" value="<?= (int)$review['id'] ?>">
-                  <input type="hidden" name="action" value="approve">
-                  <button class="btn btn--sm" type="submit">Одобрить</button>
-                </form>
-              <?php endif; ?>
+          <?php if (!$isApproved): ?>
+          <form class="inline" action="../pages/admin_reviews.php" method="post">
+            <input type="hidden" name="id"
+              value="<?= (int)$review['id'] ?>">
+            <input type="hidden" name="action" value="approve">
+            <button class="btn btn--sm" type="submit">Одобрить</button>
+          </form>
+          <?php endif; ?>
 
-              <?php if ($isApproved): ?>
-                <form class="inline" action="/souvenir_shop/pages/admin_reviews.php" method="post">
-                  <input type="hidden" name="id" value="<?= (int)$review['id'] ?>">
-                  <input type="hidden" name="action" value="hide">
-                  <button class="btn btn--sm" type="submit">Скрыть</button>
-                </form>
-              <?php endif; ?>
+          <?php if ($isApproved): ?>
+          <form class="inline" action="../pages/admin_reviews.php" method="post">
+            <input type="hidden" name="id"
+              value="<?= (int)$review['id'] ?>">
+            <input type="hidden" name="action" value="hide">
+            <button class="btn btn--sm" type="submit">Скрыть</button>
+          </form>
+          <?php endif; ?>
 
-              <form class="inline" action="/souvenir_shop/pages/admin_reviews.php" method="post" onsubmit="return confirm('Удалить отзыв?');">
-                <input type="hidden" name="id" value="<?= (int)$review['id'] ?>">
-                <input type="hidden" name="action" value="delete">
-                <button class="btn btn--sm" type="submit">Удалить</button>
-              </form>
-            </div>
-          </div>
+          <form class="inline" action="../pages/admin_reviews.php" method="post"
+            onsubmit="return confirm('Удалить отзыв?');">
+            <input type="hidden" name="id"
+              value="<?= (int)$review['id'] ?>">
+            <input type="hidden" name="action" value="delete">
+            <button class="btn btn--sm" type="submit">Удалить</button>
+          </form>
+        </div>
+      </div>
 
-          <div class="review-text">
-            <?php if (!empty($review['body'])): ?>
-              <?= nl2br(h($review['body'])) ?>
-            <?php else: ?>
-              <span class="empty">Без комментария</span>
-            <?php endif; ?>
-          </div>
-        </article>
-      <?php endforeach; ?>
-    </section>
+      <div class="review-text">
+        <?php if (!empty($review['body'])): ?>
+        <?= nl2br(h($review['body'])) ?>
+        <?php else: ?>
+        <span class="empty">Без комментария</span>
+        <?php endif; ?>
+      </div>
+    </article>
+    <?php endforeach; ?>
+  </section>
   <?php endif; ?>
 </main>
-</body>
-</html>
+<?php
+renderFooter();
+renderAuthModal();
+renderFavoritesSheet();
+
+renderScripts([
+    'js/script.js',
+    'js/cart.js',
+    'js/favorites.js'
+]);
+?>

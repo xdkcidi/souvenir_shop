@@ -1,4 +1,5 @@
 <?php
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -104,5 +105,5 @@ $_SESSION['gift_checkout'] = [
 
 echo json_encode([
     'success'  => true,
-    'redirect' => '/souvenir_shop/pages/checkout.php?mode=gift',
+    'redirect' => '../pages/checkout.php?mode=gift',
 ]);

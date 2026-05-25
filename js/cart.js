@@ -1,40 +1,40 @@
-// cart.js
-console.log('NEW cart.js LOADED');
+console.log("NEW cart.js LOADED");
 
-const CART_AUTH_MESSAGE = 'Чтобы добавить товар в корзину, сначала войдите в аккаунт.';
+const CART_AUTH_MESSAGE =
+  "Чтобы добавить товар в корзину, сначала войдите в аккаунт.";
 
-const CART_API_URL = '/SOUVENIR_SHOP/php/cart.php';
-const FAVORITES_API_URL = '/SOUVENIR_SHOP/php/favorites.php';
+const CART_API_URL = "../php/cart.php";
+const FAVORITES_API_URL = "../php/favorites.php";
 
 let isAdding = false;
 
 function openCartAuthModal() {
-  if (typeof window.openAuthModalWithMessage === 'function') {
+  if (typeof window.openAuthModalWithMessage === "function") {
     window.openAuthModalWithMessage(CART_AUTH_MESSAGE);
     return;
   }
 
   const openAuth = document.querySelector('[data-open-modal="authModal"]');
   if (openAuth) openAuth.click();
-  else alert('Нужно войти в аккаунт');
+  else alert("Нужно войти в аккаунт");
 }
 
 function isAuthed() {
-  return document.documentElement.dataset.auth === '1';
+  return document.documentElement.dataset.auth === "1";
 }
 
 async function cartApi(action, data = {}) {
   const res = await fetch(CART_API_URL, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest'
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest",
     },
-    credentials: 'same-origin',
-    body: JSON.stringify({ action, ...data })
+    credentials: "same-origin",
+    body: JSON.stringify({ action, ...data }),
   });
 
-  if (res.status === 401) throw new Error('AUTH_REQUIRED');
+  if (res.status === 401) throw new Error("AUTH_REQUIRED");
 
   const json = await res.json().catch(() => ({}));
 
@@ -46,22 +46,22 @@ async function cartApi(action, data = {}) {
 }
 
 async function favoritesApi(action, data = {}) {
-  const isList = action === 'list';
+  const isList = action === "list";
 
   const res = await fetch(
     isList ? `${FAVORITES_API_URL}?action=list` : FAVORITES_API_URL,
     {
-      method: isList ? 'GET' : 'POST',
+      method: isList ? "GET" : "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
       },
-      credentials: 'same-origin',
-      body: isList ? undefined : JSON.stringify({ action, ...data })
-    }
+      credentials: "same-origin",
+      body: isList ? undefined : JSON.stringify({ action, ...data }),
+    },
   );
 
-  if (res.status === 401) throw new Error('AUTH_REQUIRED');
+  if (res.status === 401) throw new Error("AUTH_REQUIRED");
 
   const json = await res.json().catch(() => ({}));
 
@@ -82,8 +82,8 @@ async function favoritesApi(action, data = {}) {
 function ensureQtyWrapForButton(btn, code) {
   if (!btn) return null;
 
-  const card = btn.closest('.card');
-  const favoriteItem = btn.closest('.favorites-item');
+  const card = btn.closest(".card");
+  const favoriteItem = btn.closest(".favorites-item");
   const root = card || favoriteItem;
 
   if (!root) return null;
@@ -93,24 +93,24 @@ function ensureQtyWrapForButton(btn, code) {
 
   let actions = null;
   let insertBeforeEl = null;
-  let wrapClass = 'qty qty--card';
+  let wrapClass = "qty qty--card";
 
   if (card) {
-    actions = card.querySelector('.card__actions');
-    insertBeforeEl = actions?.querySelector('[data-fav-btn]') || null;
-    wrapClass = 'qty qty--card';
+    actions = card.querySelector(".card__actions");
+    insertBeforeEl = actions?.querySelector("[data-fav-btn]") || null;
+    wrapClass = "qty qty--card";
   } else if (favoriteItem) {
-  actions = favoriteItem.querySelector('.favorites-item__actions');
-  insertBeforeEl = actions?.querySelector('[data-remove-favorite]') || null;
-  wrapClass = 'qty qty--card';
-}
+    actions = favoriteItem.querySelector(".favorites-item__actions");
+    insertBeforeEl = actions?.querySelector("[data-remove-favorite]") || null;
+    wrapClass = "qty qty--card";
+  }
 
   if (!actions) return null;
 
-  wrap = document.createElement('div');
+  wrap = document.createElement("div");
   wrap.className = wrapClass;
-  wrap.setAttribute('data-qty-wrap', code);
-  wrap.style.display = 'none';
+  wrap.setAttribute("data-qty-wrap", code);
+  wrap.style.display = "none";
   wrap.innerHTML = `
     <button class="qty__btn" type="button" aria-label="Уменьшить количество" data-qty-minus="${code}">−</button>
     <span class="qty__val">1</span>
@@ -128,25 +128,25 @@ function ensureQtyWrapForButton(btn, code) {
 
 function setCardQty(code, qty) {
   const addButtons = document.querySelectorAll(
-    `[data-add-to-cart][data-product-id="${code}"]`
+    `[data-add-to-cart][data-product-id="${code}"]`,
   );
 
   addButtons.forEach((btn) => {
     const wrap = ensureQtyWrapForButton(btn, code);
 
     if (!wrap) {
-      btn.textContent = qty > 0 ? `В корзине (${qty})` : 'В корзину';
+      btn.textContent = qty > 0 ? `В корзине (${qty})` : "В корзину";
       btn.disabled = false;
       return;
     }
 
-    const val = wrap.querySelector('.qty__val');
+    const val = wrap.querySelector(".qty__val");
 
-    btn.style.display = qty > 0 ? 'none' : '';
+    btn.style.display = qty > 0 ? "none" : "";
     btn.disabled = false;
-    btn.textContent = 'В корзину';
+    btn.textContent = "В корзину";
 
-    wrap.style.display = qty > 0 ? 'flex' : 'none';
+    wrap.style.display = qty > 0 ? "flex" : "none";
 
     if (val) {
       val.textContent = qty;
@@ -155,21 +155,24 @@ function setCardQty(code, qty) {
 }
 
 function updateCartCounter(items) {
-  const totalQty = items.reduce((sum, item) => sum + parseInt(item.qty || 0, 10), 0);
+  const totalQty = items.reduce(
+    (sum, item) => sum + parseInt(item.qty || 0, 10),
+    0,
+  );
 
   const cartLink = document.querySelector('a[href*="cart.php"]');
   if (cartLink) {
-    let badge = cartLink.querySelector('.badge');
+    let badge = cartLink.querySelector(".badge");
 
     if (!badge) {
-      badge = document.createElement('span');
-      badge.className = 'badge badge--permanent';
-      cartLink.style.position = 'relative';
+      badge = document.createElement("span");
+      badge.className = "badge badge--permanent";
+      cartLink.style.position = "relative";
       cartLink.appendChild(badge);
     }
 
     badge.textContent = totalQty;
-    badge.style.display = totalQty > 0 ? 'flex' : 'none';
+    badge.style.display = totalQty > 0 ? "flex" : "none";
   }
 }
 
@@ -177,31 +180,31 @@ async function syncHitsWithCart() {
   if (!isAuthed()) return;
 
   try {
-    const data = await cartApi('list');
+    const data = await cartApi("list");
     const map = new Map();
 
     (data.items || []).forEach((it) => {
       map.set(it.product_code, parseInt(it.qty, 10));
     });
 
-    document.querySelectorAll('[data-add-to-cart]').forEach((btn) => {
-      const code = btn.getAttribute('data-product-id');
+    document.querySelectorAll("[data-add-to-cart]").forEach((btn) => {
+      const code = btn.getAttribute("data-product-id");
       if (!code) return;
       setCardQty(code, map.get(code) || 0);
     });
 
     updateCartCounter(data.items || []);
   } catch (e) {
-    console.error('Ошибка синхронизации корзины:', e);
+    console.error("Ошибка синхронизации корзины:", e);
   }
 }
 
 function showNotification(message) {
-  let notification = document.querySelector('.cart-notification');
+  let notification = document.querySelector(".cart-notification");
 
   if (!notification) {
-    notification = document.createElement('div');
-    notification.className = 'cart-notification';
+    notification = document.createElement("div");
+    notification.className = "cart-notification";
     notification.style.cssText = `
       position: fixed;
       top: 20px;
@@ -233,21 +236,21 @@ async function addToCart(productId, productName) {
   }
 
   try {
-    await cartApi('add', { product_code: productId });
+    await cartApi("add", { product_code: productId });
     await syncHitsWithCart();
 
-    if (document.getElementById('cartList')) {
+    if (document.getElementById("cartList")) {
       await loadCart();
     }
 
     showNotification(`${productName} добавлен в корзину`);
     return true;
   } catch (error) {
-    if (error.message === 'AUTH_REQUIRED') {
+    if (error.message === "AUTH_REQUIRED") {
       openCartAuthModal();
     } else {
-      console.error('Ошибка добавления:', error);
-      alert('Не удалось добавить товар. Попробуйте позже.');
+      console.error("Ошибка добавления:", error);
+      alert("Не удалось добавить товар. Попробуйте позже.");
     }
     return false;
   }
@@ -257,35 +260,35 @@ async function updateQuantity(productId, action) {
   if (!isAuthed()) return false;
 
   try {
-    if (action === 'add') {
-      await cartApi('add', { product_code: productId });
-    } else if (action === 'remove') {
-      const data = await cartApi('list');
+    if (action === "add") {
+      await cartApi("add", { product_code: productId });
+    } else if (action === "remove") {
+      const data = await cartApi("list");
       const item = data.items.find((i) => i.product_code === productId);
       const currentQty = item ? parseInt(item.qty, 10) : 0;
 
       if (currentQty <= 1) {
-        await cartApi('remove', { product_code: productId });
+        await cartApi("remove", { product_code: productId });
       } else {
-        await cartApi('setQty', {
+        await cartApi("setQty", {
           product_code: productId,
-          qty: currentQty - 1
+          qty: currentQty - 1,
         });
       }
     }
 
     await syncHitsWithCart();
 
-    if (document.getElementById('cartList')) {
+    if (document.getElementById("cartList")) {
       await loadCart();
     }
 
     return true;
   } catch (error) {
-    if (error.message === 'AUTH_REQUIRED') {
+    if (error.message === "AUTH_REQUIRED") {
       openCartAuthModal();
     } else {
-      console.error('Ошибка обновления количества:', error);
+      console.error("Ошибка обновления количества:", error);
     }
     return false;
   }
@@ -297,14 +300,14 @@ async function addAllFavoritesToCart() {
     return false;
   }
 
-  const btn = document.getElementById('add-all-to-cart');
+  const btn = document.getElementById("add-all-to-cart");
   if (btn) btn.disabled = true;
 
   try {
-    const favorites = await favoritesApi('list');
+    const favorites = await favoritesApi("list");
 
     if (!favorites.length) {
-      showNotification('В избранном пока ничего нет');
+      showNotification("В избранном пока ничего нет");
       return true;
     }
 
@@ -312,23 +315,23 @@ async function addAllFavoritesToCart() {
       const code = item.product_code || item.id;
       if (!code) continue;
 
-      await cartApi('add', { product_code: code });
+      await cartApi("add", { product_code: code });
     }
 
     await syncHitsWithCart();
 
-    if (document.getElementById('cartList')) {
+    if (document.getElementById("cartList")) {
       await loadCart();
     }
 
-    showNotification('Все товары из избранного добавлены в корзину');
+    showNotification("Все товары из избранного добавлены в корзину");
     return true;
   } catch (error) {
-    if (error.message === 'AUTH_REQUIRED') {
+    if (error.message === "AUTH_REQUIRED") {
       openCartAuthModal();
     } else {
-      console.error('Ошибка добавления всех товаров из избранного:', error);
-      alert('Не удалось добавить товары из избранного в корзину.');
+      console.error("Ошибка добавления всех товаров из избранного:", error);
+      alert("Не удалось добавить товары из избранного в корзину.");
     }
     return false;
   } finally {
@@ -337,32 +340,32 @@ async function addAllFavoritesToCart() {
 }
 
 function formatPrice(price) {
-  return new Intl.NumberFormat('ru-RU').format(price);
+  return new Intl.NumberFormat("ru-RU").format(price);
 }
 
 function renderCartItems(items, totalQty, totalSum) {
-  const cartList = document.getElementById('cartList');
-  const cartEmpty = document.getElementById('cartEmpty');
-  const cartLayout = document.getElementById('cartLayout');
-  const cartTotalQty = document.getElementById('cartTotalQty');
-  const cartTotalSum = document.getElementById('cartTotalSum');
+  const cartList = document.getElementById("cartList");
+  const cartEmpty = document.getElementById("cartEmpty");
+  const cartLayout = document.getElementById("cartLayout");
+  const cartTotalQty = document.getElementById("cartTotalQty");
+  const cartTotalSum = document.getElementById("cartTotalSum");
 
   if (!cartList) return;
 
   if (!items || items.length === 0) {
-    if (cartEmpty) cartEmpty.style.display = '';
-    if (cartLayout) cartLayout.style.display = 'none';
-    cartList.innerHTML = '';
+    if (cartEmpty) cartEmpty.style.display = "";
+    if (cartLayout) cartLayout.style.display = "none";
+    cartList.innerHTML = "";
     return;
   }
 
-  if (cartEmpty) cartEmpty.style.display = 'none';
-  if (cartLayout) cartLayout.style.display = 'grid';
+  if (cartEmpty) cartEmpty.style.display = "none";
+  if (cartLayout) cartLayout.style.display = "grid";
 
   if (cartTotalQty) cartTotalQty.textContent = totalQty || 0;
   if (cartTotalSum) cartTotalSum.textContent = formatPrice(totalSum || 0);
 
-  let html = '';
+  let html = "";
 
   items.forEach((item) => {
     const code = item.product_code;
@@ -371,25 +374,30 @@ function renderCartItems(items, totalQty, totalSum) {
     const sum = price * qty;
 
     let img = item.image;
-    if (img && !img.startsWith('http') && !img.startsWith('/') && !img.startsWith('../')) {
-      img = '../' + img;
+    if (
+      img &&
+      !img.startsWith("http") &&
+      !img.startsWith("/") &&
+      !img.startsWith("../")
+    ) {
+      img = "../" + img;
     }
-    if (!img || img.includes('placeholder')) {
-      img = '../img/placeholder.webp';
+    if (!img || img.includes("placeholder")) {
+      img = "../img/placeholder.webp";
     }
 
     html += `
       <div class="card" style="padding:14px; margin-bottom:12px; position:relative;">
         <div class="cartRow">
           <div class="cartItemImg">
-            <img src="${img}" alt="${item.name || 'Товар'}" loading="lazy">
+            <img src="${img}" alt="${item.name || "Товар"}" loading="lazy">
           </div>
 
           <div style="flex:1;">
-            <div class="cartTitle">${item.name || 'Товар'}</div>
+            <div class="cartTitle">${item.name || "Товар"}</div>
             <div class="muted small" style="color:#666;">${formatPrice(price)} ₽ / шт</div>
 
-            ${item.meta ? `<div class="muted small cartMeta" style="color:#999;">${item.meta}</div>` : ''}
+            ${item.meta ? `<div class="muted small cartMeta" style="color:#999;">${item.meta}</div>` : ""}
 
             <div style="display:flex; align-items:center; gap:12px; margin-top:10px; flex-wrap:wrap;">
               <div class="qty">
@@ -417,27 +425,27 @@ async function loadCart() {
   if (!isAuthed()) return;
 
   try {
-    const data = await cartApi('list');
+    const data = await cartApi("list");
     renderCartItems(data.items, data.totalQty, data.totalSum);
   } catch (err) {
-    if (err.message === 'AUTH_REQUIRED') return;
-    console.error('Ошибка загрузки корзины:', err);
+    if (err.message === "AUTH_REQUIRED") return;
+    console.error("Ошибка загрузки корзины:", err);
   }
 }
 
-document.addEventListener('click', async function (e) {
+document.addEventListener("click", async function (e) {
   if (isAdding) {
     e.preventDefault();
     return;
   }
 
-  const addBtn = e.target.closest('[data-add-to-cart]');
+  const addBtn = e.target.closest("[data-add-to-cart]");
   if (addBtn) {
     e.preventDefault();
     isAdding = true;
 
     const productId = addBtn.dataset.productId;
-    const productName = addBtn.dataset.productName || 'Товар';
+    const productName = addBtn.dataset.productName || "Товар";
 
     await addToCart(productId, productName);
 
@@ -447,17 +455,17 @@ document.addEventListener('click', async function (e) {
     return;
   }
 
-  const plusBtn = e.target.closest('[data-qty-plus]');
+  const plusBtn = e.target.closest("[data-qty-plus]");
   if (plusBtn) {
     e.preventDefault();
     isAdding = true;
 
     const productId =
-      plusBtn.getAttribute('data-qty-plus') ||
-      plusBtn.closest('[data-qty-wrap]')?.dataset.qtyWrap;
+      plusBtn.getAttribute("data-qty-plus") ||
+      plusBtn.closest("[data-qty-wrap]")?.dataset.qtyWrap;
 
     if (productId) {
-      await updateQuantity(productId, 'add');
+      await updateQuantity(productId, "add");
     }
 
     setTimeout(() => {
@@ -466,17 +474,17 @@ document.addEventListener('click', async function (e) {
     return;
   }
 
-  const minusBtn = e.target.closest('[data-qty-minus]');
+  const minusBtn = e.target.closest("[data-qty-minus]");
   if (minusBtn) {
     e.preventDefault();
     isAdding = true;
 
     const productId =
-      minusBtn.getAttribute('data-qty-minus') ||
-      minusBtn.closest('[data-qty-wrap]')?.dataset.qtyWrap;
+      minusBtn.getAttribute("data-qty-minus") ||
+      minusBtn.closest("[data-qty-wrap]")?.dataset.qtyWrap;
 
     if (productId) {
-      await updateQuantity(productId, 'remove');
+      await updateQuantity(productId, "remove");
     }
 
     setTimeout(() => {
@@ -485,7 +493,7 @@ document.addEventListener('click', async function (e) {
     return;
   }
 
-  const addAllFavoritesBtn = e.target.closest('#add-all-to-cart');
+  const addAllFavoritesBtn = e.target.closest("#add-all-to-cart");
   if (addAllFavoritesBtn) {
     e.preventDefault();
     isAdding = true;
@@ -498,7 +506,7 @@ document.addEventListener('click', async function (e) {
     return;
   }
 
-  const removeBtn = e.target.closest('[data-remove]');
+  const removeBtn = e.target.closest("[data-remove]");
   if (removeBtn) {
     e.preventDefault();
     if (!isAuthed()) {
@@ -506,20 +514,20 @@ document.addEventListener('click', async function (e) {
       return;
     }
 
-    const code = removeBtn.getAttribute('data-remove');
+    const code = removeBtn.getAttribute("data-remove");
 
     try {
-      await cartApi('remove', { product_code: code });
+      await cartApi("remove", { product_code: code });
       await loadCart();
       await syncHitsWithCart();
     } catch (err) {
-      if (err.message === 'AUTH_REQUIRED') openCartAuthModal();
+      if (err.message === "AUTH_REQUIRED") openCartAuthModal();
       else console.error(err);
     }
     return;
   }
 
-  const clearBtn = e.target.closest('#cartClearBtn');
+  const clearBtn = e.target.closest("#cartClearBtn");
   if (clearBtn) {
     e.preventDefault();
     if (!isAuthed()) {
@@ -527,20 +535,20 @@ document.addEventListener('click', async function (e) {
       return;
     }
 
-    if (confirm('Очистить корзину?')) {
+    if (confirm("Очистить корзину?")) {
       try {
-        await cartApi('clear');
+        await cartApi("clear");
         await loadCart();
         await syncHitsWithCart();
       } catch (err) {
-        if (err.message === 'AUTH_REQUIRED') openCartAuthModal();
+        if (err.message === "AUTH_REQUIRED") openCartAuthModal();
         else console.error(err);
       }
     }
   }
 });
 
-const style = document.createElement('style');
+const style = document.createElement("style");
 style.textContent = `
   @keyframes slideIn {
     from {
@@ -588,16 +596,16 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-document.addEventListener('DOMContentLoaded', async function () {
+document.addEventListener("DOMContentLoaded", async function () {
   if (isAuthed()) {
     try {
       await syncHitsWithCart();
 
-      if (document.getElementById('cartList')) {
+      if (document.getElementById("cartList")) {
         await loadCart();
       }
     } catch (error) {
-      console.error('Ошибка инициализации:', error);
+      console.error("Ошибка инициализации:", error);
     }
   }
 });

@@ -36,7 +36,7 @@ if ($isEdit) {
 
     if (!$found) {
         $_SESSION['admin_error'] = 'Товар не найден.';
-        header('Location: /souvenir_shop/pages/admin_products.php');
+        header('Location: ../pages/admin_products.php');
         exit;
     }
 
@@ -52,27 +52,33 @@ $categories = [
     'sets' => 'Наборы',
 ];
 ?>
-<!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title><?= $isEdit ? 'Редактирование товара' : 'Добавление товара' ?></title>
-  <link rel="stylesheet" href="../css/style.css">
-  <link rel="stylesheet" href="../css/admin.css">
-</head>
-<body>
+<?php
+$basePath = '..';
+require_once __DIR__ . '/../includes/layout.php';
+
+renderHead(
+    ($isEdit ? 'Редактирование товара — Админка' : 'Добавление товара — Админка'),
+    'Форма администратора для добавления и редактирования товаров Лавки.',
+    [
+        'css/style.css',
+        'css/admin.css'
+    ]
+);
+
+renderHeader();
+?>
+
 <main class="admin-wrap">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
+  <div class="admin-head">
     <div>
       <h1 style="margin:0 0 8px;"><?= $isEdit ? 'Редактирование товара' : 'Добавление товара' ?></h1>
-      <p style="margin:0;color:#666;">Заполни поля и сохрани изменения.</p>
+      <p style="margin:0; color:#666;">Заполни поля и сохрани изменения.</p>
     </div>
-    <a class="btn btn--outline" href="/souvenir_shop/pages/admin_products.php">Назад</a>
+    <a class="btn btn--outline" href="../pages/admin_products.php">Назад</a>
   </div>
 
   <section class="admin-panel">
-    <form action="/souvenir_shop/php/admin_product_action.php" method="post">
+    <form action="../php/admin_product_action.php" method="post">
       <input type="hidden" name="action" value="save">
       <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
 
@@ -163,10 +169,19 @@ $categories = [
 
       <div class="actions">
         <button class="btn btn--dark" type="submit"><?= $isEdit ? 'Сохранить изменения' : 'Добавить товар' ?></button>
-        <a class="btn btn--outline" href="/souvenir_shop/pages/admin_products.php">Отмена</a>
+        <a class="btn btn--outline" href="../pages/admin_products.php">Отмена</a>
       </div>
     </form>
   </section>
 </main>
-</body>
-</html>
+<?php
+renderFooter();
+renderAuthModal();
+renderFavoritesSheet();
+
+renderScripts([
+    'js/script.js',
+    'js/cart.js',
+    'js/favorites.js'
+]);
+?>

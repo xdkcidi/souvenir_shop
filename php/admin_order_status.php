@@ -1,4 +1,5 @@
 <?php
+
 session_start();
 require_once __DIR__ . '/admin_guard.php';
 require_once __DIR__ . '/db.php';
@@ -10,13 +11,13 @@ $allowedStatuses = ['new', 'processing', 'shipped', 'completed', 'cancelled'];
 
 if ($id <= 0) {
     $_SESSION['admin_error'] = 'Некорректный ID заказа.';
-    header('Location: /souvenir_shop/pages/admin_orders.php');
+    header('Location: ../pages/admin_orders.php');
     exit;
 }
 
 if (!in_array($status, $allowedStatuses, true)) {
     $_SESSION['admin_error'] = 'Некорректный статус заказа.';
-    header('Location: /souvenir_shop/pages/admin_orders.php');
+    header('Location: ../pages/admin_orders.php');
     exit;
 }
 
@@ -26,7 +27,7 @@ try {
 
     if (!$check->fetch()) {
         $_SESSION['admin_error'] = 'Заказ не найден.';
-        header('Location: /souvenir_shop/pages/admin_orders.php');
+        header('Location: ../pages/admin_orders.php');
         exit;
     }
 
@@ -37,11 +38,11 @@ try {
     ]);
 
     $_SESSION['admin_success'] = 'Статус заказа обновлён.';
-    header('Location: /souvenir_shop/pages/admin_orders.php');
+    header('Location: ../pages/admin_orders.php');
     exit;
 
 } catch (PDOException $e) {
     $_SESSION['admin_error'] = 'Не удалось обновить статус заказа.';
-    header('Location: /souvenir_shop/pages/admin_orders.php');
+    header('Location: ../pages/admin_orders.php');
     exit;
 }

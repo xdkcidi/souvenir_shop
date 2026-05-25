@@ -1,5 +1,8 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once __DIR__ . '/db.php';
 
 $product_code = trim($_POST['product_code'] ?? '');
@@ -8,7 +11,7 @@ $body         = trim($_POST['body'] ?? '');
 
 function redirectToProduct(string $productCode): void
 {
-    header('Location: /souvenir_shop/pages/product.php?id=' . urlencode($productCode) . '#reviews');
+    header('Location: ../pages/product.php?id=' . urlencode($productCode) . '#reviews');
     exit;
 }
 
